@@ -10,16 +10,16 @@ echo "CUDA_MODE : " $1
 
 if [ $1 == "0" ]
 	then
-		echo "g++ -o bin/stereo_dense_reconstruction src/dense_reconstruction.cpp src/elas/*.cpp src/nlohmann/*.hpp \`pkg-config --cflags --libs opencv\`"
-		g++ -o bin/stereo_dense_reconstruction src/dense_reconstruction.cpp src/elas/*.cpp src/nlohmann/*.hpp `pkg-config --cflags --libs opencv`		
+		echo "g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/nlohmann/*.hpp \`pkg-config --cflags --libs opencv\`"
+		g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/nlohmann/*.hpp `pkg-config --cflags --libs opencv`		
 		exit 0
 fi
 
 
 if [ $1 == "1" ]
 	then
-		echo "nvcc -o bin/stereo_dense_reconstruction src/dense_reconstruction.cu src/dense_reconstruction.cpp src/elas/*.cpp  \`pkg-config --cflags --libs opencv\` -w"
-		nvcc -o bin/stereo_dense_reconstruction src/dense_reconstruction.cu src/dense_reconstruction.cpp src/elas/*.cpp  `pkg-config --cflags --libs opencv` -w
+		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/stereo_vision.cpp src/elas/*.cpp  \`pkg-config --cflags --libs opencv\` -w"
+		nvcc -o bin/stereo_vision src/stereo_vision.cu src/stereo_vision.cpp src/elas/*.cpp  `pkg-config --cflags --libs opencv` -w
 		exit 0
 fi
 
