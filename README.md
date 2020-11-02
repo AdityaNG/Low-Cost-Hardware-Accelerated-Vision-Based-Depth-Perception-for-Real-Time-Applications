@@ -1,4 +1,5 @@
-# Dense 3D Reconstruction from Stereo
+# Depth Perception from Stereoscopic Vision on Edge Devices
+
 
 
 
