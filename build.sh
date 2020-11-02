@@ -19,7 +19,7 @@ fi
 if [ $1 == "1" ]
 	then
 		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/stereo_vision.cpp src/elas/*.cpp  \`pkg-config --cflags --libs opencv\` -w"
-		nvcc -o bin/stereo_vision src/stereo_vision.cu src/stereo_vision.cpp src/elas/*.cpp  `pkg-config --cflags --libs opencv` -w
+		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  `pkg-config --cflags --libs opencv` -w
 		exit 0
 fi
 

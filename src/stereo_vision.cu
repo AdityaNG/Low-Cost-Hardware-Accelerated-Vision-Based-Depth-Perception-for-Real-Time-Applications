@@ -1,62 +1,20 @@
 //#include <../cfg/cpp/stereo_dense_reconstruction/CamToRobotCalibParamsConfig.h>
 //#include <stereo_dense_reconstruction/CamToRobotCalibParamsConfig.h>
 //#include "CamToRobotCalibParamsConfig.h"
-
-#include <curl/curl.h>
-#include <iostream>
-#include <vector>
-
 #include <stdlib.h>
+#include <chrono>
+#include <cuda_device_runtime_api.h>
 #include <fstream>
 #include <ctime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
 #include "elas/elas.h"
-#include "nlohmann/json.hpp"
-#include <string.h>
-#include <math.h>
-
-
-
-using json = nlohmann::json;
-
 //#include "popt.h"
 
 //#define CV_CALIB_ZERO_DISPARITY   1024
 
-typedef struct obj {
-  std::string name;
-  int x;
-  int y;
-  int h;
-  int w;
-  int c;
-} OBJ;
-
-OBJ obj_list[30];
-int obj_list_size = 0;
-
 using namespace cv;
 using namespace std;
-
-void print_OBJ(OBJ o) {
-  cout <<"Name : "<< o.name <<endl;
-  cout <<"\t x : "<< o.x << '\n';
-  cout <<"\t y : "<< o.y << '\n';
-  cout <<"\t h : "<< o.h << '\n';
-  cout <<"\t w : "<< o.w << '\n';
-  cout <<"\t c : "<< o.c << '\n';
-  cout <<"--------"<<endl;
-}
-
-int constrain(int a, int lb, int ub) {
-  if (a<lb)
-    return lb;
-  else if (a>ub)
-    return ub;
-  else
-    return a;
-}
 
 Mat XR, XT, Q, P1, P2;
 Mat R1, R2, K1, K2, D1, D2, R;
@@ -152,13 +110,25 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *
  */
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/calib3d.hpp>
+
+using namespace cv;
+using namespace std;
+/*
+__constant__ double d_XT[3] = {-4.0, 0.0, 1.7}, d_XR[9] = {0.00080,   0.00080,   1.00000,
+                                                         -1.00000,   0.00000,   0.00080,
+                                                          0.00000,  -1.00000,   0.00080 };
+__constant__ double d_Q[] = {1., 0., 0., -754.6364974975586, 0., 1., 0., -237.0751304626465, 0., 0., 0., 995.0224161109892, 0., 0., 1.877036435780607, -0.};
+*/
+
 __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
   // Calculating the coordinates of the pixel
-  int x = blockIdx.x * blockDim.x + threadIdx.x;
-  int y = blockIdx.y * blockDim.y + threadIdx.y;
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  // To prevent trying to access data outside the image
-  if (x >= cols || y >= rows)
+	// To prevent trying to access data outside the image
+	if (x >= cols || y >= rows)
         return;
     
   int pixelPosition = y * cols + x;
@@ -262,7 +232,7 @@ ios_base::sync_with_stdio(false);
   }
   printf("POINTS_END\n");
   free(points);
-  system ("touch /home/aditya/CODE_Sem3/stereo_dense_reconstruction_no_ros/plotter/3D_maps/reload_check");
+  system ("touch src/plotter/3D_maps/reload_check");
   
   if (!dmap.empty()) {
     //sensor_msgs::ImagePtr disp_msg;
@@ -274,12 +244,11 @@ ios_base::sync_with_stdio(false);
   //pcl_pub.publish(pc);
 }
 
-
-void publishPointCloud_OLD(Mat& img_left, Mat& dmap) {
+/*
+void publishPointCloud(Mat& img_left, Mat& dmap) { // CUDAfy
   if (debug == 1) {
-    //XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
-    XR = composeRotationCamToRobot(M_PI/3, 0, 0); //M_PI
-    XT = composeTranslationCamToRobot(-4,-1.0,1.7);
+    XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
+    XT = composeTranslationCamToRobot(0.0,0.0,0.28);
     cout << "Rotation matrix: " << XR << endl;
     cout << "Translation matrix: " << XT << endl;
   }
@@ -292,56 +261,6 @@ void publishPointCloud_OLD(Mat& img_left, Mat& dmap) {
   cout<<"img.size : "<<img_left.cols<<", "<<img_left.rows<<endl;
 
   cout << "POINTS"<<endl;
-  int BOUNDARY = 50;
-   /*
-  for (int iObj = 0; iObj < obj_list_size; iObj++)
-  {
-    int i_lb = constrain(obj_list[iObj].x + obj_list[iObj].w -BOUNDARY, 0, img_left.cols-1), 
-    i_ub = constrain(obj_list[iObj].x + obj_list[iObj].w +BOUNDARY, 0, img_left.cols-1), 
-    j_lb = constrain(obj_list[iObj].y + obj_list[iObj].h -BOUNDARY, 0, img_left.rows-1), 
-    j_ub = constrain(obj_list[iObj].y + obj_list[iObj].h +BOUNDARY, 0, img_left.rows-1);
-    
-    for (int i = i_lb; i < i_ub; i++) {
-      for (int j = j_lb; j < j_ub; j++) {
-        int d = dmap.at<uchar>(j,i);
-        //cout<<d<<endl;
-        // if low disparity, then ignore
-        if (d < 2) {
-          continue;
-        }
-        // V is the vector to be multiplied to Q to get
-        // the 3D homogenous coordinates of the image point
-        V.at<double>(0,0) = (double)(i);
-        V.at<double>(1,0) = (double)(j);
-        V.at<double>(2,0) = (double)d;
-        V.at<double>(3,0) = 1.;
-        
-        pos = Q * V; // 3D homogeneous coordinate
-        double X = pos.at<double>(0,0) / pos.at<double>(3,0);
-        double Y = pos.at<double>(1,0) / pos.at<double>(3,0);
-        double Z = pos.at<double>(2,0) / pos.at<double>(3,0);
-        Mat point3d_cam = Mat(3, 1, CV_64FC1);
-        point3d_cam.at<double>(0,0) = X;
-        point3d_cam.at<double>(1,0) = Y;
-        point3d_cam.at<double>(2,0) = Z;
-        // transform 3D point from camera frame to robot frame
-        Mat point3d_robot = XR * point3d_cam + XT;
-        points.push_back(Point3d(point3d_robot));
-        
-        int32_t red, blue, green;
-        red = img_left.at<Vec3b>(j,i)[2];
-        green = img_left.at<Vec3b>(j,i)[1];
-        blue = img_left.at<Vec3b>(j,i)[0];
-        int32_t rgb = (red << 16 | green << 8 | blue);
-        //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-
-        cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
-      }
-    } 
-  }
-  // */
-
-  // /*
   for (int i = 0; i < img_left.cols; i++) {
     for (int j = 0; j < img_left.rows; j++) {
       int d = dmap.at<uchar>(j,i);
@@ -369,7 +288,7 @@ void publishPointCloud_OLD(Mat& img_left, Mat& dmap) {
       Mat point3d_robot = XR * point3d_cam + XT;
       points.push_back(Point3d(point3d_robot));
       
-      int32_t red, blue, green;
+      int32_t red, blue, green; // What is thou doing here?
       red = img_left.at<Vec3b>(j,i)[2];
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];
@@ -379,58 +298,9 @@ void publishPointCloud_OLD(Mat& img_left, Mat& dmap) {
       cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }
-  // */
   cout<<"POINTS_END"<<endl;
-  
-  cout<<"BOXES"<<endl;
-  for (int iObj = 0; iObj < obj_list_size; iObj++)
-  {
-    int i_lb = constrain(obj_list[iObj].x + obj_list[iObj].w/2, 0, img_left.cols-1), 
-    i_ub = i_lb + 1, 
-    j_lb = constrain(obj_list[iObj].y + obj_list[iObj].h/2, 0, img_left.rows-1), 
-    j_ub = j_lb + 1;
-    
-    for (int i = i_lb; i < i_ub; i++) {
-      for (int j = j_lb; j < j_ub; j++) {
-        int d = dmap.at<uchar>(j,i);
-        //cout<<d<<endl;
-        // if low disparity, then ignore
-        if (d < 2) {
-          continue;
-        }
-        // V is the vector to be multiplied to Q to get
-        // the 3D homogenous coordinates of the image point
-        V.at<double>(0,0) = (double)(i);
-        V.at<double>(1,0) = (double)(j);
-        V.at<double>(2,0) = (double)d;
-        V.at<double>(3,0) = 1.;
-        
-        pos = Q * V; // 3D homogeneous coordinate
-        double X = pos.at<double>(0,0) / pos.at<double>(3,0);
-        double Y = pos.at<double>(1,0) / pos.at<double>(3,0);
-        double Z = pos.at<double>(2,0) / pos.at<double>(3,0);
-        Mat point3d_cam = Mat(3, 1, CV_64FC1);
-        point3d_cam.at<double>(0,0) = X;
-        point3d_cam.at<double>(1,0) = Y;
-        point3d_cam.at<double>(2,0) = Z;
-        // transform 3D point from camera frame to robot frame
-        Mat point3d_robot = XR * point3d_cam + XT;
-        points.push_back(Point3d(point3d_robot));
-        
-        int32_t red, blue, green;
-        red = img_left.at<Vec3b>(j,i)[2];
-        green = img_left.at<Vec3b>(j,i)[1];
-        blue = img_left.at<Vec3b>(j,i)[0];
-        int32_t rgb = (red << 16 | green << 8 | blue);
-        //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
 
-        cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
-      }
-    } 
-  }
-  cout<<"BOXES_END"<<endl;
-
-  system ("touch /home/aditya/CODE_Sem3/stereo_dense_reconstruction_no_ros/plotter/3D_maps/reload_check");
+  system ("touch src/plotter/3D_maps/reload_check");
   
   if (!dmap.empty()) {
     //sensor_msgs::ImagePtr disp_msg;
@@ -441,7 +311,7 @@ void publishPointCloud_OLD(Mat& img_left, Mat& dmap) {
   //pc.channels.push_back(ch);
   //pcl_pub.publish(pc);
 }
-
+*/
 /*
  * Function:  generateDisparityMap 
  * --------------------
@@ -465,20 +335,13 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   Elas::parameters param(Elas::MIDDLEBURY);
   //Elas::parameters param(Elas::ROBOTICS);
   //Elas::parameters param;
-  
   param.postprocess_only_left = true;
   //param.postprocess_only_left = false;
-  
   Elas elas(param);
   elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
   Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
   
   leftdpf.convertTo(dmap, CV_8UC1, 4.0);
-  //rightdpf.convertTo(dmap, CV_8UC1, 4.0);
-
-  imshow("leftdpf", leftdpf);
-  imshow("rightdpf", rightdpf);
-  
   return dmap;
 }
 
@@ -495,21 +358,19 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  *  returns: void
  *
  */
-void imgCallback(const char* left_img_topic, const char* right_img_topic, const char* left_img_topic_labels) {
+void imgCallback(const char* left_img_topic, const char* right_img_topic) {
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
   if (tmpL.empty() || tmpR.empty())
     return;
   
-  Mat img_left, img_right, img_left_color, img_left_color_flip;
-  img_left_color = imread(left_img_topic_labels);
-  flip(img_left_color,img_left_color_flip,1);
-  //img_left_color = imread(left_img_topic);
+  Mat img_left, img_right, img_left_color;
+  img_left_color = imread(left_img_topic);
 
   img_left = tmpL; img_right = tmpR;
 
-  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
-  
+  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR);
+  //remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   //cvtColor(img_left, img_left_color, COLOR_GRAY2BGR);
   
   Mat dmap = generateDisparityMap(img_left, img_right);
@@ -520,10 +381,8 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, const 
   publishPointCloud(img_left_color, dmap);
   
   imshow("LEFT_C", img_left_color);
-  
   //imshow("LEFT", img_left);
   //imshow("RIGHT", img_right);
-  
   imshow("DISP", dmap);
   waitKey(0);
 }
@@ -633,76 +492,6 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   
 }
 
-void loadYOLO(const char* left_img_labels) {
-  std::ifstream input_labels(left_img_labels);
-  json json_labels;
-  input_labels >> json_labels;
-
-  int iCount=1, jCount=0;
-  for (json::iterator it = json_labels.begin(); it != json_labels.end(); ++it) {
-    cout << *it << '\n';
-    const std::string name = std::string(it.key());
-    for (json::iterator jt = (*it).begin(); jt != (*it).end(); ++jt) {
-      obj_list[iCount * jCount].name = name;
-      obj_list[iCount * jCount].x = (*jt)[0];
-      obj_list[iCount * jCount].y = (*jt)[1];
-      obj_list[iCount * jCount].h = (*jt)[2];
-      obj_list[iCount * jCount].w = (*jt)[3];
-      obj_list[iCount * jCount].c = (*jt)[4];
-
-      /*
-      cout <<"jt : "<< *jt <<endl;
-      cout <<"\t x : "<< (*jt)[0] << '\n';
-      cout <<"\t y : "<< (*jt)[1] << '\n';
-      cout <<"\t h : "<< (*jt)[2] << '\n';
-      cout <<"\t w : "<< (*jt)[3] << '\n';
-      cout <<"\t c : "<< (*jt)[4] << '\n';
-      cout <<"--------"<<endl;
-      */
-
-      jCount++;
-      obj_list_size++;
-    }
-    iCount++;
-  }
-
-  cout<<"Got YOLO Objects : " << obj_list_size <<endl;
-  for (int i=0; i<obj_list_size; i++) {
-    print_OBJ(obj_list[i]);
-  }
-}
-
-
-
-
-
-void startVideo() {
-  
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(320, 240));
-  
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('Q', 'V', 'G', 'A'));
-  cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
-  //cv::VideoCapture capture("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
-  cv::Mat frame;
-  while (1) {
-      if (!capture.isOpened()) {
-          cout<<"Capture failed"<<endl;
-          break;
-      }
-
-      //Create image frames from capture
-      capture >> frame;
-
-      if (!frame.empty()) {
-        imshow("stream", frame);
-        waitKey(0);
-          //do something with your image (e.g. provide it)
-          //lastImage = frame.clone();
-      }
-  }
-  
-}
-
 /*
 R_02: 9.999758e-01 -5.267463e-03 -4.552439e-03 5.251945e-03 9.999804e-01 -3.413835e-03 4.570332e-03 3.389843e-03 9.999838e-01
 R_03: 9.995599e-01 1.699522e-02 -2.431313e-02 -1.704422e-02 9.998531e-01 -1.809756e-03 2.427880e-02 2.223358e-03 9.997028e-01
@@ -714,17 +503,16 @@ R_23:  0.999557086, 0.022256143, -0.019753071, -0.022226728, 0.99975148, 0.00170
 
 int main(int argc, char** argv) {
 
-  //startVideo();
-  //get_image();
-
-  //return 0;
-
   //const char* left_img_topic  = "/Users/Shared/KITTI/object/testing/image_0/um_000000.png";
   //const char* right_img_topic = "/Users/Shared/KITTI/object/testing/image_1/um_000000.png";
-  const char* calib_file_name = "/home/aditya/CODE_Sem3/stereo_dense_reconstruction_no_ros/calibration/kitti_2011_09_26.yml";
+  
+  const char* left_img_topic  = "/home/aditya/KITTI/object/testing/image_2/000001.png";
+  const char* right_img_topic = "/home/aditya/KITTI/object/testing/image_3/000001.png";
+  
+  const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
   int calib_width, calib_height, out_width, out_height;
   
-  ///*
+  // /*
   calib_width = 1242;
   calib_height = 375;
   out_width = 1242;
@@ -734,8 +522,8 @@ int main(int argc, char** argv) {
    /*
   calib_width = 1242;
   calib_height = 375;
-  out_width = 310;
-  out_height = 93;
+  out_width = 621;
+  out_height = 187;
   // */
 
   calib_img_size = Size(calib_width, calib_height);
@@ -758,21 +546,7 @@ int main(int argc, char** argv) {
   cout <<  K1 << endl << D1 << endl << R1 << endl << P1 << endl << K2 << endl << D2 << endl << R2 << endl << P2 << endl;
   
   findRectificationMap(calib_file, out_img_size);
-  char left_img_topic[64];
-  char right_img_topic[64];
-  char left_img_labels[64];
-  char left_img_show_labels[64];
+  imgCallback(left_img_topic, right_img_topic);
 
-  for (int iImage=0; iImage<5; iImage++) {
-
-    std::strcpy(left_img_topic       , format("/home/aditya/KITTI/object/testing/image_2/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-    std::strcpy(right_img_topic      , format("/home/aditya/KITTI/object/testing/image_3/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-    std::strcpy(left_img_labels      , format("/home/aditya/KITTI/output/image_2/%06d.png.json",     iImage).c_str());       //"/Users/Shared/KITTI/output/image_2/000001.png.json";
-    std::strcpy(left_img_show_labels , format("/home/aditya/KITTI/output/image_2/%06d.png",          iImage).c_str());            //"/Users/Shared/KITTI/output/image_2/000001.png";
-    
-    loadYOLO(left_img_labels);
-    
-    imgCallback(left_img_topic, right_img_topic, left_img_show_labels);
-  }
   return 0;
 }
