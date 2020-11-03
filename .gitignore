@@ -4,6 +4,9 @@
 *.o
 *.obj
 
+# vscode
+.vscode/*
+
 # Generated Pointclouds
 src/plotter/3D_maps/*
 

@@ -12,6 +12,29 @@
 #include <string.h>
 #include <math.h>
 
+#define GL_GLEXT_PROTOTYPES
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+#include <math.h>
+
+#include <thread> 
+#include <opencv2/opencv.hpp>
+
+
+#define VEL_R 1
+#define VEL_T 0.1
+
+#define MOUSE_LEFT 			  0
+#define	MOUSE_MIDDLE 		  1
+#define	MOUSE_RIGHT 		  2
+#define	MOUSE_SCROLL_UP 	3
+#define	MOUSE_SCROLL_DOWN	4
+
+#define TRANSLATION_SENSITIVITY 0.01
+
 
 using json = nlohmann::json;
 
@@ -52,6 +75,8 @@ int constrain(int a, int lb, int ub) {
   else
     return a;
 }
+
+float *POINTS;
 
 Mat XR, XT, Q, P1, P2;
 Mat R1, R2, K1, K2, D1, D2, R;
@@ -247,7 +272,14 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       int32_t rgb = (red << 16 | green << 8 | blue);
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
 
-      cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
+      int Pindex = i*j*6;
+      POINTS[Pindex + 0] = X;
+      POINTS[Pindex + 1] = Y;
+      POINTS[Pindex + 2] = Z;
+      POINTS[Pindex + 3] = red    / 255.0;
+      POINTS[Pindex + 4] = green  / 255.0;
+      POINTS[Pindex + 5] = blue   / 255.0;
+      //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }
   // */
@@ -347,8 +379,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   leftdpf.convertTo(dmap, CV_8UC1, 4.0);
   //rightdpf.convertTo(dmap, CV_8UC1, 4.0);
 
-  imshow("leftdpf", leftdpf);
-  imshow("rightdpf", rightdpf);
+  //imshow("leftdpf", leftdpf);
+  //imshow("rightdpf", rightdpf);
   
   return dmap;
 }
@@ -396,7 +428,8 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, const 
   //imshow("RIGHT", img_right);
   
   imshow("DISP", dmap);
-  waitKey(0);
+  waitKey(2000);
+  //waitKey(0);
 }
 
 /*
@@ -583,6 +616,222 @@ inv(R_02):  18181377685130871000000000/18181818984230806234153769      954899202
 R_23:  0.999557086, 0.022256143, -0.019753071, -0.022226728, 0.99975148, 0.001707184, 0.019786158, -0.001267381, 0.999803488
 */
 
+const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
+int calib_width, calib_height, out_width, out_height;
+
+void next() {
+  static int iImage=0;
+
+  char left_img_topic[64];
+  char right_img_topic[64];
+  char left_img_labels[64];
+  char left_img_show_labels[64];
+  
+    std::strcpy(left_img_topic       , format("/home/aditya/KITTI/object/testing/image_2/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+    std::strcpy(right_img_topic      , format("/home/aditya/KITTI/object/testing/image_3/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+    std::strcpy(left_img_labels      , format("/home/aditya/KITTI/output/image_2/%06d.png.json",     iImage).c_str());       //"/Users/Shared/KITTI/output/image_2/000001.png.json";
+    std::strcpy(left_img_show_labels , format("/home/aditya/KITTI/output/image_2/%06d.png",          iImage).c_str());            //"/Users/Shared/KITTI/output/image_2/000001.png";
+    
+    loadYOLO(left_img_labels);
+    
+    imgCallback(left_img_topic, right_img_topic, left_img_show_labels);
+
+  iImage++;
+}
+
+// Rotate X
+double rX=0;
+// Rotate Y
+double rY=0;
+
+double tX=0, tY=0, tZ=0, ZOOM=-0.2;
+
+// The coordinates for the vertices of the cube
+double x = 0.6;
+double y = 0.6;
+double z = 0.6;
+
+void drawCube()
+{
+        // Set Background Color
+    //glClearColor(0.4, 0.4, 0.4, 1.0);
+    glClearColor(0,0,0, 1.0);
+        // Clear screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Reset transformations
+    glLoadIdentity();
+
+    // Rotate when user changes rX and rY
+    glRotatef( rX, 1.0, 0.0, 0.0 );
+    glRotatef( rY, 0.0, 1.0, 0.0 );
+
+    glScalef(ZOOM, ZOOM, ZOOM);
+    
+    glTranslatef(tX, tY, tZ);
+
+
+    // BACK
+        glBegin(GL_POINTS);
+            	//glVertex3f(0, 0, 0.5);
+        /*
+        for (int i = 0; i < 2000; i++)
+				{
+					glColor3f(1, 1, 1);
+					glPointSize(100);
+					glVertex3f(i/4000.0, 0,0);
+					glVertex3f(0, i/4000.0, 0);
+					glVertex3f(0, 0, i/4000.0);
+				}
+        */
+        ///*
+        for (int i = 0; i < 6 * out_width * out_height; i+=6)
+				{
+					glColor3f(POINTS[i+3], POINTS[i+4], POINTS[i+5]);
+					glPointSize(1);
+					glVertex3f(POINTS[i], POINTS[i+1], POINTS[i+2]);
+				}
+				//*/
+        glEnd();
+
+    glFlush();
+    glutSwapBuffers();
+}
+
+void keyboard(int key, int x, int y)
+{
+    if (key == GLUT_KEY_RIGHT)
+        {
+                rY += VEL_R;
+        }
+    else if (key == GLUT_KEY_LEFT)
+        {
+                rY -= VEL_R;
+        }
+    else if (key == GLUT_KEY_DOWN)
+        {
+                rX -= VEL_R;
+        }
+    else if (key == GLUT_KEY_UP)
+        {
+                rX += VEL_R;
+        }
+
+    // Request display update
+    glutPostRedisplay();
+}
+
+void keyboard_chars(unsigned char key, int x, int y)
+{
+    if (key == 'w')
+        {
+            tY += VEL_T;
+        }
+    else if (key == 'a')
+        {
+                tX -= VEL_T;
+        }
+    else if (key == 's')
+        {
+                tY -= VEL_T;
+        }
+    else if (key == 'd')
+        {
+                tX += VEL_T; 
+        }
+    else if (key == 'q')
+        {
+                exit(0);
+        }
+    else if (key == 'e')
+        {
+                //ZOOM -= VEL_T; 
+        }
+    else if (key == 'n')
+        {
+                next();
+        }
+    // Request display update
+    glutPostRedisplay();
+}
+
+
+void mouse_callback(int button, int state, int x, int y) {
+	static int xp=0, yp=0;
+	//printf("%d %d %d %d\n", button, state, x, y);
+
+	if (button == MOUSE_LEFT) {
+		if (state == 0) {
+			xp = x;
+			yp = y;
+		} else if (state == 1) {
+			rX = x-xp;
+			rY = y-yp;
+		}
+	} else if (button == MOUSE_MIDDLE) {
+		if (state == 0) {
+			xp = x;
+			yp = y;
+		} else if (state == 1) {
+			tX = (x-xp) * TRANSLATION_SENSITIVITY;
+			tY = -(y-yp) * TRANSLATION_SENSITIVITY;
+		}
+	} else if (button == MOUSE_SCROLL_UP) {
+		if (state == 0) {
+			ZOOM += VEL_T;
+		}
+	} else if (button == MOUSE_SCROLL_DOWN) {
+		if (state == 0) {
+			ZOOM -= VEL_T;
+		}
+	}
+  printf("%f %f %f %f %f\n", ZOOM, rX, rY, tX, tY);
+    // Request display update
+    glutPostRedisplay();
+}
+
+void startGraphics(int argc, char** argv) {
+  POINTS = (float*) malloc(sizeof(float) * 6 * out_width * out_height);
+	
+	for (int i = 0; i < 100; i+=6)
+	{
+		POINTS[i]	= i/400.0;
+		POINTS[i+1]	= i/400.0;
+		POINTS[i+2]	= i/400.0;
+		POINTS[i+3]	= i/400 + 0.5;
+		POINTS[i+4]	= i/400 + 0.5;
+		POINTS[i+5]	= i/400 + 0.5;
+	}
+        // Initialize GLUT and process user parameters
+        glutInit(&argc, argv);
+
+        // Request double buffered true color window with Z-buffer
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
+        glutInitWindowSize(1400,800);
+        glutInitWindowPosition(100, 100);
+
+        // Create window
+        glutCreateWindow("Linux Journal OpenGL Cube");
+
+        // Enable Z-buffer depth test
+        glEnable(GL_DEPTH_TEST);
+
+        // Callback functions
+        glutDisplayFunc(drawCube);
+        glutSpecialFunc(keyboard);
+        glutKeyboardFunc(keyboard_chars);
+        glutMouseFunc(mouse_callback);
+		//thread th1(test); 
+	
+        // Pass control to GLUT for events
+        glutMainLoop();
+	
+		//th1.join();
+
+    free(POINTS);
+}
+
 int main(int argc, char** argv) {
 
   //startVideo();
@@ -592,8 +841,7 @@ int main(int argc, char** argv) {
 
   //const char* left_img_topic  = "/Users/Shared/KITTI/object/testing/image_0/um_000000.png";
   //const char* right_img_topic = "/Users/Shared/KITTI/object/testing/image_1/um_000000.png";
-  const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
-  int calib_width, calib_height, out_width, out_height;
+  
   
   ///*
   calib_width = 1242;
@@ -629,21 +877,7 @@ int main(int argc, char** argv) {
   cout <<  K1 << endl << D1 << endl << R1 << endl << P1 << endl << K2 << endl << D2 << endl << R2 << endl << P2 << endl;
   
   findRectificationMap(calib_file, out_img_size);
-  char left_img_topic[64];
-  char right_img_topic[64];
-  char left_img_labels[64];
-  char left_img_show_labels[64];
 
-  for (int iImage=0; iImage<5; iImage++) {
-
-    std::strcpy(left_img_topic       , format("/home/aditya/KITTI/object/testing/image_2/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-    std::strcpy(right_img_topic      , format("/home/aditya/KITTI/object/testing/image_3/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-    std::strcpy(left_img_labels      , format("/home/aditya/KITTI/output/image_2/%06d.png.json",     iImage).c_str());       //"/Users/Shared/KITTI/output/image_2/000001.png.json";
-    std::strcpy(left_img_show_labels , format("/home/aditya/KITTI/output/image_2/%06d.png",          iImage).c_str());            //"/Users/Shared/KITTI/output/image_2/000001.png";
-    
-    loadYOLO(left_img_labels);
-    
-    imgCallback(left_img_topic, right_img_topic, left_img_show_labels);
-  }
+  startGraphics(argc, argv);
   return 0;
 }
