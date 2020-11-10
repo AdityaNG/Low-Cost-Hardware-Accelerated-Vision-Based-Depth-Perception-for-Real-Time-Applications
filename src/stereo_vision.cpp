@@ -631,7 +631,7 @@ void next() {
     loadYOLO(left_img_labels);
     
     imgCallback(left_img_topic, right_img_topic, left_img_show_labels);
-home/
+
   iImage++;
 }
 
