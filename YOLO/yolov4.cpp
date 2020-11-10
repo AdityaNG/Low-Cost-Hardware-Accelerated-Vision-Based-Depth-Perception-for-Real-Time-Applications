@@ -13,9 +13,14 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
+using namespace cv;
+
 constexpr float CONFIDENCE_THRESHOLD = 0;
 constexpr float NMS_THRESHOLD = 0.4;
 constexpr int NUM_CLASSES = 80;
+
+auto net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
+auto output_names = net.getUnconnectedOutLayersNames();
 
 // colors for bounding boxes
 const cv::Scalar colors[] = {
@@ -25,46 +30,15 @@ const cv::Scalar colors[] = {
     {255, 0, 0}
 };
 const auto NUM_COLORS = sizeof(colors)/sizeof(colors[0]);
+std::vector<std::string> class_names;
 
-int main(int argc, char **argv){
-    if(argc != 2){
-        std::cout << "Usage: ./yolo video_name.mp4\n";
-        return 0;
-    }
-    std::vector<std::string> class_names;
-    
-    std::ifstream class_file("classes.txt");
-    if (!class_file){
-            std::cerr << "failed to open classes.txt\n";
-            return 0;
-    }
-
-    std::string line;
-    while (std::getline(class_file, line)) class_names.push_back(line);
-    
-
-    cv::VideoCapture source(argv[1]);
-
-    auto net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
-    net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-    //net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV); // To use CPU optimized version
-    //net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
-    auto output_names = net.getUnconnectedOutLayersNames();
-
-    cv::Mat frame, blob;
+void processYOLO(Mat frame) {
+    Mat blob;
+    cv::dnn::blobFromImage(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
     std::vector<cv::Mat> detections;
-    std::cout << "Starting detection on the video" << argv[1] << "\n";
-    while(cv::waitKey(1) < 1){
-        source >> frame;
-        if (frame.empty()){
-            cv::waitKey();
-            break;
-        }
-        
-        auto total_start = std::chrono::steady_clock::now();
-        cv::dnn::blobFromImage(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
-        net.setInput(blob);
+    auto total_start = std::chrono::steady_clock::now();
+
+        net.setInput(blob);     // TODO give single from here
 
         auto dnn_start = std::chrono::steady_clock::now();
         net.forward(detections, output_names);
@@ -130,6 +104,45 @@ int main(int argc, char **argv){
 
         cv::namedWindow("output", cv::WINDOW_NORMAL);
         cv::imshow("output", frame);
+}
+
+int main(int argc, char **argv){
+    if(argc != 2){
+        std::cout << "Usage: ./yolo video_name.mp4\n";
+        return 0;
+    }
+    
+    std::ifstream class_file("classes.txt");
+    if (!class_file){
+            std::cerr << "failed to open classes.txt\n";
+            return 0;
+    }
+
+    std::string line;
+    while (std::getline(class_file, line)) class_names.push_back(line);
+    
+
+    cv::VideoCapture source(argv[1]);
+
+    //auto net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
+    net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
+    net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+    //net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV); // To use CPU optimized version
+    //net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    
+
+    cv::Mat frame, blob;
+
+    std::cout << "Starting detection on the video" << argv[1] << "\n";
+    while(cv::waitKey(1) < 1){
+        source >> frame;
+        if (frame.empty()){
+            cv::waitKey();
+            break;
+        }
+        
+        processYOLO(frame);
     }
     return 0;
 }
