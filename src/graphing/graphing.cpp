@@ -234,7 +234,7 @@ void mouse_callback(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-void startGraphics(int argc, char** argv, int out_width, int out_height) {
+void startGraphics(int out_width, int out_height) {
   POINTS = (float*) malloc(sizeof(float) * 6 * out_width * out_height);
   POINTS_OBJECTS = (float*) malloc(sizeof(float) * 9 * 50);
 	
@@ -248,6 +248,8 @@ void startGraphics(int argc, char** argv, int out_width, int out_height) {
 		POINTS[i+5]	= i/400 + 0.5;
 	}
         // Initialize GLUT and process user parameters
+        int argc = 1;
+        char *argv[1] = {(char*)"Something"};
         glutInit(&argc, argv);
 
         // Request double buffered true color window with Z-buffer

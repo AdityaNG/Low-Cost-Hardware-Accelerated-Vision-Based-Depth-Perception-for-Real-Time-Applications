@@ -13,6 +13,9 @@
 #include "nlohmann/json.hpp"
 #include <string.h>
 #include <math.h>
+#include <popt.h>
+//#include <popt_pp.h>
+
 
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
@@ -73,6 +76,7 @@ FileStorage calib_file;
 int debug = 0;
 Size out_img_size;
 Size calib_img_size;
+const char* kitti_path;
 
 
 /*
@@ -613,15 +617,21 @@ void next() {
   char left_img_labels[64];
   char left_img_show_labels[64];
   
+    std::strcpy(left_img_topic       , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+    std::strcpy(right_img_topic      , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+    std::strcpy(left_img_labels      , format("%s/output/image_2/%06d.png.json",    kitti_path, iImage).c_str());       //"/Users/Shared/KITTI/output/image_2/000001.png.json";
+    std::strcpy(left_img_show_labels , format("%s/output/image_2/%06d.png",         kitti_path, iImage).c_str());            //"/Users/Shared/KITTI/output/image_2/000001.png";
+  
+  /*
     std::strcpy(left_img_topic       , format("/home/aditya/KITTI/object/testing/image_2/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
     std::strcpy(right_img_topic      , format("/home/aditya/KITTI/object/testing/image_3/%06d.png",  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
     std::strcpy(left_img_labels      , format("/home/aditya/KITTI/output/image_2/%06d.png.json",     iImage).c_str());       //"/Users/Shared/KITTI/output/image_2/000001.png.json";
     std::strcpy(left_img_show_labels , format("/home/aditya/KITTI/output/image_2/%06d.png",          iImage).c_str());            //"/Users/Shared/KITTI/output/image_2/000001.png";
-    
+  */
     loadYOLO(left_img_labels);
     
     imgCallback(left_img_topic, right_img_topic, left_img_show_labels);
-
+home/
   iImage++;
 }
 
@@ -632,8 +642,25 @@ void imageLoop() {
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
+  //const char** argv_tmp = argv;
+  //kitti_path = "/home/aditya/KITTI";
 
+  static struct poptOption options[] = {
+    { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
+    { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
+    POPT_AUTOHELP
+    { NULL, 0, 0, NULL, 0, NULL, NULL }
+  };
+
+  poptContext poptCONT = poptGetContext("main", argc, argv, options, POPT_CONTEXT_KEEP_FIRST);
+  //POpt popt(NULL, argc, argv, options, 0);
+  //int c; while((c = popt.getNextOpt()) >= 0) {}
+  int c; while((c = poptGetNextOpt(poptCONT)) >= 0) {}
+
+  printf("KITTI Path: %s \n", kitti_path);
+
+  
   //startVideo();
   //get_image();
 
@@ -680,7 +707,7 @@ int main(int argc, char** argv) {
 
   //setCallback(next);
   thread th1(imageLoop);
-  startGraphics(argc, argv, out_width, out_height);
+  startGraphics(out_width, out_height);
   th1.join();
   return 0;
 }

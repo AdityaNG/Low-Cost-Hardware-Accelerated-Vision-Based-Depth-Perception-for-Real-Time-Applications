@@ -20,4 +20,4 @@ void resetOBJECTS();
 void updateGraph();
 void setCallback(void (*f)(void));
 
-void startGraphics(int argc, char** argv, int out_width, int out_height);
+void startGraphics(int out_width, int out_height);
