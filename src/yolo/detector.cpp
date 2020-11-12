@@ -78,8 +78,8 @@ std::vector<OBJ> processYOLO(Mat frame) {
                 
                 int baseline;
                 auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-                //cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
-                //cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
+                cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
+                cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
 
                 OBJ temp;
                 temp.name = class_names[c];
@@ -88,6 +88,9 @@ std::vector<OBJ> processYOLO(Mat frame) {
                 temp.w = rect.width;
                 temp.h = rect.height;
                 temp.c = scores[c][idx];
+                temp.g = color[0] / 255.0;
+                temp.b = color[1] / 255.0;
+                temp.r = color[2] / 255.0;
                 objects.push_back(temp);
             }
         }

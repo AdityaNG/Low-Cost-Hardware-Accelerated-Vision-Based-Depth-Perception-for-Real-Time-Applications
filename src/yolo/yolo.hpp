@@ -19,6 +19,7 @@ typedef struct object {
   int x, y; // Coordinates
   int w, h; // Width and height
   float c; // Confidence
+  double r, g, b;
 } OBJ;
 
 void print(std::vector<OBJ> &objects);

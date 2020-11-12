@@ -64,7 +64,18 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
     verts[i][2] = z+ s3*SIZE/2.0;
   }
 
-
+  glBegin(GL_LINE_STRIP);
+  glColor3f(r, b, g);
+    for (int iItr=0; iItr < 8; iItr++ ) {
+        int i = iItr%8;
+        for (int jItr = 0; jItr < 8; jItr++) {
+            int j = jItr%8;
+        glVertex3f(verts[i][0], verts[i][1], verts[i][2]);
+        glVertex3f(verts[j][0], verts[j][1], verts[j][2]);
+        }
+    }
+  glEnd();
+  /*
   glBegin(GL_QUADS);
     glColor3f(r, b, g);
     for (int j = 0; j < 8; j++) {
@@ -75,6 +86,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
       glVertex3f(verts[i+3][0], verts[i+3][1], verts[i+3][2]);
     }
   glEnd();
+  */
 }
 
 void drawCube()
@@ -108,10 +120,10 @@ void drawCube()
 				}
         glEnd();
 
-    draw_cube(0,0,0, 0,1,0);
+    draw_cube(0,0,0, 1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6)
     {
-      draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2],1, 0,0);
+      draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
       /*
         POINTS_OBJECTS[iObj + 0] = X;
         POINTS_OBJECTS[iObj + 1] = Y;
@@ -180,11 +192,11 @@ void keyboard_chars(unsigned char key, int x, int y)
         }
     else if (key == 'e')
         {
-                ZOOM -= VEL_T; 
+                ZOOM -= ZOOM * 0.2;//VEL_T; 
         }
     else if (key == 'r')
         {
-                ZOOM += VEL_T; 
+                ZOOM +=  ZOOM * 0.2;//VEL_T; 
         }
     else if (key == 'n')
         {

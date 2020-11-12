@@ -197,7 +197,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       blue = img_left.at<Vec3b>(j,i)[0];
       int32_t rgb = (red << 16 | green << 8 | blue);
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-      appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
+      //appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }
@@ -243,13 +243,13 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
         blue = img_left.at<Vec3b>(j,i)[0];
         int32_t rgb = (red << 16 | green << 8 | blue);
         
-        appendOBJECTS(X, Y, Z, red/255.0, green/255.0, blue/255.0);
+        appendOBJECTS(X, Y, Z, object.r, object.g, object.b);
       }
     } 
   }
   cout<<"BOXES_END"<<endl;
 
-  system ("touch ../plotter/3D_maps/reload_check");
+  //system ("touch ../plotter/3D_maps/reload_check");
   
   if (!dmap.empty()) {
     // TODO : Do something
@@ -319,6 +319,7 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
   
   Mat img_left, img_right, img_left_color, img_left_color_flip;
   
+  
   img_left = tmpL; img_right = tmpR;
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
@@ -329,7 +330,8 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
 
   publishPointCloud(tmpL_Color, dmap);
   
-  imshow("LEFT_C", tmpL_Color);
+  flip(tmpL_Color, img_left_color_flip,1);
+  imshow("LEFT_C", img_left_color_flip);
 
   
   imshow("DISP", dmap);
