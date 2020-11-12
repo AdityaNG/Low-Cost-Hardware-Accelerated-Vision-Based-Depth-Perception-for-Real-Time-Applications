@@ -206,6 +206,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
   cout<<"BOXES"<<endl;
 
   for (auto& object : obj_list) {
+    print_OBJ(object);
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
     i_ub = i_lb + 1, 
     j_lb = constrain(object.y + object.h/2, 0, img_left.rows-1), 
@@ -320,13 +321,12 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
-  std::vector<OBJ> tmp = processYOLO(tmpL_Color);
+  obj_list = processYOLO(tmpL_Color);
 
   Mat dmap = generateDisparityMap(img_left, img_right);
 
   publishPointCloud(tmpL_Color, dmap);
   
-
   imshow("LEFT_C", tmpL_Color);
 
   
