@@ -311,8 +311,10 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
-  if (tmpL.empty() || tmpR.empty())
+  if (tmpL.empty() || tmpR.empty()){
+    printf("%s\n",left_img_topic);
     return;
+  }
   
   Mat img_left, img_right, img_left_color, img_left_color_flip;
   
@@ -472,14 +474,13 @@ void next() {
   printf("Next image\n");
   static int iImage=0;
 
-  char left_img_topic[64];
-  char right_img_topic[64];
-  
-  std::strcpy(left_img_topic       , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-  std::strcpy(right_img_topic      , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-   
-  imgCallback(left_img_topic, right_img_topic);
+  char left_img_topic[128];
+  char right_img_topic[128];
 
+  std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+  std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+ 
+  imgCallback(left_img_topic, right_img_topic);
   iImage++;
 }
 
