@@ -21,6 +21,7 @@ constexpr int NUM_CLASSES = 80;
 
 auto net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
 auto output_names = net.getUnconnectedOutLayersNames();
+cv::Mat frame, blob;
 
 // colors for bounding boxes
 const cv::Scalar colors[] = {
@@ -32,13 +33,28 @@ const cv::Scalar colors[] = {
 const auto NUM_COLORS = sizeof(colors)/sizeof(colors[0]);
 std::vector<std::string> class_names;
 
-void processYOLO(Mat frame) {
-    Mat blob;
+typedef struct object {
+  std::string name; // Name of the detection
+  int x, y; // Coordinates
+  int w, h; // Width and height
+  float c; // Confidence
+} OBJ;
+
+void print(std::vector<OBJ> &objects){
+    std::cout << "\n{\n";
+    for (auto& object : objects){
+        std::cout << '[' << object.name << '(' << object.x << ',' << object.y << ',' << object.w << ',' << object.h << ',' << object.c << ")]\n";
+    }
+    std::cout << "\n}\n";
+}
+
+auto processYOLO(Mat frame) {
     cv::dnn::blobFromImage(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
     std::vector<cv::Mat> detections;
+    std::vector<OBJ> objects; // Detected objects
     auto total_start = std::chrono::steady_clock::now();
 
-        net.setInput(blob);     // TODO give single from here
+        net.setInput(blob);   
 
         auto dnn_start = std::chrono::steady_clock::now();
         net.forward(detections, output_names);
@@ -85,6 +101,15 @@ void processYOLO(Mat frame) {
                 auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
                 cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
                 cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
+
+                OBJ temp;
+                temp.name = class_names[c];
+                temp.x = rect.x;
+                temp.y = rect.y;
+                temp.w = rect.width;
+                temp.h = rect.height;
+                temp.c = scores[c][idx];
+                objects.push_back(temp);
             }
         }
     
@@ -104,6 +129,7 @@ void processYOLO(Mat frame) {
 
         cv::namedWindow("output", cv::WINDOW_NORMAL);
         cv::imshow("output", frame);
+        return objects;
 }
 
 int main(int argc, char **argv){
@@ -124,15 +150,11 @@ int main(int argc, char **argv){
 
     cv::VideoCapture source(argv[1]);
 
-    //auto net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
     net = cv::dnn::readNetFromDarknet("yolov4-tiny.cfg", "yolov4-tiny.weights");
     net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
     //net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV); // To use CPU optimized version
     //net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
-    
-
-    cv::Mat frame, blob;
 
     std::cout << "Starting detection on the video" << argv[1] << "\n";
     while(cv::waitKey(1) < 1){
@@ -142,7 +164,8 @@ int main(int argc, char **argv){
             break;
         }
         
-        processYOLO(frame);
+        auto temp = processYOLO(frame);
+        print(temp);
     }
     return 0;
 }

@@ -1,1 +1,1 @@
-g++ -o yolo yolov4.cpp `pkg-config --cflags --libs opencv`
+g++ -o yolo *.cpp `pkg-config --cflags --libs opencv`
