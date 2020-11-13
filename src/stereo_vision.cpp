@@ -197,7 +197,9 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       blue = img_left.at<Vec3b>(j,i)[0];
       int32_t rgb = (red << 16 | green << 8 | blue);
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-      //appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
+      
+      appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
+      
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }

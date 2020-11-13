@@ -110,6 +110,15 @@ void drawCube()
     glTranslatef(tX, tZ, tY);
 
 
+    int plane_size = 20;
+    glBegin(GL_QUADS);
+    glColor3f(0.5, 0.5, 0.5);
+      glVertex3f(plane_size, 0, plane_size);
+      glVertex3f(plane_size, 0, -plane_size);
+      glVertex3f(-plane_size, 0, -plane_size);
+      glVertex3f(-plane_size, 0, plane_size);
+    glEnd();
+
     // BACK
         glBegin(GL_POINTS);
         for (int i = 0; i < Pindex; i+=6)
