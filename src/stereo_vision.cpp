@@ -28,6 +28,7 @@
 
 #include <thread> 
 #include <opencv2/opencv.hpp>
+#include <future>
 
 
 std::vector<OBJ> obj_list;
@@ -333,9 +334,20 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
-  obj_list = processYOLO(tmpL_Color);
+  auto start = chrono::high_resolution_clock::now();   
+  ios_base::sync_with_stdio(false);
+
+  auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
+  //obj_list = processYOLO(tmpL_Color);
 
   Mat dmap = generateDisparityMap(img_left, img_right);
+  obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
+  
+  auto end = chrono::high_resolution_clock::now();   
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+  time_taken *= 1e-9;   
+  cout << "Time taken for YOLO+Disparity : " << fixed << time_taken << setprecision(9); 
+  cout << " sec\n";
 
   publishPointCloud(tmpL_Color, dmap);
   
