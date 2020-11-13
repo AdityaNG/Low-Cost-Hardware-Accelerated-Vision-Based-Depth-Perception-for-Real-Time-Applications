@@ -4,7 +4,7 @@ constexpr float CONFIDENCE_THRESHOLD = 0;
 constexpr float NMS_THRESHOLD = 0.4;
 constexpr int NUM_CLASSES = 80;
 
-auto net = cv::dnn::readNetFromDarknet("YOLO/yolov4-tiny.cfg", "YOLO/yolov4-tiny.weights");
+auto net = cv::dnn::readNetFromDarknet("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights");
 auto output_names = net.getUnconnectedOutLayersNames();
 
 // colors for bounding boxes
@@ -26,7 +26,8 @@ void print(std::vector<OBJ> &objects){
     std::cout << "\n}\n";
 }
 
-std::vector<OBJ> processYOLO(Mat frame) {
+std::vector<OBJ> processYOLO(Mat input) {
+    cv::Mat frame = input.clone();
     cv::Mat blob;
     cv::dnn::blobFromImage(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
     std::vector<cv::Mat> detections;
@@ -113,7 +114,7 @@ std::vector<OBJ> processYOLO(Mat frame) {
 
 void initYOLO() {
 
-    std::ifstream class_file("YOLO/classes.txt");
+    std::ifstream class_file("src/yolo/classes.txt");
     if (!class_file){
             std::cerr << "failed to open classes.txt\n";
             exit(0);

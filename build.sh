@@ -10,16 +10,18 @@ echo "CUDA_MODE : " $1
 
 if [ $1 == "0" ]
 	then
-		echo "g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/nlohmann/*.hpp  \`pkg-config --cflags --libs opencv\`"
-		g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -pthread `pkg-config --cflags --libs opencv` -w	
+		echo "g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -pthread \`pkg-config --cflags --libs opencv\` -w"
+		g++ -o bin/stereo_vision src/stereo_vision.cpp src/elas/*.cpp src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -pthread `pkg-config --cflags --libs opencv` -w
+		echo "Compiled. Run the program using ./bin/stereo_vision -k path_to_kitti"	
 		exit 0
 fi
 
 
 if [ $1 == "1" ]
 	then
-		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/stereo_vision.cpp src/elas/*.cpp  \`pkg-config --cflags --libs opencv\` -w"
-		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  `pkg-config --cflags --libs opencv` -w
+		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" \`pkg-config --cflags --libs opencv\` -w"
+		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" `pkg-config --cflags --libs opencv` -w
+		echo "Compiled. Run the program using ./bin/stereo_vision -k path_to_kitti"
 		exit 0
 fi
 

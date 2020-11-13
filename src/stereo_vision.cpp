@@ -146,6 +146,9 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *
  */
 void publishPointCloud(Mat& img_left, Mat& dmap) {
+  auto start = chrono::high_resolution_clock::now();   
+  // unsync the I/O of C and C++. 
+  ios_base::sync_with_stdio(false);
   if (debug == 1) {
     //XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
     XR = composeRotationCamToRobot(M_PI/3, 0, 0); //M_PI
@@ -197,15 +200,19 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       blue = img_left.at<Vec3b>(j,i)[0];
       int32_t rgb = (red << 16 | green << 8 | blue);
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-      
+
       appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
-      
+
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }
-  cout<<"POINTS_END"<<endl;
-  
-  cout<<"BOXES"<<endl;
+  auto end = chrono::high_resolution_clock::now();   
+  // Calculating total time taken by the program. 
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+  time_taken *= 1e-9;   
+  cout << "Time taken to calculate point cloud is : " << fixed << time_taken << setprecision(9); 
+  cout << " sec\n";
+  cout<<"POINTS_END\nBOXES\n";
 
   for (auto& object : obj_list) {
     print_OBJ(object);
@@ -249,7 +256,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       }
     } 
   }
-  cout<<"BOXES_END"<<endl;
+  cout<<"BOXES_END\n";
 
   //system ("touch ../plotter/3D_maps/reload_check");
   
