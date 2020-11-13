@@ -271,7 +271,7 @@ void startGraphics(int out_width, int out_height) {
         glutInitWindowPosition(100, 100);
 
         // Create window
-        glutCreateWindow("Linux Journal OpenGL Cube");
+        glutCreateWindow("3D depth map");
 
         // Enable Z-buffer depth test
         //glEnable(GL_DEPTH_TEST);
