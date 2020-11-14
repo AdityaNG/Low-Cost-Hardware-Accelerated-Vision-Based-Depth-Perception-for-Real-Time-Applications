@@ -29,12 +29,15 @@
 #include <thread> 
 #include <opencv2/opencv.hpp>
 #include <future>
+#include <experimental/filesystem>  
 
 
 std::vector<OBJ> obj_list;
 
 using namespace cv;
 using namespace std;
+namespace fs = std::experimental::filesystem;
+
 
 void print_OBJ(OBJ o) {
   cout <<"Name : "<< o.name <<endl;
@@ -60,11 +63,15 @@ Mat R1, R2, K1, K2, D1, D2, R;
 Mat lmapx, lmapy, rmapx, rmapy;
 Vec3d T;
 FileStorage calib_file;
-int debug = 0;
+
 Size out_img_size;
 Size calib_img_size;
 const char* kitti_path;
+int video_mode = 0;
+int debug = 0;
+int draw_points = 0;
 
+double pc_t = 0, yd_t = 0, t_t = 0;
 
 /*
  * Function:  composeRotationCamToRobot 
@@ -161,13 +168,13 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
   Mat pos = Mat(4, 1, CV_64FC1);
   vector< Point3d > points;
 
-  cout << "Q matrix: " << Q << endl;
+  //cout << "Q matrix: " << Q << endl;
 
-  cout<<"img.size : "<<img_left.cols<<", "<<img_left.rows<<endl;
+  //cout<<"img.size : "<<img_left.cols<<", "<<img_left.rows<<endl;
 
-  cout << "POINTS"<<endl;
+  //cout << "POINTS"<<endl;
   int BOUNDARY = 50;
-  
+  if (draw_points) {
   for (int i = 0; i < img_left.cols; i++) {
     for (int j = 0; j < img_left.rows; j++) {
       int d = dmap.at<uchar>(j,i);
@@ -207,16 +214,14 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
     }
   }
-  auto end = chrono::high_resolution_clock::now();   
-  // Calculating total time taken by the program. 
-  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-  time_taken *= 1e-9;   
-  cout << "Time taken to calculate point cloud is : " << fixed << time_taken << setprecision(9); 
-  cout << " sec\n";
-  cout<<"POINTS_END\nBOXES\n";
+  }
+  
+  //cout << "pc : " << fixed << time_taken << setprecision(9); 
+  //cout << " \t";
+  //cout<<"POINTS_END\nBOXES\n";
 
   for (auto& object : obj_list) {
-    print_OBJ(object);
+    //print_OBJ(object);
     /*
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
     i_ub = i_lb + 1, 
@@ -266,7 +271,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
     }
     appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
-  cout<<"BOXES_END\n";
+  //cout<<"BOXES_END\n";
 
   //system ("touch ../plotter/3D_maps/reload_check");
   
@@ -274,6 +279,12 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
     // TODO : Do something
   }
   //updateGraph();
+  auto end = chrono::high_resolution_clock::now();   
+  // Calculating total time taken by the program. 
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+  time_taken *= 1e-9;   
+  pc_t = time_taken;
+
 }
 
 /*
@@ -327,14 +338,16 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  *  returns: void
  *
  */
-void imgCallback(const char* left_img_topic, const char* right_img_topic) {
+void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
   if (tmpL.empty() || tmpR.empty()){
-    printf("%s\n",left_img_topic);
+    //printf("%s\n",left_img_topic);
     return;
   }
+
+  cv::Mat frame = tmpL_Color.clone();
   
   Mat img_left, img_right, img_left_color, img_left_color_flip;
   
@@ -342,31 +355,34 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic) {
   img_left = tmpL; img_right = tmpR;
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+  auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
   
   auto start = chrono::high_resolution_clock::now();   
   ios_base::sync_with_stdio(false);
 
-  auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
   //obj_list = processYOLO(tmpL_Color);
 
   Mat dmap = generateDisparityMap(img_left, img_right);
-  obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
+  
   
   auto end = chrono::high_resolution_clock::now();   
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
   time_taken *= 1e-9;   
-  cout << "Time taken for YOLO+Disparity : " << fixed << time_taken << setprecision(9); 
-  cout << " sec\n";
+  yd_t = time_taken;
 
-  publishPointCloud(tmpL_Color, dmap);
+  obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
+
+  //cout << "; Y+D " << fixed << time_taken << setprecision(9); 
+  //cout << "\t";
+
+  publishPointCloud(frame, dmap);
   
   flip(tmpL_Color, img_left_color_flip,1);
-  imshow("LEFT_C", img_left_color_flip);
-
   
-  imshow("DISP", dmap);
+  imshow("LEFT_C", img_left_color_flip);
+  //imshow("DISP", dmap);
   //waitKey(2000);
-  waitKey(0);
+  waitKey(wait);
 }
 
 /*
@@ -604,21 +620,67 @@ void startVideo() {
 }
 */
 
+std::size_t number_of_files_in_directory(fs::path path)
+{
+    using fs::directory_iterator;
+    using fp = bool (*)( const fs::path&);
+    return std::count_if(directory_iterator(path), directory_iterator{}, (fp)fs::is_regular_file);
+}
+
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 int calib_width, calib_height, out_width, out_height;
+int play_video = 0;
 
 void next() {
-  printf("Next image\n");
   static int iImage=0;
+  if (video_mode) {
+    char left_img_topic[128];
+    char right_img_topic[128];
+    char right_img_dir[128];
+    std::strcpy(right_img_dir , format("%svideo/testing/image_03/%04d/", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+    fs::path path_to_folder(right_img_dir);
+    size_t max_files = number_of_files_in_directory(path_to_folder);
 
-  char left_img_topic[128];
-  char right_img_topic[128];
+    play_video = 1;
+    while (play_video)
+    {
+      for (int iFrame = 0; iFrame < max_files; iFrame++)
+      {
+        auto start = chrono::high_resolution_clock::now();   
+        ios_base::sync_with_stdio(false);
+        
+        std::strcpy(left_img_topic  , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+        std::strcpy(right_img_topic , format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+      
+        imgCallback(left_img_topic, right_img_topic, 1);
+        updateGraph();
 
-  std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-  std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
- 
-  imgCallback(left_img_topic, right_img_topic);
-  iImage++;
+        auto end = chrono::high_resolution_clock::now();   
+        // Calculating total time taken by the program. 
+        double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+        time_taken *= 1e-9;   
+        t_t = time_taken;
+        
+        printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
+      }
+    }
+  } else {
+    printf("Next image\n");
+
+    char left_img_topic[128];
+    char right_img_topic[128];
+
+    std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+    std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+  
+    
+    imgCallback(left_img_topic, right_img_topic);
+    iImage++;
+  }
+}
+
+void next_video() {
+  play_video = 0;
 }
 
 void imageLoop() {
@@ -637,8 +699,10 @@ int main(int argc, const char** argv) {
   
   initYOLO();
 
-  static struct poptOption options[] = {
+  static struct poptOption options[] = { //draw_points
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
+    { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
+    { "draw_points",'p',POPT_ARG_INT,&draw_points,0,"Set p=1 to plot out points","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -673,7 +737,7 @@ int main(int argc, const char** argv) {
   
   findRectificationMap(calib_file, out_img_size);
 
-  //setCallback(next);
+  setCallback(next_video);
   thread th1(imageLoop);
   startGraphics(out_width, out_height);
   th1.join();
