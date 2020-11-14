@@ -217,11 +217,20 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
 
   for (auto& object : obj_list) {
     print_OBJ(object);
+    /*
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
     i_ub = i_lb + 1, 
     j_lb = constrain(object.y + object.h/2, 0, img_left.rows-1), 
     j_ub = j_lb + 1;
+    */
+
+    int i_lb = constrain(object.x, 0, img_left.cols-1), 
+    i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
+    j_lb = constrain(object.y, 0, img_left.rows-1), 
+    j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
     
+    double X=0, Y=0, Z=0;
+
     for (int i = i_lb; i < i_ub; i++) {
       for (int j = j_lb; j < j_ub; j++) {
         int d = dmap.at<uchar>(j,i);
@@ -236,9 +245,9 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
         V.at<double>(3,0) = 1.;
         
         pos = Q * V; // 3D homogeneous coordinate
-        double X = pos.at<double>(0,0) / pos.at<double>(3,0);
-        double Y = pos.at<double>(1,0) / pos.at<double>(3,0);
-        double Z = pos.at<double>(2,0) / pos.at<double>(3,0);
+        X += pos.at<double>(0,0) / pos.at<double>(3,0);
+        Y += pos.at<double>(1,0) / pos.at<double>(3,0);
+        Z += pos.at<double>(2,0) / pos.at<double>(3,0);
         Mat point3d_cam = Mat(3, 1, CV_64FC1);
         point3d_cam.at<double>(0,0) = X;
         point3d_cam.at<double>(1,0) = Y;
@@ -253,9 +262,9 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
         blue = img_left.at<Vec3b>(j,i)[0];
         int32_t rgb = (red << 16 | green << 8 | blue);
         
-        appendOBJECTS(X, Y, Z, object.r, object.g, object.b);
       }
-    } 
+    }
+    appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
   cout<<"BOXES_END\n";
 
@@ -468,10 +477,17 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 void startVideo() {
   //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(320, 240));
   //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('Q', 'V', 'G', 'A'));
-  cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
+  
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpg");//cv2.CAP_OPENCV_MJPEG
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg");
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg", cv::CAP_OPENCV_MJPEG);// VideoWriter::fourcc('M', 'J', 'P', 'G'));
+
   //cv::VideoCapture capture("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
-  cv::Mat frame;
+  
   while (1) {
+    cv::VideoCapture capture("http://192.168.0.109:80/capture");
+    cv::Mat frame, gframe, pframe, pgframe, rgframe;
       if (!capture.isOpened()) {
           cout<<"Capture failed"<<endl;
           break;
@@ -481,14 +497,112 @@ void startVideo() {
       capture >> frame;
 
       if (!frame.empty()) {
-        imshow("stream", frame);
-        waitKey(0);
+        flip(frame, frame,-1);
+        cv::cvtColor(frame, gframe, cv::COLOR_BGR2GRAY);
+
+        //if (!pframe.empty() || 1) {
+          int ref = 0;//gframe.at<uchar>(gframe.rows - 5,gframe.cols/2);
+          int scan_height = 5, scan_width = gframe.rows;
+          for (int i=gframe.rows - scan_height; i<gframe.rows; i++) {
+            for (int j=0; j<scan_width; j++) {
+              ref += gframe.at<uchar>(i,j);
+            }
+          }
+          ref = ref / (scan_width * scan_height);
+          printf("%d \n", ref);
+
+          cv::Rect myROI(0, 0, frame.cols, frame.rows - 50);
+          cv::Mat cframe = frame(myROI);
+          if (ref < 60 ) //&&
+              //gframe.at<uchar>(gframe.rows,gframe.cols/2) < gpframe.at<uchar>(gframe.rows,gframe.cols/2)) 
+          {
+            imshow("left", cframe);
+            imshow("left0", frame);
+          } else {
+            imshow("right", cframe);
+            imshow("right0", frame);
+          }
+          char c=(char)waitKey(25);
+          if(c==27)
+            break;
+        //}
+
           //do something with your image (e.g. provide it)
           //lastImage = frame.clone();
+
+        pframe = frame.clone();
+        pgframe = gframe.clone();
       }
+
   }
   
 }
+
+/*
+void startVideo() {
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(320, 240));
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('Q', 'V', 'G', 'A'));
+  
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpg");//cv2.CAP_OPENCV_MJPEG
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg");
+  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg", cv::CAP_OPENCV_MJPEG);// VideoWriter::fourcc('M', 'J', 'P', 'G'));
+
+  //cv::VideoCapture capture("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+  
+  while (1) {
+    cv::VideoCapture capture("http://192.168.0.109:80/capture");
+    cv::Mat frame, gframe, pframe, pgframe, rgframe;
+      if (!capture.isOpened()) {
+          cout<<"Capture failed"<<endl;
+          break;
+      }
+
+      //Create image frames from capture
+      capture >> frame;
+
+      if (!frame.empty()) {
+        flip(frame, frame,-1);
+        cv::cvtColor(frame, gframe, cv::COLOR_BGR2GRAY);
+
+        //if (!pframe.empty() || 1) {
+          int ref = 0;//gframe.at<uchar>(gframe.rows - 5,gframe.cols/2);
+          int scan_height = 5, scan_width = gframe.rows;
+          for (int i=gframe.rows - scan_height; i<gframe.rows; i++) {
+            for (int j=0; j<scan_width; j++) {
+              ref += gframe.at<uchar>(i,j);
+            }
+          }
+          ref = ref / (scan_width * scan_height);
+          printf("%d \n", ref);
+
+          cv::Rect myROI(0, 0, frame.cols, frame.rows - 50);
+          cv::Mat cframe = frame(myROI);
+          if (ref < 60 ) //&&
+              //gframe.at<uchar>(gframe.rows,gframe.cols/2) < gpframe.at<uchar>(gframe.rows,gframe.cols/2)) 
+          {
+            imshow("left", cframe);
+            imshow("left0", frame);
+          } else {
+            imshow("right", cframe);
+            imshow("right0", frame);
+          }
+          char c=(char)waitKey(25);
+          if(c==27)
+            break;
+        //}
+
+          //do something with your image (e.g. provide it)
+          //lastImage = frame.clone();
+
+        pframe = frame.clone();
+        pgframe = gframe.clone();
+      }
+
+  }
+  
+}
+*/
 
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 int calib_width, calib_height, out_width, out_height;
@@ -515,6 +629,11 @@ void imageLoop() {
 }
 
 int main(int argc, const char** argv) {
+  
+  //startVideo();
+  //thread vid(startVideo);
+  //vid.join();
+  //return 0; 
   
   initYOLO();
 
