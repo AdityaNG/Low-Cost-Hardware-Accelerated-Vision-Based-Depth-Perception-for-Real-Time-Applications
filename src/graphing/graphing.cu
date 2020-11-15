@@ -88,7 +88,10 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   glEnd();
   */
 }
-
+#define width 1242/4
+#define height 375/4
+extern double3 *points;
+extern uchar4 *color;
 void drawCube(){
     // Set Background Color
     //glClearColor(0.4, 0.4, 0.4, 1.0);
@@ -119,11 +122,12 @@ void drawCube(){
 
     // BACK
     glBegin(GL_POINTS);
-    for (int i = 0; i < Pindex; i+=6){
-		glColor3f(POINTS[i+3], POINTS[i+4], POINTS[i+5]);
+    for (int i = 0; i < width * height; i++){
+        if(color == NULL) break;
+		glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
-		glVertex3f(POINTS[i], POINTS[i+1], POINTS[i+2]);
-	}
+		glVertex3f(points[i].y, -points[i].z, points[i].x);
+    }
     glEnd();
 
     draw_cube(0,0,0, 1,0,0);
