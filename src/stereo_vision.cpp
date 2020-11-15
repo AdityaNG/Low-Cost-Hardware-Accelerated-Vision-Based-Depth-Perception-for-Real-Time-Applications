@@ -70,7 +70,7 @@ const char* kitti_path;
 int video_mode = 0;
 int debug = 0;
 int draw_points = 0;
-int frame_skip = 0;
+int frame_skip = 1;
 
 double pc_t = 0, yd_t = 0, t_t = 0;
 
@@ -381,6 +381,10 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
     return;
   }
 
+  resize(tmpL_Color, tmpL_Color, out_img_size);
+  resize(tmpL, tmpL, out_img_size);
+  resize(tmpR, tmpR, out_img_size);
+
   cv::Mat frame = tmpL_Color.clone();
   
   Mat img_left, img_right, img_left_color, img_left_color_flip;
@@ -564,6 +568,8 @@ void next() {
 
         left_img = imread(left_img_topic, IMREAD_UNCHANGED);
         right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+        resize(left_img, left_img, out_img_size);
+        resize(right_img, right_img, out_img_size);
 
         YOLOL_Color = left_img.clone();
 
@@ -590,7 +596,8 @@ void next() {
         updateGraph();
 
         if (1) {
-          flip(YOLOL_Color, img_left_color_flip,1);
+          //flip(YOLOL_Color, img_left_color_flip,1);
+          flip(left_img, img_left_color_flip,1);
           
           imshow("LEFT_C", img_left_color_flip);
           //imshow("DISP", dmap);
@@ -654,8 +661,8 @@ int main(int argc, const char** argv) {
 
   calib_width = 1242;
   calib_height = 375;
-  out_width = 1242;
-  out_height = 375;
+  out_width = 1242/4;
+  out_height = 375/4;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);

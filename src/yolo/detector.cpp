@@ -1,6 +1,6 @@
 #include "yolo.hpp"
 
-constexpr float CONFIDENCE_THRESHOLD = 0.7;
+constexpr float CONFIDENCE_THRESHOLD = 0;
 constexpr float NMS_THRESHOLD = 0.4;
 constexpr int NUM_CLASSES = 80;
 
