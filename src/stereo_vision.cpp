@@ -70,6 +70,7 @@ const char* kitti_path;
 int video_mode = 0;
 int debug = 0;
 int draw_points = 0;
+int frame_skip = 0;
 
 double pc_t = 0, yd_t = 0, t_t = 0;
 
@@ -154,6 +155,11 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *
  */
 void publishPointCloud(Mat& img_left, Mat& dmap) {
+
+  if (img_left.empty() || dmap.empty()) {
+    return;
+  }
+
   auto start = chrono::high_resolution_clock::now();   
   // unsync the I/O of C and C++. 
   ios_base::sync_with_stdio(false);
@@ -338,6 +344,34 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  *  returns: void
  *
  */
+Mat left_img_OLD, right_img_OLD, dmapOLD;
+void imgCallback_video() {
+  Mat left_img = left_img_OLD; Mat& right_img = right_img_OLD; Mat& dmap = dmapOLD;
+  if (left_img.empty() || right_img.empty()){
+    //printf("%s\n",left_img_topic);
+    return;
+  }
+
+  Mat img_left, img_right, img_left_color_flip;
+
+  cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
+  cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
+
+  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+  
+  auto start = chrono::high_resolution_clock::now();   
+  ios_base::sync_with_stdio(false);
+
+  
+  dmap = generateDisparityMap(img_left, img_right);
+  
+  
+  auto end = chrono::high_resolution_clock::now();   
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+  time_taken *= 1e-9;   
+  yd_t = time_taken;
+}
+
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
@@ -370,6 +404,7 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
   time_taken *= 1e-9;   
   yd_t = time_taken;
 
+  obj_list.empty();
   obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
 
   //cout << "; Y+D " << fixed << time_taken << setprecision(9); 
@@ -384,6 +419,7 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
   //waitKey(2000);
   waitKey(wait);
 }
+
 
 /*
  * Function:  findRectificationMap 
@@ -490,136 +526,6 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   
 }
 
-void startVideo() {
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(320, 240));
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('Q', 'V', 'G', 'A'));
-  
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpg");//cv2.CAP_OPENCV_MJPEG
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg");
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg", cv::CAP_OPENCV_MJPEG);// VideoWriter::fourcc('M', 'J', 'P', 'G'));
-
-  //cv::VideoCapture capture("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
-  
-  while (1) {
-    cv::VideoCapture capture("http://192.168.0.109:80/capture");
-    cv::Mat frame, gframe, pframe, pgframe, rgframe;
-      if (!capture.isOpened()) {
-          cout<<"Capture failed"<<endl;
-          break;
-      }
-
-      //Create image frames from capture
-      capture >> frame;
-
-      if (!frame.empty()) {
-        flip(frame, frame,-1);
-        cv::cvtColor(frame, gframe, cv::COLOR_BGR2GRAY);
-
-        //if (!pframe.empty() || 1) {
-          int ref = 0;//gframe.at<uchar>(gframe.rows - 5,gframe.cols/2);
-          int scan_height = 5, scan_width = gframe.rows;
-          for (int i=gframe.rows - scan_height; i<gframe.rows; i++) {
-            for (int j=0; j<scan_width; j++) {
-              ref += gframe.at<uchar>(i,j);
-            }
-          }
-          ref = ref / (scan_width * scan_height);
-          printf("%d \n", ref);
-
-          cv::Rect myROI(0, 0, frame.cols, frame.rows - 50);
-          cv::Mat cframe = frame(myROI);
-          if (ref < 60 ) //&&
-              //gframe.at<uchar>(gframe.rows,gframe.cols/2) < gpframe.at<uchar>(gframe.rows,gframe.cols/2)) 
-          {
-            imshow("left", cframe);
-            imshow("left0", frame);
-          } else {
-            imshow("right", cframe);
-            imshow("right0", frame);
-          }
-          char c=(char)waitKey(25);
-          if(c==27)
-            break;
-        //}
-
-          //do something with your image (e.g. provide it)
-          //lastImage = frame.clone();
-
-        pframe = frame.clone();
-        pgframe = gframe.clone();
-      }
-
-  }
-  
-}
-
-/*
-void startVideo() {
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(320, 240));
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('Q', 'V', 'G', 'A'));
-  
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream", VideoWriter::fourcc('M', 'J', 'P', 'G'));
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpg");//cv2.CAP_OPENCV_MJPEG
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg");
-  //cv::VideoCapture capture("http://192.168.0.109:81/stream.mjpeg", cv::CAP_OPENCV_MJPEG);// VideoWriter::fourcc('M', 'J', 'P', 'G'));
-
-  //cv::VideoCapture capture("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
-  
-  while (1) {
-    cv::VideoCapture capture("http://192.168.0.109:80/capture");
-    cv::Mat frame, gframe, pframe, pgframe, rgframe;
-      if (!capture.isOpened()) {
-          cout<<"Capture failed"<<endl;
-          break;
-      }
-
-      //Create image frames from capture
-      capture >> frame;
-
-      if (!frame.empty()) {
-        flip(frame, frame,-1);
-        cv::cvtColor(frame, gframe, cv::COLOR_BGR2GRAY);
-
-        //if (!pframe.empty() || 1) {
-          int ref = 0;//gframe.at<uchar>(gframe.rows - 5,gframe.cols/2);
-          int scan_height = 5, scan_width = gframe.rows;
-          for (int i=gframe.rows - scan_height; i<gframe.rows; i++) {
-            for (int j=0; j<scan_width; j++) {
-              ref += gframe.at<uchar>(i,j);
-            }
-          }
-          ref = ref / (scan_width * scan_height);
-          printf("%d \n", ref);
-
-          cv::Rect myROI(0, 0, frame.cols, frame.rows - 50);
-          cv::Mat cframe = frame(myROI);
-          if (ref < 60 ) //&&
-              //gframe.at<uchar>(gframe.rows,gframe.cols/2) < gpframe.at<uchar>(gframe.rows,gframe.cols/2)) 
-          {
-            imshow("left", cframe);
-            imshow("left0", frame);
-          } else {
-            imshow("right", cframe);
-            imshow("right0", frame);
-          }
-          char c=(char)waitKey(25);
-          if(c==27)
-            break;
-        //}
-
-          //do something with your image (e.g. provide it)
-          //lastImage = frame.clone();
-
-        pframe = frame.clone();
-        pgframe = gframe.clone();
-      }
-
-  }
-  
-}
-*/
-
 std::size_t number_of_files_in_directory(fs::path path)
 {
     using fs::directory_iterator;
@@ -641,6 +547,10 @@ void next() {
     fs::path path_to_folder(right_img_dir);
     size_t max_files = number_of_files_in_directory(path_to_folder);
 
+    Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
+    //thread th1(imgCallback_video);
+    thread th1;
+
     play_video = 1;
     while (play_video)
     {
@@ -651,9 +561,42 @@ void next() {
         
         std::strcpy(left_img_topic  , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
         std::strcpy(right_img_topic , format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-      
-        imgCallback(left_img_topic, right_img_topic, 1);
+
+        left_img = imread(left_img_topic, IMREAD_UNCHANGED);
+        right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+
+        YOLOL_Color = left_img.clone();
+
+        obj_list = processYOLO(YOLOL_Color);
+        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO
+
+        if ( iFrame%frame_skip == 0 ) {
+          //imgCallback_video(left_img, right_img, dmap);
+          left_img_OLD = left_img.clone();
+          right_img_OLD = right_img.clone();
+
+          //disp_parallel = std::async(imgCallback_video);
+          th1 = thread(imgCallback_video);
+        }
+          
+        if (iFrame%frame_skip == frame_skip-1) {
+          th1.join();
+          dmap = dmapOLD.clone();
+        }
+    
+
+        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
+        publishPointCloud(left_img, dmap);
         updateGraph();
+
+        if (1) {
+          flip(YOLOL_Color, img_left_color_flip,1);
+          
+          imshow("LEFT_C", img_left_color_flip);
+          //imshow("DISP", dmap);
+          
+          waitKey(1);
+        }
 
         auto end = chrono::high_resolution_clock::now();   
         // Calculating total time taken by the program. 
@@ -692,17 +635,13 @@ void imageLoop() {
 
 int main(int argc, const char** argv) {
   
-  //startVideo();
-  //thread vid(startVideo);
-  //vid.join();
-  //return 0; 
-  
   initYOLO();
 
-  static struct poptOption options[] = { //draw_points
+  static struct poptOption options[] = { //
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
     { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
     { "draw_points",'p',POPT_ARG_INT,&draw_points,0,"Set p=1 to plot out points","NUM" },
+    { "frame_skip",'f',POPT_ARG_INT,&frame_skip,0,"Set frame_skip to skip disparity generation for f frames","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
