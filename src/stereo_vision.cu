@@ -1,4 +1,5 @@
 //#include <curl/curl.h>
+#include <exception>
 #include <iostream>
 #include <vector>
 #include <thread> 
@@ -16,6 +17,7 @@
 #include "yolo/yolo.hpp"
 #include "elas/elas.h"
 #include "graphing/graphing.h"
+#include "cleanup/cleanup.hpp"
 
 
 #define GL_GLEXT_PROTOTYPES
@@ -31,6 +33,16 @@ using namespace cv;
 using namespace std;
 //namespace fs = std::experimental::filesystem;
 
+#define out_width 1242/4
+#define out_height 375/4
+
+// Cuda globals
+double *d_XT, *d_XR, *d_Q;
+uchar *d_dmap; // D map needs to be pushed to GPU
+double3 *d_points, *points; // Holds the coordinates of each pixel in 3D space
+cudaStream_t s1;
+const dim3 blockSize(32, 32, 1);
+const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 
 void print_OBJ(OBJ o) {
   cout <<"Name : "<< o.name <<endl;
@@ -147,7 +159,6 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *  returns: void
  *
  */
-
  __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
   // Calculating the coordinates of the pixel
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -162,21 +173,19 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   //if(d < 2) return;
 
   double pos[4];
-  for(int j = 0; j<4; j++)
-    pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
+  for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
     
   double X = pos[0] / pos[3];
   double Y = pos[1] / pos[3];
   double Z = pos[2] / pos[3];
 
   double point[3];
-  for(int j = 0; j<3; j++)
-    point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
+  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
     
   points[pixelPosition] = make_double3(point[0], point[1], point[2]);
 }
 
- void publishPointCloud(Mat& img_left, Mat& dmap) { // CUDAfied
+ void publishPointCloud(Mat& img_left, Mat& dmap) { 
   if (img_left.empty() || dmap.empty()) {
     printf("(empty)\t");
     return;
@@ -189,48 +198,17 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   }
   auto start = chrono::high_resolution_clock::now();    
   ios_base::sync_with_stdio(false); // unsync the I/O of C and C++.
-  int cols = img_left.cols;
-  int rows = img_left.rows;
-  int totalPixels = cols * rows;
 
-  uchar *d_dmap; // D map needs to be pushed to GPU
-  double3 *d_points; // Holds the coordinates of each pixel in 3D space
-  double3 *points = (double3*)malloc(sizeof(double3) * totalPixels);
-  double *d_XT, *d_XR, *d_Q;
-
-  cudaMalloc(&d_dmap, sizeof(uchar) * totalPixels);
-  cudaMalloc(&d_points, sizeof(double3) * totalPixels);
-  cudaMalloc(&d_XT, sizeof(double) * 3);
-  cudaMalloc(&d_XR, sizeof(double) * 9);
-  cudaMalloc(&d_Q, sizeof(double) * 16);
-
-  cudaStream_t s1;
-  cudaStreamCreate(&s1);  
-
-  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * totalPixels, cudaMemcpyHostToDevice, s1);
+  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1);
   cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
   cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);
   cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
-
-
-  const dim3 blockSize(32, 32, 1);
-  const dim3 gridSize((cols / blockSize.x) + 1, (rows / blockSize.y) + 1, 1);
-
   cudaDeviceSynchronize();
 
-  parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, rows, cols, d_XT, d_XR, d_Q);
+  parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
 
   cudaDeviceSynchronize();
-
-  cudaStreamDestroy(s1);
-
-  cudaMemcpy(points, d_points, sizeof(double3) * totalPixels, cudaMemcpyDeviceToHost);
-
-  cudaFree(d_points);
-  cudaFree(d_dmap);
-  cudaFree(d_XR);
-  cudaFree(d_XT);
-  cudaFree(d_Q);
+  cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
 
   for (int i = 0; i < img_left.cols; i++){
     for (int j = 0; j < img_left.rows; j++){
@@ -238,7 +216,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
       red = img_left.at<Vec3b>(j,i)[2];
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];   
-      appendPOINT(points[j*cols + i].y, -points[j*cols + i].z, points[j*cols + i].x, red/255.0, green/255.0, blue/255.0);
+      appendPOINT(points[j*out_width + i].y, -points[j*out_width + i].z, points[j*out_width + i].x, red/255.0, green/255.0, blue/255.0);
       //appendPOINT(points[j*cols + i].x, points[j*cols + i].y, points[j*cols + i].z, red/255.0, green/255.0, blue/255.0);   
     }
   }
@@ -257,9 +235,9 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     double X=0, Y=0, Z=0;
     for (int i = i_lb; i < i_ub; i++) {
       for (int j = j_lb; j < j_ub; j++) {   
-        X += points[j*cols + i].x;  
-        Y += points[j*cols + i].y;     
-        Z += points[j*cols + i].z;  
+        X += points[j*out_width + i].x;  
+        Y += points[j*out_width + i].y;     
+        Z += points[j*out_width + i].z;  
       }
     } 
     //appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
@@ -524,7 +502,7 @@ std::size_t number_of_files_in_directory(fs::path path)
 */
 
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
-int calib_width, calib_height, out_width, out_height;
+int calib_width, calib_height;//, out_width, out_height;
 int play_video = 0;
 
 void next() {
@@ -617,7 +595,8 @@ void next() {
         printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
       }
     }
-  } else {
+  } 
+  else {
     printf("Next image\n");
 
     char left_img_topic[128];
@@ -637,10 +616,31 @@ void next_video() {
 }
 
 void imageLoop() {
-  while (1)
-  {
-    next();
-  }
+  while (1) next();
+}
+
+void cudaInit(){
+  // Cuda Init
+  cudaMalloc(&d_XT, sizeof(double) * 3);
+  cudaMalloc(&d_XR, sizeof(double) * 9);
+  cudaMalloc(&d_Q, sizeof(double) * 16);
+  cudaMalloc(&d_dmap, sizeof(uchar) * out_width * out_height);
+  cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
+  points = (double3*)malloc(sizeof(double3) * out_width * out_height);
+  cudaStreamCreate(&s1);  
+}
+
+void clean(){
+  // Cuda Cleanup
+  printf("Exitting the program.....\n");
+  free(points);
+  cudaStreamDestroy(s1);
+  cudaFree(d_XR);
+  cudaFree(d_XT);
+  cudaFree(d_Q);
+  cudaFree(d_points);
+  cudaFree(d_dmap);
+  exit(0);
 }
 
 int main(int argc, const char** argv) {
@@ -664,8 +664,8 @@ int main(int argc, const char** argv) {
 
   calib_width = 1242;
   calib_height = 375;
-  out_width = 1242/4;
-  out_height = 375/4;
+  //out_width = 1242/4;
+  //out_height = 375/4;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);
@@ -685,10 +685,13 @@ int main(int argc, const char** argv) {
   cout <<  K1 << endl << D1 << endl << R1 << endl << P1 << endl << K2 << endl << D2 << endl << R2 << endl << P2 << endl;
   
   findRectificationMap(calib_file, out_img_size);
+  
+  cudaInit();
 
   setCallback(next_video);
   thread th1(imageLoop);
   startGraphics(out_width, out_height);
   th1.join();
+  clean();
   return 0;
 }
