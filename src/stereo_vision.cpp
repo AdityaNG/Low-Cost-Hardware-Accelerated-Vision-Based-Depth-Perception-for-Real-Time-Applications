@@ -153,10 +153,6 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
     printf("(empty)\t");
     return;
   }
-
-  auto start = chrono::high_resolution_clock::now();   
-  // unsync the I/O of C and C++. 
-  ios_base::sync_with_stdio(false);
   if (debug == 1) {
     //XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
     XR = composeRotationCamToRobot(M_PI/3, 0, 0); //M_PI
@@ -164,25 +160,22 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
     cout << "Rotation matrix: " << XR << endl;
     cout << "Translation matrix: " << XT << endl;
   }
+  auto start = chrono::high_resolution_clock::now();    
+  ios_base::sync_with_stdio(false); // unsync the I/O of C and C++.
   Mat V = Mat(4, 1, CV_64FC1);
   Mat pos = Mat(4, 1, CV_64FC1);
   vector< Point3d > points;
 
-  //cout << "Q matrix: " << Q << endl;
-
-  //cout<<"img.size : "<<img_left.cols<<", "<<img_left.rows<<endl;
-
-  //cout << "POINTS"<<endl;
-  int BOUNDARY = 50;
   if (draw_points) {
   for (int i = 0; i < img_left.cols; i++) {
     for (int j = 0; j < img_left.rows; j++) {
       int d = dmap.at<uchar>(j,i);
       //cout<<d<<endl;
       // if low disparity, then ignore
+      /*
       if (d < 2) {
         continue;
-      }
+      }*/
       // V is the vector to be multiplied to Q to get
       // the 3D homogenous coordinates of the image point
       V.at<double>(0,0) = (double)(i);
@@ -206,7 +199,6 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
       red = img_left.at<Vec3b>(j,i)[2];
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];
-      int32_t rgb = (red << 16 | green << 8 | blue);
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
 
       appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
@@ -239,11 +231,11 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
     for (int i = i_lb; i < i_ub; i++) {
       for (int j = j_lb; j < j_ub; j++) {
         int d = dmap.at<uchar>(j,i);
-        
+        /*
         if (d < 2) {
           continue;
         }
-        
+        */
         V.at<double>(0,0) = (double)(i);
         V.at<double>(1,0) = (double)(j);
         V.at<double>(2,0) = (double)d;
@@ -259,14 +251,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
         point3d_cam.at<double>(2,0) = Z;
         // transform 3D point from camera frame to robot frame
         Mat point3d_robot = XR * point3d_cam + XT;
-        points.push_back(Point3d(point3d_robot));
-        
-        int32_t red, blue, green;
-        red = img_left.at<Vec3b>(j,i)[2];
-        green = img_left.at<Vec3b>(j,i)[1];
-        blue = img_left.at<Vec3b>(j,i)[0];
-        int32_t rgb = (red << 16 | green << 8 | blue);
-        
+        points.push_back(Point3d(point3d_robot));        
       }
     }
     appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
@@ -284,7 +269,6 @@ void publishPointCloud(Mat& img_left, Mat& dmap) {
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
   time_taken *= 1e-9;   
   pc_t = time_taken;
-
 }
 
 /*

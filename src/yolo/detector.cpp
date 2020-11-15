@@ -33,90 +33,89 @@ std::vector<OBJ> processYOLO(Mat frame) {
     std::vector<OBJ> objects; // Detected objects
     auto total_start = std::chrono::steady_clock::now();
 
-        net.setInput(blob);   
+    net.setInput(blob);   
 
-        auto dnn_start = std::chrono::steady_clock::now();
-        net.forward(detections, output_names);
-        auto dnn_end = std::chrono::steady_clock::now();
+    auto dnn_start = std::chrono::steady_clock::now();
+    net.forward(detections, output_names);
+    auto dnn_end = std::chrono::steady_clock::now();
 
-        std::vector<int> indices[NUM_CLASSES];
-        std::vector<cv::Rect> boxes[NUM_CLASSES];
-        std::vector<float> scores[NUM_CLASSES];
+    std::vector<int> indices[NUM_CLASSES];
+    std::vector<cv::Rect> boxes[NUM_CLASSES];
+    std::vector<float> scores[NUM_CLASSES];
 
-        for (auto& output : detections){
-            const auto num_boxes = output.rows;
-            for (int i = 0; i < num_boxes; i++){
-                auto x = output.at<float>(i, 0) * frame.cols;
-                auto y = output.at<float>(i, 1) * frame.rows;
-                auto width = output.at<float>(i, 2) * frame.cols;
-                auto height = output.at<float>(i, 3) * frame.rows;
-                cv::Rect rect(x - width/2, y - height/2, width, height);
+    for (auto& output : detections){
+        const auto num_boxes = output.rows;
+        for (int i = 0; i < num_boxes; i++){
+            auto x = output.at<float>(i, 0) * frame.cols;
+            auto y = output.at<float>(i, 1) * frame.rows;
+            auto width = output.at<float>(i, 2) * frame.cols;
+            auto height = output.at<float>(i, 3) * frame.rows;
+            cv::Rect rect(x - width/2, y - height/2, width, height);
 
-                for (int c = 0; c < NUM_CLASSES; c++){
-                    auto confidence = *output.ptr<float>(i, 5 + c);
-                    if (confidence >= CONFIDENCE_THRESHOLD){
-                        boxes[c].push_back(rect);
-                        scores[c].push_back(confidence);
-                    }
+            for (int c = 0; c < NUM_CLASSES; c++){
+                auto confidence = *output.ptr<float>(i, 5 + c);
+                if (confidence >= CONFIDENCE_THRESHOLD){
+                    boxes[c].push_back(rect);
+                    scores[c].push_back(confidence);
                 }
             }
         }
+    }
 
-        for (int c = 0; c < NUM_CLASSES; c++) cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, NMS_THRESHOLD, indices[c]);
+    for (int c = 0; c < NUM_CLASSES; c++) cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, NMS_THRESHOLD, indices[c]);
         
-        for (int c= 0; c < NUM_CLASSES; c++){
-            for (size_t i = 0; i < indices[c].size(); ++i){
-                const auto color = colors[c % NUM_COLORS];
+    for (int c= 0; c < NUM_CLASSES; c++){
+        for (size_t i = 0; i < indices[c].size(); ++i){
+            const auto color = colors[c % NUM_COLORS];
 
-                auto idx = indices[c][i];
-                const auto& rect = boxes[c][idx];
-                cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
+            auto idx = indices[c][i];
+            const auto& rect = boxes[c][idx];
+            cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
 
-                std::ostringstream label_ss;
-                label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
-                auto label = label_ss.str();
+            std::ostringstream label_ss;
+            label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
+            auto label = label_ss.str();
                 
-                int baseline;
-                auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-                cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
-                cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
+            int baseline;
+            auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
+            cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
+            cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
 
-                OBJ temp;
-                temp.name = class_names[c];
-                temp.x = rect.x;
-                temp.y = rect.y;
-                temp.w = rect.width;
-                temp.h = rect.height;
-                temp.c = scores[c][idx];
-                temp.g = color[0] / 255.0;
-                temp.b = color[1] / 255.0;
-                temp.r = color[2] / 255.0;
-                objects.push_back(temp);
-            }
+            OBJ temp;
+            temp.name = class_names[c];
+            temp.x = rect.x;
+            temp.y = rect.y;
+            temp.w = rect.width;
+            temp.h = rect.height;
+            temp.c = scores[c][idx];
+            temp.g = color[0] / 255.0;
+            temp.b = color[1] / 255.0;
+            temp.r = color[2] / 255.0;
+            objects.push_back(temp);
         }
+    }
     
-        auto total_end = std::chrono::steady_clock::now();
+    auto total_end = std::chrono::steady_clock::now();
 
-        float inference_fps = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(dnn_end - dnn_start).count();
-        float total_fps = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
-        std::ostringstream stats_ss;
-        stats_ss << std::fixed << std::setprecision(2);
-        stats_ss << "Inference FPS: " << inference_fps << ", Total FPS: " << total_fps;
-        auto stats = stats_ss.str();
+    float inference_fps = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(dnn_end - dnn_start).count();
+    float total_fps = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
+    std::ostringstream stats_ss;
+    stats_ss << std::fixed << std::setprecision(2);
+    stats_ss << "Inference FPS: " << inference_fps << ", Total FPS: " << total_fps;
+    auto stats = stats_ss.str();
 
-        std::cout<<stats<<"\n";
+    std::cout<<stats<<"\n";
             
-        int baseline;
-        auto stats_bg_sz = cv::getTextSize(stats.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-        return objects;
+    int baseline;
+    auto stats_bg_sz = cv::getTextSize(stats.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
+    return objects;
 }
 
 void initYOLO() {
-
     std::ifstream class_file("src/yolo/classes.txt");
     if (!class_file){
             std::cerr << "failed to open classes.txt\n";
-            exit(0);
+            exit(-1);
     }
 
     std::string line;

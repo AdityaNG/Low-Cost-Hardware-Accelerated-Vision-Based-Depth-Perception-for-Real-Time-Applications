@@ -1,0 +1,97 @@
+void publishPointCloud(Mat& img_left, Mat& dmap) { // CUDAfied
+  auto start = chrono::high_resolution_clock::now();    
+  ios_base::sync_with_stdio(false); // unsync the I/O of C and C++.
+
+  if (debug == 1) {
+    XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
+    XT = composeTranslationCamToRobot(0.0,0.0,0.28);
+    cout << "Rotation matrix: " << XR << endl;
+    cout << "Translation matrix: " << XT << endl;
+  }
+    
+  int cols = img_left.cols;
+  int rows = img_left.rows;
+  int totalPixels = cols * rows;
+
+  uchar *d_dmap; // D map needs to be pushed to GPU
+  double3 *d_points; // Holds the coordinates of each pixel in 3D space
+  double3 *points = (double3*)malloc(sizeof(double3) * totalPixels);
+  double *d_XT, *d_XR, *d_Q;
+
+  cudaMalloc(&d_dmap, sizeof(uchar) * totalPixels);
+  cudaMalloc(&d_points, sizeof(double3) * totalPixels);
+  cudaMalloc(&d_XT, sizeof(double) * 3);
+  cudaMalloc(&d_XR, sizeof(double) * 9);
+  cudaMalloc(&d_Q, sizeof(double) * 16);
+
+  cudaStream_t s1;
+  cudaStreamCreate(&s1);  
+
+  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * totalPixels, cudaMemcpyHostToDevice, s1);
+  cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
+
+
+  const dim3 blockSize(32, 32, 1);
+  const dim3 gridSize((cols / blockSize.x) + 1, (rows / blockSize.y) + 1, 1);
+
+  cudaDeviceSynchronize();
+
+  parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, rows, cols, d_XT, d_XR, d_Q);
+
+  cudaDeviceSynchronize();
+
+  cudaStreamDestroy(s1);
+
+  cudaMemcpy(points, d_points, sizeof(double3) * totalPixels, cudaMemcpyDeviceToHost);
+
+  cudaFree(d_points);
+  cudaFree(d_dmap);
+  cudaFree(d_XR);
+  cudaFree(d_XT);
+  cudaFree(d_Q);
+
+  auto end = chrono::high_resolution_clock::now();   
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); // Calculating total time taken by the program. 
+  time_taken *= 1e-9;   
+  cout << "Time taken to calculate point cloud is : " << fixed << time_taken << setprecision(9) << " sec\n";
+
+  cout << "Q matrix: " << Q << "\nimg.size : " << cols <<", " << rows << "\nPOINTS\n";
+
+  printf("POINTS\n");
+  for (int i = 0; i < img_left.cols; i++){
+    for (int j = 0; j < img_left.rows; j++){
+      int32_t red, blue, green; 
+      red = img_left.at<Vec3b>(j,i)[2];
+      green = img_left.at<Vec3b>(j,i)[1];
+      blue = img_left.at<Vec3b>(j,i)[0];   
+      appendPOINT(points[j*cols + i].y, -points[j*cols + i].z, points[j*cols + i].x, red/255.0, green/255.0, blue/255.0);   
+    }
+  }
+  int BOUNDARY = 50;
+  
+  printf("POINTS_END\nBOXES\n");
+
+  for (auto& object : obj_list) {
+    print_OBJ(object);
+    int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
+    i_ub = i_lb + 1, 
+    j_lb = constrain(object.y + object.h/2, 0, img_left.rows-1), 
+    j_ub = j_lb + 1;
+    
+    for (int i = i_lb; i < i_ub; i++) {
+      for (int j = j_lb; j < j_ub; j++) {        
+        appendOBJECTS(points[j*cols + i].y, -points[j*cols + i].z, points[j*cols + i].x, object.r, object.g, object.b);
+      }
+    } 
+  }
+  cout<<"BOXES_END\n";
+
+  //system ("touch ../plotter/3D_maps/reload_check");
+  
+  if (!dmap.empty()) {
+    // TODO : Do something
+  }
+  //updateGraph();
+}
