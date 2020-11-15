@@ -1,21 +1,21 @@
 //#include <curl/curl.h>
 #include <iostream>
 #include <vector>
-
 #include <thread> 
 #include <stdlib.h>
 #include <fstream>
 #include <ctime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
-#include "elas/elas.h"
-#include "graphing/graphing.h"
-//#include "nlohmann/json.hpp"
 #include <string.h>
 #include <math.h>
 #include <popt.h>
+#include <future>
+#include <experimental/filesystem>  
 
 #include "yolo/yolo.hpp"
+#include "elas/elas.h"
+#include "graphing/graphing.h"
 
 
 #define GL_GLEXT_PROTOTYPES
@@ -24,13 +24,6 @@
 #else
 #include <GL/glut.h>
 #endif
-#include <math.h>
-
-#include <thread> 
-#include <opencv2/opencv.hpp>
-#include <future>
-#include <experimental/filesystem>  
-
 
 std::vector<OBJ> obj_list;
 

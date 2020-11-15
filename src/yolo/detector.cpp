@@ -27,7 +27,6 @@ void print(std::vector<OBJ> &objects){
 }
 
 std::vector<OBJ> processYOLO(Mat frame) {
-    //cv::Mat frame = input.clone();
     cv::Mat blob;
     cv::dnn::blobFromImage(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
     std::vector<cv::Mat> detections;

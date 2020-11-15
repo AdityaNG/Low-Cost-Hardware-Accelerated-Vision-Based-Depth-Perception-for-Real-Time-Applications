@@ -2,22 +2,22 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
-
+#include <math.h>
+#include <future>
 #include <thread> 
 #include <stdlib.h>
 #include <fstream>
 #include <ctime>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
-#include "elas/elas.h"
-#include "graphing/graphing.h"
-//#include "nlohmann/json.hpp"
 #include <string.h>
 #include <math.h>
 #include <popt.h>
 #include <vector_types.h>
 
 #include "yolo/yolo.hpp"
+#include "elas/elas.h"
+#include "graphing/graphing.h"
 
 
 #define GL_GLEXT_PROTOTYPES
@@ -26,12 +26,7 @@
 #else
 #include <GL/glut.h>
 #endif
-#include <math.h>
 
-#include <thread> 
-#include <opencv2/opencv.hpp>
-
-#include <future>
 std::vector<OBJ> obj_list;
 
 using namespace cv;
