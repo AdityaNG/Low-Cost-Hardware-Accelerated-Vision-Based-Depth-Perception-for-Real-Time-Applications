@@ -1,4 +1,3 @@
-//#include <curl/curl.h>
 #include <iostream>
 #include <vector>
 #include <thread> 
@@ -14,6 +13,8 @@
 #include <experimental/filesystem>  
 
 #include "yolo/yolo.hpp"
+#include "elas/elas.h"
+#include "graphing/graphing.h"
 #include "common.h"
 #include "bayesian/bayesian.h"
 
@@ -24,7 +25,7 @@
 #include <GL/glut.h>
 #endif
 
-std::vector<OBJ> obj_list;
+std::vector<OBJ> obj_list, pred_list;
 
 using namespace cv;
 using namespace std;
@@ -519,7 +520,7 @@ int calib_width, calib_height, out_width, out_height;
 int play_video = 0;
 
 void next() {
-  static int iImage=0;
+  static int iImage=1;
   if (video_mode) {
     char left_img_topic[128];
     char right_img_topic[128];
@@ -532,11 +533,16 @@ void next() {
     //thread th1(imgCallback_video);
     thread th1;
 
-    play_video = 1;
-    while (play_video)
+    play_video = 0;
+    //while (play_video)
+    while (1)
     {
+
+      
       for (int iFrame = 0; iFrame < max_files; iFrame++)
       {
+        while (!play_video) {}
+
         if (t_t!=0)
           printf("(FPS=%f) ", 1/t_t);
         auto start = chrono::high_resolution_clock::now();   
@@ -555,6 +561,10 @@ void next() {
         YOLOL_Color = left_img.clone();
 
         obj_list = processYOLO(YOLOL_Color);
+        pred_list = get_predicted_boxes();
+        append_old_objs(obj_list);
+        obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+
         //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO
 
         if ( iFrame%frame_skip == 0) {
@@ -587,8 +597,8 @@ void next() {
         updateGraph();
 
         if (1) {
-          //flip(YOLOL_Color, img_left_color_flip,1);
-          flip(left_img, img_left_color_flip,1);
+          flip(YOLOL_Color, img_left_color_flip,1);
+          //flip(left_img, img_left_color_flip,1);
           
           imshow("LEFT_C", img_left_color_flip);
           //imshow("DISP", dmap);
@@ -621,7 +631,7 @@ void next() {
 }
 
 void next_video() {
-  play_video = 0;
+  play_video = !play_video;
 }
 
 void imageLoop() {
@@ -632,28 +642,42 @@ void imageLoop() {
 }
 
 int main(int argc, const char** argv) {
-  std::vector<OBJ> tmp_list;
 
+  /*
   for (int i=0; i<10; i++) {
-  OBJ temp;
-  temp.name = "tmp";
-  temp.x = i;
-  temp.y = i+1;
-  temp.w = 1;
-  temp.h = 1;
-  temp.c = 0.1;
-  temp.g = 255.0;
-  temp.b = 255.0;
-  temp.r = 255.0;
-  tmp_list.push_back(temp);
+    std::vector<OBJ> tmp_list;
+    
+    OBJ temp;
+    temp.name = "tmp";
+    temp.x = 3*i;
+    temp.y = 4*i+1;
+    temp.w = 1;
+    temp.h = 1;
+    temp.c = 0.1;
+    temp.g = 255.0;
+    temp.b = 255.0;
+    temp.r = 255.0;
+    tmp_list.push_back(temp);
 
-  append_old_objs(tmp_list);
+    temp.x = -3*i - 80;
+    temp.y = 5*i + 70;
+    tmp_list.push_back(temp);
+
+    append_old_objs(tmp_list);
   }
   
-
   display_history();
 
+  int x=0;
+  int y=0;
+  predict(0, &x, &y);
+  printf("Prediction 0 : (%d, %d)\n", x, y);
+  predict(1, &x, &y);
+  printf("Prediction 1 : (%d, %d)\n", x, y);
+
   return 0;
+
+  // */
   
   initYOLO();
 
@@ -674,8 +698,8 @@ int main(int argc, const char** argv) {
 
   calib_width = 1242;
   calib_height = 375;
-  out_width = 1242/4;
-  out_height = 375/4;
+  out_width = 1242/2;
+  out_height = 375/2;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);
