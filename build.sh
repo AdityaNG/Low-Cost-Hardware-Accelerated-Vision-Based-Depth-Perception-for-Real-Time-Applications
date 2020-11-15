@@ -33,7 +33,7 @@ fi
 if [ $1 == "3" ]
 	then
 		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas_openmp/*.cpp  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread -fopenmp" -lm \`pkg-config --cflags --libs opencv\` -w"
-		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas_openmp/*.cpp  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread -fopenmp" -lm `pkg-config --cflags --libs opencv` -w && echo "Compiled. Run the program using ./bin/stereo_vision -k path_to_kitti"
+		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas_openmp/*.cpp  src/yolo/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread -fopenmp" -lm `pkg-config --cflags --libs opencv` -w && echo "Compiled. Run the program using ./bin/stereo_vision -k path_to_kitti"
 		exit 0
 fi
 

@@ -39,7 +39,11 @@ using namespace std;
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
 uchar *d_dmap; // D map needs to be pushed to GPU
-double3 *d_points, *points; // Holds the coordinates of each pixel in 3D space
+double3 *points; // Holds the coordinates of each pixel in 3D space
+double3 *d_points;
+
+uchar4 *color = NULL;
+
 cudaStream_t s1;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
@@ -159,6 +163,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *  returns: void
  *
  */
+
+
  __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
   // Calculating the coordinates of the pixel
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -198,7 +204,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   }
   auto start = chrono::high_resolution_clock::now();    
   ios_base::sync_with_stdio(false); // unsync the I/O of C and C++.
-
+  
   cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1);
   cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
   cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);
@@ -209,18 +215,18 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 
   cudaDeviceSynchronize();
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
-
+/*
   for (int i = 0; i < img_left.cols; i++){
     for (int j = 0; j < img_left.rows; j++){
       int32_t red, blue, green; 
       red = img_left.at<Vec3b>(j,i)[2];
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];   
-      appendPOINT(points[j*out_width + i].y, -points[j*out_width + i].z, points[j*out_width + i].x, red/255.0, green/255.0, blue/255.0);
+      //appendPOINT(points[j*out_width + i].y, -points[j*out_width + i].z, points[j*out_width + i].x, red/255.0, green/255.0, blue/255.0);
       //appendPOINT(points[j*cols + i].x, points[j*cols + i].y, points[j*cols + i].z, red/255.0, green/255.0, blue/255.0);   
     }
   }
-
+*/
   for (auto& object : obj_list) {
     /*
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
@@ -325,8 +331,7 @@ void imgCallback_video() {
   ios_base::sync_with_stdio(false);
 
   
-  dmapOLD = generateDisparityMap(img_left, img_right);
-  
+  dmapOLD = generateDisparityMap(img_left, img_right);  
   
   auto end = chrono::high_resolution_clock::now();   
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
@@ -348,7 +353,6 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
   resize(tmpR, tmpR, out_img_size);
 
   cv::Mat frame = tmpL_Color.clone();
-  
   Mat img_left, img_right, img_left_color, img_left_color_flip;
   
   
@@ -521,10 +525,8 @@ void next() {
     thread th1;
 
     play_video = 1;
-    while (play_video)
-    {
-      for (int iFrame = 0; iFrame < max_files; iFrame++)
-      {
+    while (play_video){
+      for (int iFrame = 0; iFrame < max_files; iFrame++){
         if (t_t!=0)
           printf("(FPS=%f) ", 1/t_t);
         auto start = chrono::high_resolution_clock::now();   
@@ -536,9 +538,7 @@ void next() {
         left_img = imread(left_img_topic, IMREAD_UNCHANGED);
         right_img = imread(right_img_topic, IMREAD_UNCHANGED);
         resize(left_img, left_img, out_img_size);
-        resize(right_img, right_img, out_img_size);
-
-        
+        resize(right_img, right_img, out_img_size);        
 
         YOLOL_Color = left_img.clone();
 
@@ -570,6 +570,9 @@ void next() {
     
 
         //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
+        cv::Mat rgba;
+        cv::cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+        color = (uchar4*)rgba.ptr<unsigned char>(0);
         publishPointCloud(left_img, dmap);
         printf("(PC Done) ");
         updateGraph();
@@ -628,6 +631,7 @@ void cudaInit(){
   cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
   points = (double3*)malloc(sizeof(double3) * out_width * out_height);
   cudaStreamCreate(&s1);  
+  printf("CUDA Init done\n");
 }
 
 void clean(){
