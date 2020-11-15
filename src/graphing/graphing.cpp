@@ -250,7 +250,7 @@ void mouse_callback(int button, int state, int x, int y) {
 			ZOOM -= VEL_T;
 		}
 	}
-  printf("%f %f %f %f %f %f\n", ZOOM, rX, rY, tX, tY, tZ);
+  //printf("%f %f %f %f %f %f\n", ZOOM, rX, rY, tX, tY, tZ);
     // Request display update
     glutPostRedisplay();
 }

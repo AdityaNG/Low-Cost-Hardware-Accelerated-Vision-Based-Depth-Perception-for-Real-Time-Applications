@@ -157,6 +157,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 void publishPointCloud(Mat& img_left, Mat& dmap) {
 
   if (img_left.empty() || dmap.empty()) {
+    printf("(empty)\t");
     return;
   }
 
@@ -346,7 +347,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  */
 Mat left_img_OLD, right_img_OLD, dmapOLD;
 void imgCallback_video() {
-  Mat left_img = left_img_OLD; Mat& right_img = right_img_OLD; Mat& dmap = dmapOLD;
+  Mat left_img = left_img_OLD; Mat right_img = right_img_OLD;
   if (left_img.empty() || right_img.empty()){
     //printf("%s\n",left_img_topic);
     return;
@@ -363,7 +364,7 @@ void imgCallback_video() {
   ios_base::sync_with_stdio(false);
 
   
-  dmap = generateDisparityMap(img_left, img_right);
+  dmapOLD = generateDisparityMap(img_left, img_right);
   
   
   auto end = chrono::high_resolution_clock::now();   
@@ -560,6 +561,8 @@ void next() {
     {
       for (int iFrame = 0; iFrame < max_files; iFrame++)
       {
+        if (t_t!=0)
+          printf("(FPS=%f) ", 1/t_t);
         auto start = chrono::high_resolution_clock::now();   
         ios_base::sync_with_stdio(false);
         
@@ -571,12 +574,15 @@ void next() {
         resize(left_img, left_img, out_img_size);
         resize(right_img, right_img, out_img_size);
 
+        
+
         YOLOL_Color = left_img.clone();
 
         obj_list = processYOLO(YOLOL_Color);
         //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO
 
-        if ( iFrame%frame_skip == 0 ) {
+        if ( iFrame%frame_skip == 0) {
+          printf("(DISP) \t ");
           //imgCallback_video(left_img, right_img, dmap);
           left_img_OLD = left_img.clone();
           right_img_OLD = right_img.clone();
@@ -586,13 +592,22 @@ void next() {
         }
           
         if (iFrame%frame_skip == frame_skip-1) {
+          printf("(JOIN) \t");
           th1.join();
           dmap = dmapOLD.clone();
         }
+
+        printf("(%d, %d) ", dmap.rows, dmap.cols);
+        
+        //if (iFrame%frame_skip == frame_skip-1) {
+        // th1.join();
+        //  dmap = dmapOLD.clone();
+        //}
     
 
         //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
         publishPointCloud(left_img, dmap);
+        printf("(PC Done) ");
         updateGraph();
 
         if (1) {
