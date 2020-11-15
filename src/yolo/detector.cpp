@@ -70,7 +70,7 @@ std::vector<OBJ> processYOLO(Mat frame) {
 
             auto idx = indices[c][i];
             const auto& rect = boxes[c][idx];
-            cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
+            cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 1);
 
             std::ostringstream label_ss;
             label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
@@ -101,13 +101,13 @@ std::vector<OBJ> processYOLO(Mat frame) {
     float total_fps = 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
     std::ostringstream stats_ss;
     stats_ss << std::fixed << std::setprecision(2);
-    stats_ss << "Inference FPS: " << inference_fps << ", Total FPS: " << total_fps;
+    stats_ss << "Total FPS: " << total_fps << ", Inference FPS: " << inference_fps;
     auto stats = stats_ss.str();
-
-    std::cout<<stats<<"\n";
-            
+         
     int baseline;
     auto stats_bg_sz = cv::getTextSize(stats.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
+    cv::rectangle(frame, cv::Point(0, 0), cv::Point(stats_bg_sz.width, stats_bg_sz.height + 10), cv::Scalar(0, 0, 0), cv::FILLED);
+    cv::putText(frame, stats.c_str(), cv::Point(0, stats_bg_sz.height + 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255, 255, 255));
     return objects;
 }
 

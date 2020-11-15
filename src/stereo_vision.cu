@@ -11,7 +11,7 @@
 #include <math.h>
 #include <popt.h>
 #include <future>
-#include <experimental/filesystem>  
+//#include <experimental/filesystem>  
 
 #include "yolo/yolo.hpp"
 #include "elas/elas.h"
@@ -29,7 +29,7 @@ std::vector<OBJ> obj_list;
 
 using namespace cv;
 using namespace std;
-namespace fs = std::experimental::filesystem;
+//namespace fs = std::experimental::filesystem;
 
 
 void print_OBJ(OBJ o) {
@@ -238,8 +238,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
       red = img_left.at<Vec3b>(j,i)[2];
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];   
-      //appendPOINT(points[j*cols + i].y, -points[j*cols + i].z, points[j*cols + i].x, red/255.0, green/255.0, blue/255.0);
-      appendPOINT(points[j*cols + i].x, -points[j*cols + i].y, points[j*cols + i].z, red/255.0, green/255.0, blue/255.0);   
+      appendPOINT(points[j*cols + i].y, -points[j*cols + i].z, points[j*cols + i].x, red/255.0, green/255.0, blue/255.0);
+      //appendPOINT(points[j*cols + i].x, points[j*cols + i].y, points[j*cols + i].z, red/255.0, green/255.0, blue/255.0);   
     }
   }
 
@@ -262,7 +262,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
         Z += points[j*cols + i].z;  
       }
     } 
-    appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+    //appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+    appendOBJECTS(Y/((i_ub-i_lb)*(j_ub-j_lb)), -Z/((i_ub-i_lb)*(j_ub-j_lb)), X/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
    
   if (!dmap.empty()) {
@@ -513,12 +514,14 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   
 }
 
+/*
 std::size_t number_of_files_in_directory(fs::path path)
 {
     using fs::directory_iterator;
     using fp = bool (*)( const fs::path&);
     return std::count_if(directory_iterator(path), directory_iterator{}, (fp)fs::is_regular_file);
 }
+*/
 
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 int calib_width, calib_height, out_width, out_height;
@@ -531,8 +534,9 @@ void next() {
     char right_img_topic[128];
     char right_img_dir[128];
     std::strcpy(right_img_dir , format("%svideo/testing/image_03/%04d/", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-    fs::path path_to_folder(right_img_dir);
-    size_t max_files = number_of_files_in_directory(path_to_folder);
+    //fs::path path_to_folder(right_img_dir);
+    //size_t max_files = number_of_files_in_directory(path_to_folder);
+    size_t max_files = 465; // Just hardcoded the value for now
 
     Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
     //thread th1(imgCallback_video);
@@ -596,8 +600,10 @@ void next() {
           //flip(YOLOL_Color, img_left_color_flip,1);
           flip(left_img, img_left_color_flip,1);
           
-          imshow("LEFT_C", img_left_color_flip);
+          //imshow("LEFT_C", img_left_color_flip);
           //imshow("DISP", dmap);
+          cv::namedWindow("output", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+          cv::imshow("output", YOLOL_Color);
           
           waitKey(1);
         }
