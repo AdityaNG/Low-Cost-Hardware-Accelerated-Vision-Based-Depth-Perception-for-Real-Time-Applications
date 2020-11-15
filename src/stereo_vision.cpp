@@ -16,7 +16,8 @@
 #include <popt.h>
 
 #include "yolo/yolo.hpp"
-
+#include "common.h"
+#include "bayesian/bayesian.h"
 
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
@@ -656,6 +657,28 @@ void imageLoop() {
 }
 
 int main(int argc, const char** argv) {
+  std::vector<OBJ> tmp_list;
+
+  for (int i=0; i<10; i++) {
+  OBJ temp;
+  temp.name = "tmp";
+  temp.x = i;
+  temp.y = i+1;
+  temp.w = 1;
+  temp.h = 1;
+  temp.c = 0.1;
+  temp.g = 255.0;
+  temp.b = 255.0;
+  temp.r = 255.0;
+  tmp_list.push_back(temp);
+
+  append_old_objs(tmp_list);
+  }
+  
+
+  display_history();
+
+  return 0;
   
   initYOLO();
 

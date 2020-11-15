@@ -11,16 +11,10 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include "../common.h"
 
 using namespace cv;
 
-typedef struct object {
-  std::string name; // Name of the detection
-  int x, y; // Coordinates
-  int w, h; // Width and height
-  float c; // Confidence
-  double r, g, b;
-} OBJ;
 
 void print(std::vector<OBJ> &objects);
 
