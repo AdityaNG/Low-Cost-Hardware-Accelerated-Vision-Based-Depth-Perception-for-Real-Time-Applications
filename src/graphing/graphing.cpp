@@ -1,5 +1,5 @@
 #include "graphing.h"
-#include "../cleanup/cleanup.hpp"
+//#include "../cleanup/cleanup.hpp"
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -166,7 +166,7 @@ void keyboard_chars(unsigned char key, int x, int y)
     else if (key == 'a') tX -= VEL_T;
     else if (key == 's') tY -= VEL_T;
     else if (key == 'd') tX += VEL_T; 
-    else if (key == 'q') clean();
+    else if (key == 'q') exit(0); //clean();
     else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
     else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
     else if (key == 'n'){
