@@ -8,7 +8,7 @@
 #endif
 #include <stdlib.h>
 #include <iostream>
-double *POINTS, *POINTS_OBJECTS;
+double *POINTS_OBJECTS;
 
 // Rotate X
 double rX=17;
@@ -18,22 +18,6 @@ double rY=0;
 double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
 
 #define SIZE 1
-
-// The coordinates for the vertices of the cube
-
-int Pindex = 0;
-void appendPOINT(double X, double Y, double Z, double r, double g, double b) {
-    POINTS[Pindex + 0] = X;
-    POINTS[Pindex + 1] = Y;
-    POINTS[Pindex + 2] = Z;
-    POINTS[Pindex + 3] = r;
-    POINTS[Pindex + 4] = g;
-    POINTS[Pindex + 5] = b;
-    Pindex+=6;
-}
-void resetPOINTS() {
-    Pindex = 0;
-}
 
 int Oindex = 0;
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
@@ -225,17 +209,8 @@ void mouse_callback(int button, int state, int x, int y) {
 }
 
 void startGraphics(int out_width, int out_height) {
-    POINTS = (double*) malloc(sizeof(double) * 6 * out_width * out_height);
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
-	for (int i = 0; i < 100; i+=6){
-		POINTS[i]	= i/400.0;
-		POINTS[i+1]	= i/400.0;
-		POINTS[i+2]	= i/400.0;
-		POINTS[i+3]	= i/400 + 0.5;
-		POINTS[i+4]	= i/400 + 0.5;
-		POINTS[i+5]	= i/400 + 0.5;
-	}
     // Initialize GLUT and process user parameters
     int argc = 1;
     char *argv[1] = {(char*)"Something"};
@@ -266,7 +241,5 @@ void startGraphics(int out_width, int out_height) {
     glutMainLoop();
 	
 	//th1.join();
-
-    free(POINTS);
     free(POINTS_OBJECTS);
 }

@@ -274,7 +274,6 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *
  */
 Mat generateDisparityMap(Mat& left, Mat& right) {
-  resetPOINTS();
   resetOBJECTS();
   if (left.empty() || right.empty()) 
     return left;
