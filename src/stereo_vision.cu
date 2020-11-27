@@ -1,6 +1,7 @@
 //#include <curl/curl.h>
 #include <exception>
 #include <iostream>
+#include <opencv4/opencv2/highgui.hpp>
 #include <vector>
 #include <thread> 
 #include <stdlib.h>
@@ -50,7 +51,8 @@ FileStorage calib_file;
 
 Size out_img_size;
 Size calib_img_size;
-int calib_width, calib_height, out_width = 1242/shrink_factor, out_height = 375/shrink_factor;
+int calib_width = 1242, calib_height = 375,
+    out_width = 1242/shrink_factor, out_height = 375/shrink_factor;
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
@@ -89,6 +91,7 @@ void cudaInit(){
 void clean(){
   // Cuda Cleanup
   printf("Exitting the program.....\n");
+  destroyAllWindows();
   free(points);
   cudaStreamDestroy(s1);
   cudaFree(d_XR);
@@ -342,6 +345,7 @@ void imgCallback_video() {
 }
 
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
+printf("imgCalback called\n");
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
@@ -371,7 +375,6 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
   
   imshow("LEFT_C", img_left_color_flip);
 }
-
 
 /*
  * Function:  findRectificationMap 
@@ -478,13 +481,10 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   
 }
 
-void next() {
+void next(){
   static int iImage=0;
-  if (video_mode) {
-    char left_img_topic[128];
-    char right_img_topic[128];
-    char right_img_dir[128];
-    std::strcpy(right_img_dir , format("%svideo/testing/image_03/%04d/", kitti_path, iImage).c_str()); 
+  if (video_mode){
+    char left_img_topic[128], right_img_topic[128];
     size_t max_files = 465; // Just hardcoded the value for now
 
     Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
@@ -494,13 +494,11 @@ void next() {
     play_video = 1;
     while (play_video){
       for (int iFrame = 0; iFrame < max_files; iFrame++){
-        if (t_t!=0)
-          printf("(FPS=%f) ", 1/t_t);
+        if (t_t!=0) printf("(FPS=%f) ", 1/t_t);
         
-        start_timer   
-        
-        strcpy(left_img_topic  , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-        strcpy(right_img_topic , format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+        start_timer;        
+        strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+        strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
 
         left_img = imread(left_img_topic, IMREAD_UNCHANGED);
         right_img = imread(right_img_topic, IMREAD_UNCHANGED);
@@ -508,11 +506,10 @@ void next() {
         resize(right_img, right_img, out_img_size);        
 
         YOLOL_Color = left_img.clone();
-
         obj_list = processYOLO(YOLOL_Color);
-        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO
+        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
-        if ( iFrame%frame_skip == 0) {
+        if (iFrame%frame_skip == 0) {
           printf("(DISP) \t ");
           //imgCallback_video(left_img, right_img, dmap);
           left_img_OLD = left_img.clone();
@@ -535,47 +532,32 @@ void next() {
         //  dmap = dmapOLD.clone();
         //}
     
-
-        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
-        cv::Mat rgba;
-        cv::cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+        Mat rgba;
+        cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
         color = (uchar4*)rgba.ptr<unsigned char>(0);
+        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
         publishPointCloud(left_img, dmap);
         printf("(PC Done) ");
         updateGraph();
 
-        if (1) {
-          //flip(YOLOL_Color, img_left_color_flip,1);
+        if (1){
           flip(left_img, img_left_color_flip,1);
-          
-          //imshow("LEFT_C", img_left_color_flip);
-          //imshow("DISP", dmap);
-          cv::namedWindow("output", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-          cv::imshow("output", YOLOL_Color);
-          
+          namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+          namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+          imshow("Detections", YOLOL_Color);
+          imshow("Disparity", dmap);
           waitKey(1);
         }
-
-        auto end = chrono::high_resolution_clock::now();   
-        // Calculating total time taken by the program. 
-        double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-        time_taken *= 1e-9;   
-        t_t = time_taken;
-        
+        end_timer(t_t);        
         printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
       }
     }
   } 
   else {
     printf("Next image\n");
-
-    char left_img_topic[128];
-    char right_img_topic[128];
-
-    std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    
-    std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    
-  
-    
+    char left_img_topic[128], right_img_topic[128];
+    strcpy(left_img_topic , format("%s/object/testing/image_2/%06d.png", kitti_path, iImage).c_str());    
+    strcpy(right_img_topic, format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());       
     imgCallback(left_img_topic, right_img_topic);
     iImage++;
   }
@@ -589,11 +571,10 @@ void imageLoop() {
   while (1) next();
 }
 
-int main(int argc, const char** argv) {
-  
+int main(int argc, const char** argv){  
   initYOLO();
 
-  static struct poptOption options[] = { //
+  static struct poptOption options[] = { 
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
     { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
     { "draw_points",'p',POPT_ARG_INT,&draw_points,0,"Set p=1 to plot out points","NUM" },
@@ -607,9 +588,6 @@ int main(int argc, const char** argv) {
   int c; while((c = poptGetNextOpt(poptCONT)) >= 0) {}
 
   printf("KITTI Path: %s \n", kitti_path);
-
-  calib_width = 1242;
-  calib_height = 375;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);
@@ -625,8 +603,8 @@ int main(int argc, const char** argv) {
   calib_file["XT"] >> XT;
 
  
-  cout << " K1 : " << "D1 : " << "R1 : " << "P1 : " << "K2 : " << "D2 : " << "R2 : " << "P2 : " << endl;
-  cout <<  K1 << endl << D1 << endl << R1 << endl << P1 << endl << K2 << endl << D2 << endl << R2 << endl << P2 << endl;
+  cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
+       << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
   
   findRectificationMap(calib_file, out_img_size);
   

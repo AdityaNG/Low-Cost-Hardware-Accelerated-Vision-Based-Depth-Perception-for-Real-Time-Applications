@@ -72,8 +72,8 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   glEnd();
   */
 }
-#define width 1242/4
-#define height 375/4
+extern int out_width;
+extern int out_height;
 extern double3 *points;
 extern uchar4 *color;
 void drawCube(){
@@ -106,7 +106,7 @@ void drawCube(){
 
     // BACK
     glBegin(GL_POINTS);
-    for (int i = 0; i < width * height; i++){
+    for (int i = 0; i < out_width * out_height; i++){
         if(color == NULL) break;
 		glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
