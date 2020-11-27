@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "graphing.h"
 #include "../cleanup/cleanup.hpp"
 #define GL_GLEXT_PROTOTYPES
@@ -6,20 +7,20 @@
 #else
 #include <GL/glut.h>
 #endif
-#include <stdlib.h>
-#include <iostream>
-double *POINTS_OBJECTS;
-
-// Rotate X
-double rX=17;
-// Rotate Y
-double rY=0;
-
-double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
 
 #define SIZE 1
 
+extern int out_width;
+extern int out_height;
+extern double3 *points;
+extern uchar4 *color;
+double *POINTS_OBJECTS;
 int Oindex = 0;
+
+double rX=17; // Rotate X
+double rY=0;  // Rotate Y
+double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
     POINTS_OBJECTS[Oindex + 1] = Y;
@@ -33,10 +34,8 @@ void resetOBJECTS() {
     Oindex = 0;
 }
 
-void draw_cube(double x, double y, double z, double r, double g, double b) {
-
+void draw_cube(double x, double y, double z, double r, double g, double b){
   //printf("(%lf %lf %lf), ", x,y,z);
-
     double verts[8][3];
     for (int i = 0; i < 8; i++){
         int s3 = ((1<<0) & i)>>0 ? 1: -1;
@@ -47,7 +46,6 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
         verts[i][1] = y+ s2*SIZE/2.0;
         verts[i][2] = z+ s3*SIZE/2.0;
     }
-
     glBegin(GL_LINE_STRIP);
     glColor3f(r, b, g);
     for (int iItr=0; iItr < 8; iItr++ ){
@@ -72,10 +70,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   glEnd();
   */
 }
-extern int out_width;
-extern int out_height;
-extern double3 *points;
-extern uchar4 *color;
+
 void drawCube(){
     // Set Background Color
     //glClearColor(0.4, 0.4, 0.4, 1.0);
@@ -89,7 +84,6 @@ void drawCube(){
     // Rotate when user changes rX and rY
     glRotatef( rX, 1.0, 0.0, 0.0 );
     glRotatef( rY, 0.0, 1.0, 0.0 );
-
 
     glScalef(ZOOM, ZOOM, ZOOM);
     
@@ -168,7 +162,6 @@ void updateGraph() {
     glutPostRedisplay();
 }
 
-
 void mouse_callback(int button, int state, int x, int y) {
 	static int xp=0, yp=0;
 	//printf("%d %d %d %d\n", button, state, x, y);
@@ -208,7 +201,7 @@ void mouse_callback(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-void startGraphics(int out_width, int out_height) {
+void startGraphics(int out_width, int out_height){
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
     // Initialize GLUT and process user parameters

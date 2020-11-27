@@ -7,6 +7,7 @@
 
 ## Dependencies
 
+- [Cuda Toolkit](https://developer.nvidia.com/cuda-downloads)
 - A C++ compiler (*e.g.*, [GCC](http://gcc.gnu.org/))
 - [LIBELAS](http://www.cvlibs.net/software/libelas/) 
 - [OpenCV](https://github.com/opencv/opencv)

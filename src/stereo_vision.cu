@@ -32,7 +32,7 @@ std::vector<OBJ> obj_list;
 using namespace cv;
 using namespace std;
 
-#define shrink_factor 4 // Modify to change the image resize factor
+#define shrink_factor 2 // Modify to change the image resize factor
 
 #define start_timer auto start = chrono::high_resolution_clock::now();  
 #define end_timer(var)\
