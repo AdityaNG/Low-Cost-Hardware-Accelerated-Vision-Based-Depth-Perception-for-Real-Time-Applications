@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "graphing.h"
 #include "../cleanup/cleanup.hpp"
 #define GL_GLEXT_PROTOTYPES
@@ -6,36 +7,20 @@
 #else
 #include <GL/glut.h>
 #endif
-#include <stdlib.h>
-#include <iostream>
-double *POINTS, *POINTS_OBJECTS;
-
-// Rotate X
-double rX=17;
-// Rotate Y
-double rY=0;
-
-double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
 
 #define SIZE 1
 
-// The coordinates for the vertices of the cube
-
-int Pindex = 0;
-void appendPOINT(double X, double Y, double Z, double r, double g, double b) {
-    POINTS[Pindex + 0] = X;
-    POINTS[Pindex + 1] = Y;
-    POINTS[Pindex + 2] = Z;
-    POINTS[Pindex + 3] = r;
-    POINTS[Pindex + 4] = g;
-    POINTS[Pindex + 5] = b;
-    Pindex+=6;
-}
-void resetPOINTS() {
-    Pindex = 0;
-}
-
+extern int out_width;
+extern int out_height;
+extern double3 *points;
+extern uchar4 *color;
+double *POINTS_OBJECTS;
 int Oindex = 0;
+
+double rX=17; // Rotate X
+double rY=0;  // Rotate Y
+double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
     POINTS_OBJECTS[Oindex + 1] = Y;
@@ -49,10 +34,8 @@ void resetOBJECTS() {
     Oindex = 0;
 }
 
-void draw_cube(double x, double y, double z, double r, double g, double b) {
-
+void draw_cube(double x, double y, double z, double r, double g, double b){
   //printf("(%lf %lf %lf), ", x,y,z);
-
     double verts[8][3];
     for (int i = 0; i < 8; i++){
         int s3 = ((1<<0) & i)>>0 ? 1: -1;
@@ -63,7 +46,6 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
         verts[i][1] = y+ s2*SIZE/2.0;
         verts[i][2] = z+ s3*SIZE/2.0;
     }
-
     glBegin(GL_LINE_STRIP);
     glColor3f(r, b, g);
     for (int iItr=0; iItr < 8; iItr++ ){
@@ -88,10 +70,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   glEnd();
   */
 }
-#define width 1242/4
-#define height 375/4
-extern double3 *points;
-extern uchar4 *color;
+
 void drawCube(){
     // Set Background Color
     //glClearColor(0.4, 0.4, 0.4, 1.0);
@@ -105,7 +84,6 @@ void drawCube(){
     // Rotate when user changes rX and rY
     glRotatef( rX, 1.0, 0.0, 0.0 );
     glRotatef( rY, 0.0, 1.0, 0.0 );
-
 
     glScalef(ZOOM, ZOOM, ZOOM);
     
@@ -122,7 +100,7 @@ void drawCube(){
 
     // BACK
     glBegin(GL_POINTS);
-    for (int i = 0; i < width * height; i++){
+    for (int i = 0; i < out_width * out_height; i++){
         if(color == NULL) break;
 		glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
@@ -184,7 +162,6 @@ void updateGraph() {
     glutPostRedisplay();
 }
 
-
 void mouse_callback(int button, int state, int x, int y) {
 	static int xp=0, yp=0;
 	//printf("%d %d %d %d\n", button, state, x, y);
@@ -224,18 +201,9 @@ void mouse_callback(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-void startGraphics(int out_width, int out_height) {
-    POINTS = (double*) malloc(sizeof(double) * 6 * out_width * out_height);
+void startGraphics(int out_width, int out_height){
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
-	for (int i = 0; i < 100; i+=6){
-		POINTS[i]	= i/400.0;
-		POINTS[i+1]	= i/400.0;
-		POINTS[i+2]	= i/400.0;
-		POINTS[i+3]	= i/400 + 0.5;
-		POINTS[i+4]	= i/400 + 0.5;
-		POINTS[i+5]	= i/400 + 0.5;
-	}
     // Initialize GLUT and process user parameters
     int argc = 1;
     char *argv[1] = {(char*)"Something"};
@@ -266,7 +234,5 @@ void startGraphics(int out_width, int out_height) {
     glutMainLoop();
 	
 	//th1.join();
-
-    free(POINTS);
     free(POINTS_OBJECTS);
 }

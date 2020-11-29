@@ -1,6 +1,7 @@
 //#include <curl/curl.h>
 #include <exception>
 #include <iostream>
+#include <opencv4/opencv2/highgui.hpp>
 #include <vector>
 #include <thread> 
 #include <stdlib.h>
@@ -12,7 +13,6 @@
 #include <math.h>
 #include <popt.h>
 #include <future>
-//#include <experimental/filesystem>  
 
 #include "yolo/yolo.hpp"
 #include "elas/elas.h"
@@ -31,31 +31,75 @@ std::vector<OBJ> obj_list;
 
 using namespace cv;
 using namespace std;
-//namespace fs = std::experimental::filesystem;
 
-#define out_width 1242/4
-#define out_height 375/4
+#define shrink_factor 2 // Modify to change the image resize factor
+
+#define start_timer auto start = chrono::high_resolution_clock::now();  
+#define end_timer(var)\
+  auto end = chrono::high_resolution_clock::now();\
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count();\
+  time_taken *= 1e-9;\
+  var = time_taken;                                             
+
+//////////////////////////////////////// Globals ///////////////////////////////////////////////////////
+Mat XR, XT, Q, P1, P2;
+Mat R1, R2, K1, K2, D1, D2, R;
+Mat lmapx, lmapy, rmapx, rmapy;
+Mat left_img_OLD, right_img_OLD, dmapOLD;
+Vec3d T;
+FileStorage calib_file;
+
+Size out_img_size;
+Size calib_img_size;
+int calib_width = 1242, calib_height = 375,
+    out_width = 1242/shrink_factor, out_height = 375/shrink_factor;
+
+const char* kitti_path;
+const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
+
+double pc_t = 0, yd_t = 0, t_t = 0; // For calculating timings
+
+int video_mode = 0;
+int debug = 0;
+int draw_points = 0;
+int frame_skip = 1;
+int play_video = 0;
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
-uchar *d_dmap; // D map needs to be pushed to GPU
+uchar *d_dmap; // Disparity map needs to be pushed to GPU
 double3 *points; // Holds the coordinates of each pixel in 3D space
 double3 *d_points;
-
 uchar4 *color = NULL;
-
 cudaStream_t s1;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void print_OBJ(OBJ o) {
-  cout <<"Name : "<< o.name <<endl;
-  cout <<"\t x : "<< o.x << '\n';
-  cout <<"\t y : "<< o.y << '\n';
-  cout <<"\t h : "<< o.h << '\n';
-  cout <<"\t w : "<< o.w << '\n';
-  cout <<"\t c : "<< o.c << '\n';
-  cout <<"--------"<<endl;
+void cudaInit(){
+  // Cuda Init
+  cudaMalloc(&d_XT, sizeof(double) * 3);
+  cudaMalloc(&d_XR, sizeof(double) * 9);
+  cudaMalloc(&d_Q, sizeof(double) * 16);
+  cudaMalloc(&d_dmap, sizeof(uchar) * out_width * out_height);
+  cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
+  points = (double3*)malloc(sizeof(double3) * out_width * out_height);
+  cudaStreamCreate(&s1);  
+  printf("CUDA Init done\n");
+}
+
+void clean(){
+  // Cuda Cleanup
+  printf("Exitting the program.....\n");
+  destroyAllWindows();
+  free(points);
+  cudaStreamDestroy(s1);
+  cudaFree(d_XR);
+  cudaFree(d_XT);
+  cudaFree(d_Q);
+  cudaFree(d_points);
+  cudaFree(d_dmap);
+  exit(0);
 }
 
 int constrain(int a, int lb, int ub) {
@@ -66,22 +110,6 @@ int constrain(int a, int lb, int ub) {
   else
     return a;
 }
-
-Mat XR, XT, Q, P1, P2;
-Mat R1, R2, K1, K2, D1, D2, R;
-Mat lmapx, lmapy, rmapx, rmapy;
-Vec3d T;
-FileStorage calib_file;
-
-Size out_img_size;
-Size calib_img_size;
-const char* kitti_path;
-int video_mode = 0;
-int debug = 0;
-int draw_points = 0;
-int frame_skip = 1;
-
-double pc_t = 0, yd_t = 0, t_t = 0;
 
 /*
  * Function:  composeRotationCamToRobot 
@@ -202,8 +230,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     cout << "Rotation matrix: " << XR << endl;
     cout << "Translation matrix: " << XT << endl;
   }
-  auto start = chrono::high_resolution_clock::now();    
-  ios_base::sync_with_stdio(false); // unsync the I/O of C and C++.
+
+  start_timer; 
   
   cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1);
   cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
@@ -215,18 +243,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 
   cudaDeviceSynchronize();
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
-/*
-  for (int i = 0; i < img_left.cols; i++){
-    for (int j = 0; j < img_left.rows; j++){
-      int32_t red, blue, green; 
-      red = img_left.at<Vec3b>(j,i)[2];
-      green = img_left.at<Vec3b>(j,i)[1];
-      blue = img_left.at<Vec3b>(j,i)[0];   
-      //appendPOINT(points[j*out_width + i].y, -points[j*out_width + i].z, points[j*out_width + i].x, red/255.0, green/255.0, blue/255.0);
-      //appendPOINT(points[j*cols + i].x, points[j*cols + i].y, points[j*cols + i].z, red/255.0, green/255.0, blue/255.0);   
-    }
-  }
-*/
+
   for (auto& object : obj_list) {
     /*
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
@@ -255,11 +272,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     // TODO : Do something
   }
   //updateGraph();
-  auto end = chrono::high_resolution_clock::now();   
-  // Calculating total time taken by the program. 
-  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-  time_taken *= 1e-9;   
-  pc_t = time_taken;
+  end_timer(pc_t);
 }
 
 /*
@@ -275,7 +288,6 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *
  */
 Mat generateDisparityMap(Mat& left, Mat& right) {
-  resetPOINTS();
   resetOBJECTS();
   if (left.empty() || right.empty()) 
     return left;
@@ -313,7 +325,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  *  returns: void
  *
  */
-Mat left_img_OLD, right_img_OLD, dmapOLD;
+
 void imgCallback_video() {
   Mat left_img = left_img_OLD; Mat right_img = right_img_OLD;
   if (left_img.empty() || right_img.empty()){
@@ -328,69 +340,42 @@ void imgCallback_video() {
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
-  auto start = chrono::high_resolution_clock::now();   
-  ios_base::sync_with_stdio(false);
-
-  
+  start_timer;   
   dmapOLD = generateDisparityMap(img_left, img_right);  
-  
-  auto end = chrono::high_resolution_clock::now();   
-  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-  time_taken *= 1e-9;   
-  yd_t = time_taken;
+  end_timer(yd_t);
 }
 
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
+printf("imgCalback called\n");
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
-  if (tmpL.empty() || tmpR.empty()){
-    //printf("%s\n",left_img_topic);
-    return;
-  }
+  
+  if (tmpL.empty() || tmpR.empty()) return;
 
   resize(tmpL_Color, tmpL_Color, out_img_size);
   resize(tmpL, tmpL, out_img_size);
   resize(tmpR, tmpR, out_img_size);
 
-  cv::Mat frame = tmpL_Color.clone();
-  Mat img_left, img_right, img_left_color, img_left_color_flip;
-  
+  Mat frame = tmpL_Color.clone();
+  Mat img_left, img_right, img_left_color, img_left_color_flip;  
   
   img_left = tmpL; img_right = tmpR;
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+  
+  start_timer;
   auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
-  
-  auto start = chrono::high_resolution_clock::now();   
-  ios_base::sync_with_stdio(false);
-
-  //obj_list = processYOLO(tmpL_Color);
-
-  Mat dmap = generateDisparityMap(img_left, img_right);
-  
-  
-  auto end = chrono::high_resolution_clock::now();   
-  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-  time_taken *= 1e-9;   
-  yd_t = time_taken;
-
-  obj_list.empty();
-  obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
-
-  //cout << "; Y+D " << fixed << time_taken << setprecision(9); 
-  //cout << "\t";
+  Mat dmap = generateDisparityMap(img_left, img_right);  
+  obj_list = f.get(); // Getting obj_list from the future object which the async call returns to f  
+  end_timer(yd_t);
 
   publishPointCloud(frame, dmap);
   
   flip(tmpL_Color, img_left_color_flip,1);
   
   imshow("LEFT_C", img_left_color_flip);
-  //imshow("DISP", dmap);
-  //waitKey(2000);
-  waitKey(wait);
 }
-
 
 /*
  * Function:  findRectificationMap 
@@ -497,28 +482,10 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   
 }
 
-/*
-std::size_t number_of_files_in_directory(fs::path path)
-{
-    using fs::directory_iterator;
-    using fp = bool (*)( const fs::path&);
-    return std::count_if(directory_iterator(path), directory_iterator{}, (fp)fs::is_regular_file);
-}
-*/
-
-const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
-int calib_width, calib_height;//, out_width, out_height;
-int play_video = 0;
-
-void next() {
+void next(){
   static int iImage=0;
-  if (video_mode) {
-    char left_img_topic[128];
-    char right_img_topic[128];
-    char right_img_dir[128];
-    std::strcpy(right_img_dir , format("%svideo/testing/image_03/%04d/", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-    //fs::path path_to_folder(right_img_dir);
-    //size_t max_files = number_of_files_in_directory(path_to_folder);
+  if (video_mode){
+    char left_img_topic[128], right_img_topic[128];
     size_t max_files = 465; // Just hardcoded the value for now
 
     Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
@@ -528,13 +495,11 @@ void next() {
     play_video = 1;
     while (play_video){
       for (int iFrame = 0; iFrame < max_files; iFrame++){
-        if (t_t!=0)
-          printf("(FPS=%f) ", 1/t_t);
-        auto start = chrono::high_resolution_clock::now();   
-        ios_base::sync_with_stdio(false);
+        if (t_t!=0) printf("(FPS=%f) ", 1/t_t);
         
-        std::strcpy(left_img_topic  , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-        std::strcpy(right_img_topic , format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+        start_timer;        
+        strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+        strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
 
         left_img = imread(left_img_topic, IMREAD_UNCHANGED);
         right_img = imread(right_img_topic, IMREAD_UNCHANGED);
@@ -542,11 +507,10 @@ void next() {
         resize(right_img, right_img, out_img_size);        
 
         YOLOL_Color = left_img.clone();
-
         obj_list = processYOLO(YOLOL_Color);
-        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO
+        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
-        if ( iFrame%frame_skip == 0) {
+        if (iFrame%frame_skip == 0) {
           printf("(DISP) \t ");
           //imgCallback_video(left_img, right_img, dmap);
           left_img_OLD = left_img.clone();
@@ -569,47 +533,32 @@ void next() {
         //  dmap = dmapOLD.clone();
         //}
     
-
-        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
-        cv::Mat rgba;
-        cv::cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+        Mat rgba;
+        cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
         color = (uchar4*)rgba.ptr<unsigned char>(0);
+        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
         publishPointCloud(left_img, dmap);
         printf("(PC Done) ");
         updateGraph();
 
-        if (0) {
-          //flip(YOLOL_Color, img_left_color_flip,1);
+        if (1){
           flip(left_img, img_left_color_flip,1);
-          
-          //imshow("LEFT_C", img_left_color_flip);
-          //imshow("DISP", dmap);
-          cv::namedWindow("output", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-          cv::imshow("output", YOLOL_Color);
-          
+          namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+          namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+          imshow("Detections", YOLOL_Color);
+          imshow("Disparity", dmap);
           waitKey(1);
         }
-
-        auto end = chrono::high_resolution_clock::now();   
-        // Calculating total time taken by the program. 
-        double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
-        time_taken *= 1e-9;   
-        t_t = time_taken;
-        
+        end_timer(t_t);        
         printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
       }
     }
   } 
   else {
     printf("Next image\n");
-
-    char left_img_topic[128];
-    char right_img_topic[128];
-
-    std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-    std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-  
-    
+    char left_img_topic[128], right_img_topic[128];
+    strcpy(left_img_topic , format("%s/object/testing/image_2/%06d.png", kitti_path, iImage).c_str());    
+    strcpy(right_img_topic, format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());       
     imgCallback(left_img_topic, right_img_topic);
     iImage++;
   }
@@ -623,36 +572,10 @@ void imageLoop() {
   while (1) next();
 }
 
-void cudaInit(){
-  // Cuda Init
-  cudaMalloc(&d_XT, sizeof(double) * 3);
-  cudaMalloc(&d_XR, sizeof(double) * 9);
-  cudaMalloc(&d_Q, sizeof(double) * 16);
-  cudaMalloc(&d_dmap, sizeof(uchar) * out_width * out_height);
-  cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
-  points = (double3*)malloc(sizeof(double3) * out_width * out_height);
-  cudaStreamCreate(&s1);  
-  printf("CUDA Init done\n");
-}
-
-void clean(){
-  // Cuda Cleanup
-  printf("Exitting the program.....\n");
-  free(points);
-  cudaStreamDestroy(s1);
-  cudaFree(d_XR);
-  cudaFree(d_XT);
-  cudaFree(d_Q);
-  cudaFree(d_points);
-  cudaFree(d_dmap);
-  exit(0);
-}
-
-int main(int argc, const char** argv) {
-  
+int main(int argc, const char** argv){  
   initYOLO();
 
-  static struct poptOption options[] = { //
+  static struct poptOption options[] = { 
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
     { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
     { "draw_points",'p',POPT_ARG_INT,&draw_points,0,"Set p=1 to plot out points","NUM" },
@@ -666,11 +589,6 @@ int main(int argc, const char** argv) {
   int c; while((c = poptGetNextOpt(poptCONT)) >= 0) {}
 
   printf("KITTI Path: %s \n", kitti_path);
-
-  calib_width = 1242;
-  calib_height = 375;
-  //out_width = 1242/4;
-  //out_height = 375/4;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);
@@ -686,8 +604,8 @@ int main(int argc, const char** argv) {
   calib_file["XT"] >> XT;
 
  
-  cout << " K1 : " << "D1 : " << "R1 : " << "P1 : " << "K2 : " << "D2 : " << "R2 : " << "P2 : " << endl;
-  cout <<  K1 << endl << D1 << endl << R1 << endl << P1 << endl << K2 << endl << D2 << endl << R2 << endl << P2 << endl;
+  cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
+       << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
   
   findRectificationMap(calib_file, out_img_size);
   
