@@ -1,6 +1,6 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
-![demo](https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices/blob/main/imgs/Point_Cloud_Outputs/Oct_29_2020/p2_final.gif?raw=true)
+![demo](https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices/blob/main/imgs/single_loop.gif?raw=true)
 
 
 - Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
