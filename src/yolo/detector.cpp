@@ -83,6 +83,7 @@ std::vector<OBJ> processYOLO(Mat frame) {
 
             OBJ temp;
             temp.name = class_names[c];
+            //strcpy(temp.name, class_names[c]);
             temp.x = rect.x;
             temp.y = rect.y;
             temp.w = rect.width;

@@ -247,6 +247,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
       }
     } 
     //appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+    //if (draw_points == 1)
     appendOBJECTS(Y/((i_ub-i_lb)*(j_ub-j_lb)), -Z/((i_ub-i_lb)*(j_ub-j_lb)), X/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
    
@@ -577,7 +578,7 @@ void next() {
         printf("(PC Done) ");
         updateGraph();
 
-        if (1) {
+        if (0) {
           //flip(YOLOL_Color, img_left_color_flip,1);
           flip(left_img, img_left_color_flip,1);
           
