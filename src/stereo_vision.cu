@@ -541,7 +541,7 @@ void next(){
         printf("(PC Done) ");
         updateGraph();
 
-        if (1){
+        if (0){
           flip(left_img, img_left_color_flip,1);
           namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
           namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
