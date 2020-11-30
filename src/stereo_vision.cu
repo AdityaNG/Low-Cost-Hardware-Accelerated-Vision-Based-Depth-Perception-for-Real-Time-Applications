@@ -18,6 +18,7 @@
 #include "elas/elas.h"
 #include "graphing/graphing.h"
 #include "cleanup/cleanup.hpp"
+#include "bayesian/bayesian.h"
 
 
 #define GL_GLEXT_PROTOTYPES
@@ -27,7 +28,7 @@
 #include <GL/glut.h>
 #endif
 
-std::vector<OBJ> obj_list;
+std::vector<OBJ> obj_list, pred_list;
 
 using namespace cv;
 using namespace std;
@@ -508,6 +509,10 @@ void next(){
 
         YOLOL_Color = left_img.clone();
         obj_list = processYOLO(YOLOL_Color);
+        pred_list = get_predicted_boxes();
+        append_old_objs(obj_list);
+        obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+        
         //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
         if (iFrame%frame_skip == 0) {

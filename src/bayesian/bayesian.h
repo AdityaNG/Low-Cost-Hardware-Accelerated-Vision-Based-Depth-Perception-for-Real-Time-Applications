@@ -8,13 +8,14 @@
 
 #define MAX_BAYESIAN_OBJECTS 10
 #define BAYESIAN_HISTORY 10
-#define BAYESIAN_DISTANCE_THRESH 50
+#define BAYESIAN_DISTANCE_THRESH 100
 
 typedef struct bayesian
 {
     int used[BAYESIAN_HISTORY];
     int x[BAYESIAN_HISTORY];
     int y[BAYESIAN_HISTORY];
+    int predX=0, predY=0;
     //int dist;
 } bayesian_t;
 

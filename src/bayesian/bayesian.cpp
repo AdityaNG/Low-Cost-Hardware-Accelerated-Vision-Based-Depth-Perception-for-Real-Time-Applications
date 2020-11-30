@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <numeric>
+
 using namespace std;
 
 int OLD_OBJS_TOP = 0;
@@ -22,26 +24,29 @@ int unused_id(int recent) {
 }
 
 int match_object(int x, int y) {
-    int id = 0;
+    int id = -1;
     double old_dist = BAYESIAN_DISTANCE_THRESH;
     int prev = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
 
         
     for (int jCount=0; jCount<MAX_BAYESIAN_OBJECTS; jCount++) {
         if (OLD_BAYES_OBJS[jCount].used[prev] != 0) {
-            int dist = distance(OLD_BAYES_OBJS[jCount].x[prev], OLD_BAYES_OBJS[jCount].y[prev], x, y);
+            double dist = distance(OLD_BAYES_OBJS[jCount].x[prev], OLD_BAYES_OBJS[jCount].y[prev], x, y);
             if (
                 dist < BAYESIAN_DISTANCE_THRESH &&
                 dist < old_dist
                 ) {
+                    //printf("\n\nDist = %f", dist);
                 id = jCount;
                 old_dist = dist;
             }
         } 
     }
 
-    if (id == 0) {
+    if (id == -1) {
         id = unused_id(prev);
+        // TODO : clean up the id
+        //printf("\n\n UNSUSED");
     }
 
     return id;
@@ -70,7 +75,7 @@ void append_old_objs(std::vector<OBJ> obj_list) {
 
     for (OBJ object : obj_list) {
         int id = iCount;
-        if (QUEUE_IS_EMPTY)
+        if (!QUEUE_IS_EMPTY)
             id = match_object(object.x, object.y);
         
         OLD_BAYES_OBJS[id].used[top] = 1;
@@ -111,6 +116,8 @@ int mean_change_position_vector(int* a, int* used) {
     return round(m / BAYESIAN_HISTORY);
 }
 
+std::vector<float> error_list, mean_errors;
+float MAX_ERR = 0;
 
 void predict(int id, int* x, int* y) {
     if (!QUEUE_IS_FULL)
@@ -119,9 +126,19 @@ void predict(int id, int* x, int* y) {
     //printf("ID=%d, top=%d\n", id, recent);
     *x = OLD_BAYES_OBJS[id].x[recent] + mean_change_position_vector(OLD_BAYES_OBJS[id].x, OLD_BAYES_OBJS[id].used);
     *y = OLD_BAYES_OBJS[id].y[recent] + mean_change_position_vector(OLD_BAYES_OBJS[id].y, OLD_BAYES_OBJS[id].used);
+    if (OLD_BAYES_OBJS[id].predX!=0 && OLD_BAYES_OBJS[id].predY!=0) {
+        float errX = abs(OLD_BAYES_OBJS[id].predX - OLD_BAYES_OBJS[id].x[recent]);
+        float errY = abs(OLD_BAYES_OBJS[id].predY - OLD_BAYES_OBJS[id].y[recent]);
+        //printf(" (bay_err=%f) ", ((errX+errY)/2.0));
+        error_list.push_back(errX);
+        error_list.push_back(errY);
+    }
+    OLD_BAYES_OBJS[id].predX = *x;
+    OLD_BAYES_OBJS[id].predY = *y;
 }
 
 std::vector<OBJ> get_predicted_boxes() {
+    error_list.clear();
     int recent = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
     std::vector<OBJ> plist;
     for (int iCount=0; iCount<MAX_BAYESIAN_OBJECTS; iCount++) {
@@ -138,5 +155,23 @@ std::vector<OBJ> get_predicted_boxes() {
             plist.push_back(temp);
         }
     }
+    auto n = error_list.size(); 
+    float average = 0.0f;
+    if ( n != 0) {
+        average = std::accumulate( error_list.begin(), error_list.end(), 0.0) / n; 
+    }
+    if (average>MAX_ERR)
+        MAX_ERR = average;
+    
+    mean_errors.push_back(abs(average));
+
+    n = mean_errors.size(); 
+    average = 0.0f;
+    if ( n != 0) {
+        average = std::accumulate( mean_errors.begin(), mean_errors.end(), 0.0) / n; 
+    }
+    printf(" (bay_err=%f) (max_err=%f) ", average, MAX_ERR);
+    
+    // TODO : calculate mean error
     return plist;
 }
