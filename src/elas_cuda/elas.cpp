@@ -51,15 +51,17 @@ void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t*
     }
   }
 
+//Apply filter and comput. discriptors in descriptor.cpp
 #ifdef PROFILE
   timer.start("Descriptor");  
 #endif
-  Descriptor desc1(I1,width,height,bpl,param.subsampling);
-  Descriptor desc2(I2,width,height,bpl,param.subsampling);
+  Descriptor desc1(I1,width,height,bpl,param.subsampling); //Image 1 desciptor
+  Descriptor desc2(I2,width,height,bpl,param.subsampling); //Image 2 desciptor
 
 #ifdef PROFILE
   timer.start("Support Matches");
 #endif
+
   vector<support_pt> p_support = computeSupportMatches(desc1.I_desc,desc2.I_desc);
   
   // if not enough support points for triangulation
@@ -73,14 +75,14 @@ void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t*
 #ifdef PROFILE
   timer.start("Delaunay Triangulation");
 #endif
-  vector<triangle> tri_1 = computeDelaunayTriangulation(p_support,0);
-  vector<triangle> tri_2 = computeDelaunayTriangulation(p_support,1);
+  vector<triangle> tri_1 = computeDelaunayTriangulation(p_support,0); //Left image
+  vector<triangle> tri_2 = computeDelaunayTriangulation(p_support,1); //Right Image
 
 #ifdef PROFILE
   timer.start("Disparity Planes");
 #endif
-  computeDisparityPlanes(p_support,tri_1,0);
-  computeDisparityPlanes(p_support,tri_2,1);
+  computeDisparityPlanes(p_support,tri_1,0); //Left image
+  computeDisparityPlanes(p_support,tri_2,1); //Right Image
 
 #ifdef PROFILE
   timer.start("Grid");
@@ -150,20 +152,27 @@ void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t*
   _mm_free(I2);
 }
 
+/*
+* Outlier rejection
+*/
 void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height) {
   
   // for all valid support points do
   for (int32_t u_can=0; u_can<D_can_width; u_can++) {
     for (int32_t v_can=0; v_can<D_can_height; v_can++) {
       int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
+      //If the point has a calulated disparity
       if (d_can>=0) {
-        
         // compute number of other points supporting the current point
         int32_t support = 0;
+        //Checks a 5 pixel window for inconsistent disparities
         for (int32_t u_can_2=u_can-param.incon_window_size; u_can_2<=u_can+param.incon_window_size; u_can_2++) {
           for (int32_t v_can_2=v_can-param.incon_window_size; v_can_2<=v_can+param.incon_window_size; v_can_2++) {
+            //Check we're inside candidate array (slightly smaller than image)
             if (u_can_2>=0 && v_can_2>=0 && u_can_2<D_can_width && v_can_2<D_can_height) {
               int16_t d_can_2 = *(D_can+getAddressOffsetImage(u_can_2,v_can_2,D_can_width));
+              //Check if the disparity is different above a given threshold (5 pixels)
+              //If it is considered fine, similar to other pixels around it, consider it a support
               if (d_can_2>=0 && abs(d_can-d_can_2)<=param.incon_threshold)
                 support++;
             }
@@ -178,10 +187,13 @@ void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,i
   }
 }
 
+/*
+* Removes support points with the same disparity along horizontal and vertical lines
+*/
 void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32_t D_can_height,
                                         int32_t redun_max_dist, int32_t redun_threshold, bool vertical) {
   
-  // parameters
+  // parameters for horizontal or vertical navigation
   int32_t redun_dir_u[2] = {0,0};
   int32_t redun_dir_v[2] = {0,0};
   if (vertical) {
@@ -200,6 +212,7 @@ void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32
         
         // check all directions for redundancy
         bool redundant = true;
+        // Loop through horizontal directions (left,right) or vertical direction (up,down)
         for (int32_t i=0; i<2; i++) {
           
           // search for support
@@ -207,14 +220,17 @@ void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32
           int32_t v_can_2 = v_can;
           int16_t d_can_2;
           bool support = false;
+          //Loops the spacial coordinate in the respective direction until the max distance for checking
           for (int32_t j=0; j<redun_max_dist; j++) {
             u_can_2 += redun_dir_u[i];
             v_can_2 += redun_dir_v[i];
             if (u_can_2<0 || v_can_2<0 || u_can_2>=D_can_width || v_can_2>=D_can_height)
               break;
             d_can_2 = *(D_can+getAddressOffsetImage(u_can_2,v_can_2,D_can_width));
+            //If the neighboring point has a similar disparity below the threshhold (1)
+            //TODO: What if jump in disparity
             if (d_can_2>=0 && abs(d_can-d_can_2)<=redun_threshold) {
-              support = true;
+              support = true; //We are have a neighboring thats very similar
               break;
             }
           }
@@ -234,21 +250,27 @@ void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32
   }
 }
 
+/*
+* Adds 4 corner point disparities based off closest support points
+*/
 void Elas::addCornerSupportPoints(vector<support_pt> &p_support) {
   
   // list of border points
   vector<support_pt> p_border;
-  p_border.push_back(support_pt(0,0,0));
-  p_border.push_back(support_pt(0,height-1,0));
-  p_border.push_back(support_pt(width-1,0,0));
-  p_border.push_back(support_pt(width-1,height-1,0));
+  p_border.push_back(support_pt(0,0,0)); // Bottom left
+  p_border.push_back(support_pt(0,height-1,0)); // Top left
+  p_border.push_back(support_pt(width-1,0,0)); // Top right
+  p_border.push_back(support_pt(width-1,height-1,0)); // Bottom Right
   
-  // find closest d
+  // find closest support point by minimizing the pixel distance
+  //Loops through boarder points
   for (int32_t i=0; i<p_border.size(); i++) {
     int32_t best_dist = 10000000;
+    //Loops through every support point (Inefficient)
     for (int32_t j=0; j<p_support.size(); j++) {
       int32_t du = p_border[i].u-p_support[j].u;
       int32_t dv = p_border[i].v-p_support[j].v;
+      //Current distance
       int32_t curr_dist = du*du+dv*dv;
       if (curr_dist<best_dist) {
         best_dist = curr_dist;
@@ -258,6 +280,7 @@ void Elas::addCornerSupportPoints(vector<support_pt> &p_support) {
   }
   
   // for right image
+  // TODO: Weird, why not left side extension
   p_border.push_back(support_pt(p_border[2].u+p_border[2].d,p_border[2].v,p_border[2].d));
   p_border.push_back(support_pt(p_border[3].u+p_border[3].d,p_border[3].v,p_border[3].d));
   
@@ -272,6 +295,7 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
   const int32_t v_step      = 2;
   const int32_t window_size = 3;
   
+  //Get 4 cornering discriptors (NE NE SE SW)
   int32_t desc_offset_1 = -16*u_step-16*width*v_step;
   int32_t desc_offset_2 = +16*u_step-16*width*v_step;
   int32_t desc_offset_3 = -16*u_step+16*width*v_step;
@@ -298,13 +322,15 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
     uint8_t* I2_block_addr;
     
     // we require at least some texture
+    // Sum intensity values around the candidate
     int32_t sum = 0;
     for (int32_t i=0; i<16; i++)
-      sum += abs((int32_t)(*(I1_block_addr+i))-128);
-    if (sum<param.support_texture)
+      sum += abs((int32_t)(*(I1_block_addr+i))-128); //TODO: Why subtract 128
+    //If our candidate had a texture below a threshold (Aka not a line) dont use it
+    if (sum<param.support_texture) 
       return -1;
     
-    // load first blocks to xmm registers
+    // load first blocks to xmm registers (Loading corning registers)
     xmm1 = _mm_load_si128((__m128i*)(I1_block_addr+desc_offset_1));
     xmm2 = _mm_load_si128((__m128i*)(I1_block_addr+desc_offset_2));
     xmm3 = _mm_load_si128((__m128i*)(I1_block_addr+desc_offset_3));
@@ -322,6 +348,7 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
     // get valid disparity range
     int32_t disp_min_valid = max(param.disp_min,0);
     int32_t disp_max_valid = param.disp_max;
+    //Limits how far we can go out based on window and surrounding candidate points size
     if (!right_image) disp_max_valid = min(param.disp_max,u-window_size-u_step);
     else              disp_max_valid = min(param.disp_max,width-u-window_size-u_step);
     
@@ -330,9 +357,11 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
       return -1;
 
     // for all disparities do
+    // Iterate through our disparity values (at least 10)
     for (int16_t d=disp_min_valid; d<=disp_max_valid; d++) {
 
       // warp u coordinate
+      // Remember u_warp is applied to the opposite side!
       if (!right_image) u_warp = u-d;
       else              u_warp = u+d;
 
@@ -340,17 +369,20 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
       I2_block_addr = I2_line_addr+16*u_warp;
 
       // compute match energy at this disparity
-      xmm6 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_1));
-      xmm6 = _mm_sad_epu8(xmm1,xmm6);
-      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_2));
+      // Sum all the intensity differences of all the surrounding canditates between the first I1 and second I2 inages 
+      xmm6 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_1)); // Get NE candidate from image 2
+      //_mm_sad_epu8 sums the difference of the first 64 bytes and second 64 bytes (returns 2 values)
+      xmm6 = _mm_sad_epu8(xmm1,xmm6); //Subtract the two values from image 1 and image 2
+      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_2));// Get NW candidate from image 2
       xmm6 = _mm_add_epi16(_mm_sad_epu8(xmm2,xmm5),xmm6);
-      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_3));
+      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_3));// Get SE candidate from image 2
       xmm6 = _mm_add_epi16(_mm_sad_epu8(xmm3,xmm5),xmm6);
-      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_4));
+      xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_4));// Get SW candidate from image 2
       xmm6 = _mm_add_epi16(_mm_sad_epu8(xmm4,xmm5),xmm6);
-      sum  = _mm_extract_epi16(xmm6,0)+_mm_extract_epi16(xmm6,4);
+      sum  = _mm_extract_epi16(xmm6,0)+_mm_extract_epi16(xmm6,4); //Sum all the differences
 
       // best + second best match
+      //(Smaller sum = better match)
       if (sum<min_1_E) {
         min_2_E = min_1_E;   
         min_2_d = min_1_d;
@@ -363,6 +395,7 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
     }
 
     // check if best and second best match are available and if matching ratio is sufficient
+    // Threshold says the second is within the 95th percentile of the first
     if (min_1_d>=0 && min_2_d>=0 && (float)min_1_E<param.support_threshold*(float)min_2_E)
       return min_1_d;
     else
@@ -372,19 +405,23 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
     return -1;
 }
 
+/*
+* Computes the disparity for each support point candidate 
+* Removes outlier and redundant support points
+*/
 vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* I2_desc) {
   
   // be sure that at half resolution we only need data
   // from every second line!
-  int32_t D_candidate_stepsize = param.candidate_stepsize;
+  int32_t D_candidate_stepsize = param.candidate_stepsize; //Stride over candidates for discriptors
   if (param.subsampling)
     D_candidate_stepsize += D_candidate_stepsize%2;
 
   // create matrix for saving disparity candidates
   int32_t D_can_width  = 0;
   int32_t D_can_height = 0;
-  for (int32_t u=0; u<width;  u+=D_candidate_stepsize) D_can_width++;
-  for (int32_t v=0; v<height; v+=D_candidate_stepsize) D_can_height++;
+  for (int32_t u=0; u<width;  u+=D_candidate_stepsize) D_can_width++; //Determine number of candidates at the stepsize in the horizontal
+  for (int32_t v=0; v<height; v+=D_candidate_stepsize) D_can_height++; //Determine number of candidates at the stepsize in the vertical
   int16_t* D_can = (int16_t*)calloc(D_can_width*D_can_height,sizeof(int16_t));
 
   // loop variables
@@ -398,16 +435,19 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
       v = v_can*D_candidate_stepsize;
       
       // initialize disparity candidate to invalid
-      *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = -1;
+      *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = -1; //Find the current candidate location
       
       // find forwards
-      d = computeMatchingDisparity(u,v,I1_desc,I2_desc,false);
+      d = computeMatchingDisparity(u,v,I1_desc,I2_desc,false); //Left image
+      //If we have found a disparity in the left, check from the right to left disparity
       if (d>=0) {
         
         // find backwards
         d2 = computeMatchingDisparity(u-d,v,I1_desc,I2_desc,true);
+        //Check our error between the 2 disparity and that its below 2 pixel difference
         if (d2>=0 && abs(d-d2)<=param.lr_threshold)
-          *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = d;
+            //TODO: Use average of the two? Why only the left?
+          *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = d; //Save disparity 
       }
     }
   }
@@ -442,6 +482,9 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
   return p_support; 
 }
 
+/*
+* Triangulate support points for the requested image
+*/
 vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_support,int32_t right_image) {
 
   // input/output structure for triangulation
@@ -449,6 +492,7 @@ vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_
   int32_t k;
 
   // inputs
+  // Input number of points and point list
   in.numberofpoints = p_support.size();
   in.pointlist = (float*)malloc(in.numberofpoints*2*sizeof(float));
   k=0;
@@ -458,6 +502,7 @@ vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_
       in.pointlist[k++] = p_support[i].v;
     }
   } else {
+      //If right image shift by the disparity (to the left)
     for (int32_t i=0; i<p_support.size(); i++) {
       in.pointlist[k++] = p_support[i].u-p_support[i].d;
       in.pointlist[k++] = p_support[i].v;
@@ -488,6 +533,8 @@ vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_
   triangulate(parameters, &in, &out, NULL);
   
   // put resulting triangles into vector tri
+  // triangle structure is an array that holds the triangles 3 corners
+  // Stores one point and the remainder in a counterclockwise order
   vector<triangle> tri;
   k=0;
   for (int32_t i=0; i<out.numberoftriangles; i++) {
@@ -504,6 +551,9 @@ vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_
   return tri;
 }
 
+/*
+* Calculate the t values to be used later on
+*/
 void Elas::computeDisparityPlanes (vector<support_pt> p_support,vector<triangle> &tri,int32_t right_image) {
 
   // init matrices
@@ -514,6 +564,8 @@ void Elas::computeDisparityPlanes (vector<support_pt> p_support,vector<triangle>
   for (int32_t i=0; i<tri.size(); i++) {
     
     // get triangle corner indices
+    // Since we fed in the support point to the triangle class sequentially
+    // The triangle indecties correspond directly to the support point indecies
     int32_t c1 = tri[i].c1;
     int32_t c2 = tri[i].c2;
     int32_t c3 = tri[i].c3;
@@ -741,13 +793,14 @@ inline void Elas::findMatch(int32_t &u,int32_t &v,float &plane_a,float &plane_b,
   if (!right_image) { 
     for (int32_t i=0; i<num_grid; i++) {
       d_curr = d_grid[i];
-      if (d_curr<d_plane_min || d_curr>d_plane_max) {
+      if (d_curr<d_plane_min || d_curr>d_plane_max) { //If the current disparity is out of the planes range
         u_warp = u-d_curr;
         if (u_warp<window_size || u_warp>=width-window_size)
           continue;
         updatePosteriorMinimum((__m128i*)(I2_line_addr+16*u_warp),d_curr,xmm1,xmm2,val,min_val,min_d);
       }
     }
+    //disparity inside the grid
     for (d_curr=d_plane_min; d_curr<=d_plane_max; d_curr++) {
       u_warp = u-d_curr;
       if (u_warp<window_size || u_warp>=width-window_size)
@@ -874,11 +927,16 @@ void Elas::computeDisparity(vector<support_pt> p_support,vector<triangle> tri,in
         
     // first part (triangle corner A->B)
     if ((int32_t)(A_u)!=(int32_t)(B_u)) {
+      // Starting at A_u loop till the B_u or the end of the image
       for (int32_t u=max((int32_t)A_u,0); u<min((int32_t)B_u,width); u++){
+        // If we are sub-sampling skip every two
         if (!param.subsampling || u%2==0) {
+          // Use linear lines, to get the bounds of where we need to check
           int32_t v_1 = (uint32_t)(AC_a*(float)u+AC_b);
           int32_t v_2 = (uint32_t)(AB_a*(float)u+AB_b);
+          // Loop through these values of v and try to find the match
           for (int32_t v=min(v_1,v_2); v<max(v_1,v_2); v++)
+            // If we are sub-sampling skip every two
             if (!param.subsampling || v%2==0) {
               findMatch(u,v,plane_a,plane_b,plane_c,disparity_grid,grid_dims,
                         I1_desc,I2_desc,P,plane_radius,valid,right_image,D);
@@ -1392,43 +1450,57 @@ void Elas::adaptiveMean (float* D) {
     }
     
   // full resolution: 8 pixel bilateral filter width
+  // D(x) = sum(I(x)*f(I(xi)-I(x))*g(xi-x))/W(x)
+  // W(x) = sum(f(I(xi)-I(x))*g(xi-x))
+  // g(xi-x) = 1
+  // f(I(xi)-I(x)) = 4-(I(xi)-I(x)) if greater than 0, 0 otherwise
   } else {
     
-  
     // horizontal filter
     for (int32_t v=3; v<D_height-3; v++) {
 
-      // init
+      // Preload first 7 pixels in row
       for (int32_t u=0; u<7; u++)
         val[u] = *(D_copy+v*D_width+u);
 
-      // loop
+      // Loop through remainer of the row
       for (int32_t u=7; u<D_width; u++) {
 
-        // set
+        // Current pixel being filtered is middle of our set (3 back)
+        //Note this isn't truely the center since we have 8 for the vestor registers
         float val_curr = *(D_copy+v*D_width+(u-3));
+        // Update the most outdated (farthest away) pixel of our 8
         val[u%8] = *(D_copy+v*D_width+u);
 
-        xval     = _mm_load_ps(val);      
+        //Process first 4 pixels
+        xval     = _mm_load_ps(val);
         xweight1 = _mm_sub_ps(xval,_mm_set1_ps(val_curr));
-        xweight1 = _mm_and_ps(xweight1,xabsmask);
+        //Mask UNSAFE use alternative
+        //xweight1 = _mm_and_ps(xweight1,xabsmask);
+        xweight1 = _mm_max_ps(_mm_sub_ps(_mm_setzero_ps(), xweight1), xweight1);
         xweight1 = _mm_sub_ps(xconst4,xweight1);
         xweight1 = _mm_max_ps(xconst0,xweight1);
         xfactor1 = _mm_mul_ps(xval,xweight1);
 
+        //Process next 4 pixels
         xval     = _mm_load_ps(val+4);      
         xweight2 = _mm_sub_ps(xval,_mm_set1_ps(val_curr));
-        xweight2 = _mm_and_ps(xweight2,xabsmask);
+        //Mask UNSAFE use alternative
+        //xweight2 = _mm_and_ps(xweight2,xabsmask);
+        xweight2 = _mm_max_ps(_mm_sub_ps(_mm_setzero_ps(), xweight2), xweight2);
         xweight2 = _mm_sub_ps(xconst4,xweight2);
         xweight2 = _mm_max_ps(xconst0,xweight2);
         xfactor2 = _mm_mul_ps(xval,xweight2);
 
+        //sum up factor and weight
         xweight1 = _mm_add_ps(xweight1,xweight2);
         xfactor1 = _mm_add_ps(xfactor1,xfactor2);
 
+        //Pull out factor and weight from vector registers
         _mm_store_ps(weight,xweight1);
         _mm_store_ps(factor,xfactor1);
 
+        //Sum it up
         float weight_sum = weight[0]+weight[1]+weight[2]+weight[3];
         float factor_sum = factor[0]+factor[1]+factor[2]+factor[3];
         
@@ -1455,14 +1527,18 @@ void Elas::adaptiveMean (float* D) {
 
         xval     = _mm_load_ps(val);      
         xweight1 = _mm_sub_ps(xval,_mm_set1_ps(val_curr));
-        xweight1 = _mm_and_ps(xweight1,xabsmask);
+        //Mask UNSAFE use alternative
+        //xweight1 = _mm_and_ps(xweight1,xabsmask);
+        xweight1 = _mm_max_ps(_mm_sub_ps(_mm_setzero_ps(), xweight1), xweight1);
         xweight1 = _mm_sub_ps(xconst4,xweight1);
         xweight1 = _mm_max_ps(xconst0,xweight1);
         xfactor1 = _mm_mul_ps(xval,xweight1);
 
         xval     = _mm_load_ps(val+4);      
         xweight2 = _mm_sub_ps(xval,_mm_set1_ps(val_curr));
-        xweight2 = _mm_and_ps(xweight2,xabsmask);
+        //Mask UNSAFE use alternative
+        //xweight2 = _mm_and_ps(xweight2,xabsmask);
+        xweight2 = _mm_max_ps(_mm_sub_ps(_mm_setzero_ps(), xweight2), xweight2);
         xweight2 = _mm_sub_ps(xconst4,xweight2);
         xweight2 = _mm_max_ps(xconst0,xweight2);
         xfactor2 = _mm_mul_ps(xval,xweight2);

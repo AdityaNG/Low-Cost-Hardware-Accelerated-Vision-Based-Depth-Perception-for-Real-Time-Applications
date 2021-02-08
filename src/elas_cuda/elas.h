@@ -16,7 +16,7 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110-1301, USA
+Street, Fifth Floor, Boston, MA 02110-1301, USA 
 */
 
 // Main header file. Include this to use libelas in your code.
@@ -53,11 +53,11 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #endif
 
 class Elas {
-
+  
 public:
-
+  
   enum setting {ROBOTICS,MIDDLEBURY};
-
+  
   // parameter settings
   struct parameters {
     int32_t disp_min;               // min disparity
@@ -85,10 +85,10 @@ public:
     bool    subsampling;            // saves time by only computing disparities for each 2nd pixel
                                     // note: for this option D1 and D2 must be passed with size
                                     //       width/2 x height/2 (rounded towards zero)
-
+    
     // constructor
     parameters (setting s=ROBOTICS) {
-
+      
       // default settings in a robotics environment
       // (do not produce results in half-occluded areas
       //  and are a bit more robust towards lighting etc.)
@@ -116,7 +116,7 @@ public:
         filter_adaptive_mean  = 1;
         postprocess_only_left = 1;
         subsampling           = 0;
-
+        
       // default settings for middlebury benchmark
       // (interpolate all missing disparities)
       } else {
@@ -147,12 +147,12 @@ public:
     }
   };
 
-  // constructor, input: parameters
+  // constructor, input: parameters  
   Elas (parameters param) : param(param) {}
 
   // deconstructor
   ~Elas () {}
-
+  
   // matching function
   // inputs: pointers to left (I1) and right (I2) intensity image (uint8, input)
   //         pointers to left (D1) and right (D2) disparity image (float, output)
@@ -163,9 +163,12 @@ public:
   //               if subsampling is not active their size is width x height,
   //               otherwise width/2 x height/2 (rounded towards zero)
   void process (uint8_t* I1,uint8_t* I2,float* D1,float* D2,const int32_t* dims);
-
-private:
-
+  
+// This was originally "private"
+// Was converted to allow sub-classes to call this
+// This assumes the user knows what they are doing
+public:
+  
   struct support_pt {
     int32_t u;
     int32_t v;
@@ -189,17 +192,17 @@ private:
   }
 
   // support point functions
-  void removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height);
-  void removeRedundantSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height,
+  virtual void removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height);
+  virtual void removeRedundantSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height,
                                      int32_t redun_max_dist, int32_t redun_threshold, bool vertical);
-  void addCornerSupportPoints (std::vector<support_pt> &p_support);
+  virtual void addCornerSupportPoints (std::vector<support_pt> &p_support);
   inline int16_t computeMatchingDisparity (const int32_t &u,const int32_t &v,uint8_t* I1_desc,uint8_t* I2_desc,const bool &right_image);
-  std::vector<support_pt> computeSupportMatches (uint8_t* I1_desc,uint8_t* I2_desc);
+  virtual std::vector<support_pt> computeSupportMatches (uint8_t* I1_desc,uint8_t* I2_desc);
 
   // triangulation & grid
-  std::vector<triangle> computeDelaunayTriangulation (std::vector<support_pt> p_support,int32_t right_image);
-  void computeDisparityPlanes (std::vector<support_pt> p_support,std::vector<triangle> &tri,int32_t right_image);
-  void createGrid (std::vector<support_pt> p_support,int32_t* disparity_grid,int32_t* grid_dims,bool right_image);
+  virtual std::vector<triangle> computeDelaunayTriangulation (std::vector<support_pt> p_support,int32_t right_image);
+  virtual void computeDisparityPlanes (std::vector<support_pt> p_support,std::vector<triangle> &tri,int32_t right_image);
+  virtual void createGrid (std::vector<support_pt> p_support,int32_t* disparity_grid,int32_t* grid_dims,bool right_image);
 
   // matching
   inline void updatePosteriorMinimum (__m128i* I2_block_addr,const int32_t &d,const int32_t &w,
@@ -209,27 +212,27 @@ private:
   inline void findMatch (int32_t &u,int32_t &v,float &plane_a,float &plane_b,float &plane_c,
                          int32_t* disparity_grid,int32_t *grid_dims,uint8_t* I1_desc,uint8_t* I2_desc,
                          int32_t *P,int32_t &plane_radius,bool &valid,bool &right_image,float* D);
-  void computeDisparity (std::vector<support_pt> p_support,std::vector<triangle> tri,int32_t* disparity_grid,int32_t* grid_dims,
+  virtual void computeDisparity (std::vector<support_pt> p_support,std::vector<triangle> tri,int32_t* disparity_grid,int32_t* grid_dims,
                          uint8_t* I1_desc,uint8_t* I2_desc,bool right_image,float* D);
 
   // L/R consistency check
-  void leftRightConsistencyCheck (float* D1,float* D2);
-
+  virtual void leftRightConsistencyCheck (float* D1,float* D2);
+  
   // postprocessing
-  void removeSmallSegments (float* D);
-  void gapInterpolation (float* D);
+  virtual void removeSmallSegments (float* D);
+  virtual void gapInterpolation (float* D);
 
   // optional postprocessing
-  void adaptiveMean (float* D);
-  void median (float* D);
-
+  virtual void adaptiveMean (float* D);
+  virtual void median (float* D);
+  
   // parameter set
   parameters param;
-
+  
   // memory aligned input images + dimensions
   uint8_t *I1,*I2;
   int32_t width,height,bpl;
-
+  
   // profiling timer
 #ifdef PROFILE
   Timer timer;
