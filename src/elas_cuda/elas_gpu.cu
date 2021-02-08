@@ -269,6 +269,47 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
 
 }
 
+void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims){
+  // Cuda Init
+  static int flag = 0;
+  if(flag==1) return;
+  std::cout << "ELAS GPU initialization called";
+  cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
+  cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
+  cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
+  cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
+  cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
+  cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
+  cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
+  cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
+  cudaMalloc((void**) &d_D, width*height*sizeof(float));
+  cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
+  cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
+  cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
+  cudaMalloc((void**) &d_D, width*height*sizeof(float));
+  flag = 1;
+}
+
+void ElasGPU::cudaDest(){
+  // Free big memory
+  cudaFree(d_u_vals);
+  cudaFree(d_v_vals);
+  cudaFree(d_planes_a);
+  cudaFree(d_planes_b);
+  cudaFree(d_planes_c);
+
+  // Free cuda memory
+  cudaFree(d_disparity_grid);
+  cudaFree(d_P);
+  cudaFree(d_D);
+  cudaFree(d_I1);
+  cudaFree(d_I2);
+  cudaFree(d_grid_dims);
+  cudaFree(d_u_vals);
+  cudaFree(d_v_vals);
+  cudaFree(d_D);
+}
+
 /**
  * This is the core method that computes the disparity of the image
  * It processes each triangle, so we create a kernel and have each thread
@@ -457,43 +498,44 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   dim3 DimGrid(grid_size,1,1);
   dim3 DimBlock(block_size,1,1);
 
+  cudaInit(size_total, pixs_u, pixs_v, disp_num, grid_dims);
   // Allocate u,v pointer array
-  int32_t* d_u_vals, *d_v_vals;
-  cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
-  cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
+  //int32_t* d_u_vals, *d_v_vals;
+  //cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
+  //cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
 
   // Copy over pointer array
   cudaMemcpy(d_u_vals, pixs_u, size_total*sizeof(int32_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_v_vals, pixs_v, size_total*sizeof(int32_t), cudaMemcpyHostToDevice);
 
   // Copy over the plane values
-  float* d_planes_a, *d_planes_b, *d_planes_c;
-  cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
-  cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
-  cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
+  //float* d_planes_a, *d_planes_b, *d_planes_c;
+  //cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
+  //cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
+  //cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
   cudaMemcpy(d_planes_a, planes_a, size_total*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_planes_b, planes_b, size_total*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_planes_c, planes_c, size_total*sizeof(float), cudaMemcpyHostToDevice);
   
   // Copy over valid
-  bool* d_valids;
-  cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
+  //bool* d_valids;
+  //cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
   cudaMemcpy(d_valids, valids, size_total*sizeof(bool), cudaMemcpyHostToDevice);
 
   // CUDA copy over needed memory information
   // disparity_grid, I1_desc,I2_desc,P,D
-  int32_t* d_disparity_grid, *d_grid_dims;
-  int32_t* d_P;
-  float* d_D;
-  uint8_t* d_I1, *d_I2;
+  //int32_t* d_disparity_grid, *d_grid_dims;
+  //int32_t* d_P;
+  //float* d_D;
+  //uint8_t* d_I1, *d_I2;
 
   // Allocate on global memory
-  cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
-  cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
-  cudaMalloc((void**) &d_D, width*height*sizeof(float));
-  cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t)); 
+  //cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
+  //cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
+  //cudaMalloc((void**) &d_D, width*height*sizeof(float));
+  //cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
+  //cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
+  //cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t)); 
 
   // Now copy over data
   cudaMemcpy(d_disparity_grid, disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t), cudaMemcpyHostToDevice);
@@ -525,6 +567,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   delete pixs_v;
   delete valids;
 
+  /*
   // Free big memory
   cudaFree(d_u_vals);
   cudaFree(d_v_vals);
@@ -541,7 +584,8 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   cudaFree(d_grid_dims);
   cudaFree(d_u_vals);
   cudaFree(d_v_vals);
-
+  */
+    //cudaDest();
 }
 
 // implements approximation to bilateral filtering
@@ -685,7 +729,7 @@ void ElasGPU::adaptiveMean (float* D) {
     float* d_D;
 
     // Allocate on global memory and copy
-    cudaMalloc((void**) &d_D, width*height*sizeof(float));
+    //cudaMalloc((void**) &d_D, width*height*sizeof(float));
     cudaMemcpy(d_D, D, width*height*sizeof(float), cudaMemcpyHostToDevice);
 
     //Kernel go!
@@ -698,7 +742,7 @@ void ElasGPU::adaptiveMean (float* D) {
     cudaMemcpy(D, d_D, width*height*sizeof(float), cudaMemcpyDeviceToHost);
 
     //Free memory
-    cudaFree(d_D);
+    //cudaFree(d_D);
 
 
     // horizontal filter

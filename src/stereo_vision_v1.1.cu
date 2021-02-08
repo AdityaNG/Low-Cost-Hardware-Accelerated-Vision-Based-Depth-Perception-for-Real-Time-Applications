@@ -77,6 +77,18 @@ cudaStream_t s1;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+Elas::parameters param(Elas::MIDDLEBURY);
+param.postprocess_only_left = true;
+ElasGPU elas(param);*/
+  //Elas::parameters param(Elas::ROBOTICS);
+  //Elas::parameters param;
+  
+
+  //param.postprocess_only_left = false;
+  
+  //Elas elas(param);
+  
 
 void cudaInit(){
   // Cuda Init
@@ -101,6 +113,7 @@ void clean(){
   cudaFree(d_Q);
   cudaFree(d_points);
   cudaFree(d_dmap);
+  //elas.cudaDest();
   exit(0);
 }
 
@@ -298,7 +311,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   Mat leftdpf = Mat::zeros(imsize, CV_32F);
   Mat rightdpf = Mat::zeros(imsize, CV_32F);
 
-  Elas::parameters param(Elas::MIDDLEBURY);
+  
+  static Elas::parameters param(Elas::MIDDLEBURY);
   //Elas::parameters param(Elas::ROBOTICS);
   //Elas::parameters param;
   
@@ -306,7 +320,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   //param.postprocess_only_left = false;
   
   //Elas elas(param);
-  ElasGPU elas(param);
+  static ElasGPU elas(param);
+  
   elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
   Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
   
