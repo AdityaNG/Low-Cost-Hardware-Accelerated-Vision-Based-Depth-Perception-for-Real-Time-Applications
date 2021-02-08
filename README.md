@@ -11,6 +11,7 @@
 - A C++ compiler (*e.g.*, [GCC](http://gcc.gnu.org/))
 - [LIBELAS](http://www.cvlibs.net/software/libelas/) 
 - [OpenCV](https://github.com/opencv/opencv)
+- [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
 
 ## Stereo Calibration
 
@@ -34,14 +35,6 @@ Execute the `build.sh` script:
 $ chmod +x build.sh
 $ ./build.sh
 ```
-
-## Running Dense 3D Reconstruction
-
-```bash
-$ chmod +x start.sh
-$ ./start.sh
-```
-
 ## License
 
 This software is released under the [GNU GPL v3 license](LICENSE).
