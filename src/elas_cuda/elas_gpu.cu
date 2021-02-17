@@ -271,8 +271,8 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
 
 void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims){
   // Cuda Init
-  static int flag = 0;
-  if(flag==1) return;
+  //static int flag = 0;
+  //if(flag==1) return;
   std::cout << "ELAS GPU initialization called";
   cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
   cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
@@ -287,7 +287,7 @@ void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int
   cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
   cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
   cudaMalloc((void**) &d_D, width*height*sizeof(float));
-  flag = 1;
+  //flag = 1;
 }
 
 void ElasGPU::cudaDest(){
@@ -318,6 +318,7 @@ void ElasGPU::cudaDest(){
 void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<triangle> tri, int32_t* disparity_grid, int32_t *grid_dims,
                                 uint8_t* I1_desc, uint8_t* I2_desc, bool right_image, float* D) {
 
+  static int flag = 0;
   // number of disparities
   const int32_t disp_num  = grid_dims[0]-1;
   
@@ -498,7 +499,8 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   dim3 DimGrid(grid_size,1,1);
   dim3 DimBlock(block_size,1,1);
 
-  cudaInit(size_total, pixs_u, pixs_v, disp_num, grid_dims);
+  if(flag==0)  cudaInit(size_total, pixs_u, pixs_v, disp_num, grid_dims);
+  flag = 1;
   // Allocate u,v pointer array
   //int32_t* d_u_vals, *d_v_vals;
   //cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
