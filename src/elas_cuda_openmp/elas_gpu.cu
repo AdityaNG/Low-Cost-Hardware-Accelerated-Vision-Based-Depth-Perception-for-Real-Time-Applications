@@ -586,7 +586,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   cudaFree(d_grid_dims);
   cudaFree(d_u_vals);
   cudaFree(d_v_vals);
-  */
+    */
     //cudaDest();
 }
 

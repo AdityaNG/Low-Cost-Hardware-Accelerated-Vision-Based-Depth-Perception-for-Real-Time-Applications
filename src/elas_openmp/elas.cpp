@@ -67,6 +67,7 @@ void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t*
 #ifdef PROFILE
 	timer.start("Support Matches");
 #endif
+
 	vector<support_pt> p_support = computeSupportMatches(desc1.I_desc,desc2.I_desc);
 
 #ifdef PROFILE
@@ -164,7 +165,6 @@ void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,i
 		for (int32_t v_can=0; v_can<D_can_height; v_can++) {
 			int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
 			if (d_can>=0) {
-
 				// compute number of other points supporting the current point
 				int32_t support = 0;
 				for (int32_t u_can_2=u_can-param.incon_window_size; u_can_2<=u_can+param.incon_window_size; u_can_2++) {
@@ -459,7 +459,6 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 	// with the same disparity as the nearest neighbor support point
 	if (param.add_corners)
 		addCornerSupportPoints(p_support);
-
 
 	// free memory
 	free(D_can);
@@ -874,7 +873,7 @@ void Elas::computeDisparity(vector<support_pt> p_support,vector<triangle> tri,in
 			tri_u[1] = p_support[c2].u-p_support[c2].d;
 			tri_u[2] = p_support[c3].u-p_support[c3].d;
 		}
-		float tri_v[3] = {p_support[c1].v,p_support[c2].v,p_support[c3].v};
+		float tri_v[3] = {(float)p_support[c1].v, (float)p_support[c2].v, (float)p_support[c3].v};
 
 		for (uint32_t j=0; j<3; j++) {
 			for (uint32_t k=0; k<j; k++) {
