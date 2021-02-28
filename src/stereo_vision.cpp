@@ -179,10 +179,10 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
     printf("(empty)\t");
     return;
   }
-  if (debug == 1) {
+  if (debug == 1 || 1) {
     //XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
-    XR = composeRotationCamToRobot(M_PI/3, 0, 0); //M_PI
-    XT = composeTranslationCamToRobot(-4,-1.0,1.7);
+    XR = composeRotationCamToRobot(0, 0, 0); //M_PI
+    XT = composeTranslationCamToRobot(-50.0, 0,0);
     cout << "Rotation matrix: " << XR << endl;
     cout << "Translation matrix: " << XT << endl;
   }
@@ -192,6 +192,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
   Mat pos = Mat(4, 1, CV_64FC1);
   vector< Point3d > points;
 
+  cout<<"POINTS-----------------------------"<<endl;
   if (draw_points) {
   for (int i = 0; i < img_left.cols; i++) {
     for (int j = 0; j < img_left.rows; j++) {
@@ -226,12 +227,15 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
       green = img_left.at<Vec3b>(j,i)[1];
       blue = img_left.at<Vec3b>(j,i)[0];
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-
-      appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
+      float scale_fact = 0.3;
+      appendPOINT(X * scale_fact, Y * scale_fact, Z * scale_fact, red/255.0, green/255.0, blue/255.0);
+      //appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
+      cout<<X<<", "<<Y<<", "<<Z<<endl;
     }
   }
   }
+  cout<<"POINTS_END-----------------------------"<<endl;
   
   //cout << "pc : " << fixed << time_taken << setprecision(9); 
   //cout << " \t";
@@ -535,10 +539,11 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
   
   flip(tmpL_Color, img_left_color_flip,1);
   
-  imshow("LEFT_C", img_left_color_flip);
-  //imshow("DISP", dmap);
+  imshow("LEFT", tmpL);
+  imshow("RIGHT", tmpR);
+  imshow("DISP", dmap);
   //waitKey(2000);
-  waitKey(wait);
+  waitKey(0);
 }
 
 
@@ -654,7 +659,8 @@ std::size_t number_of_files_in_directory(fs::path path)
     return std::count_if(directory_iterator(path), directory_iterator{}, (fp)fs::is_regular_file);
 }
 
-const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
+//const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
+const char* calib_file_name = "calibration/thermal_cam_stereo.yml";
 int calib_width, calib_height, out_width, out_height;
 int play_video = 0;
 
@@ -965,14 +971,36 @@ void next() {
       }
     }
 
-  } else {
+  } else if (video_mode==4) { // Directly go to publish pointcloud, input is disparity
+    printf("Next image\n");
+    //char left_img_topic[128];
+    //char right_img_topic[128];
+
+    //std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+    //std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+    
+    //std::strcpy(left_img_topic  , format("%s/left%d.png", kitti_path,  iImage).c_str());    //"/home/aditya/VSProjects/stereo-calibration/calib_imgs/6/left1.png";
+    //std::strcpy(right_img_topic , format("%s/right%d.png", kitti_path, iImage).c_str());    //"/home/aditya/VSProjects/stereo-calibration/calib_imgs/6/right1.png";
+    
+    char dmap_topic[128];
+    std::strcpy(dmap_topic , format("%s", kitti_path).c_str());    //"/home/aditya/VSProjects/stereo-calibration/calib_imgs/6/right1.png";
+    Mat dmap = imread(dmap_topic, IMREAD_GRAYSCALE);
+    Mat dmap_flip;
+    flip(dmap, dmap_flip,1);
+    publishPointCloud(dmap, dmap);
+    
+    imshow("DISP", dmap_flip);
+    waitKey(0);
+  }else {
     printf("Next image\n");
     char left_img_topic[128];
     char right_img_topic[128];
 
-    std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
-    std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
-  
+    //std::strcpy(left_img_topic  , format("%s/object/testing/image_2/%06d.png", kitti_path,  iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_2/000001.png";
+    //std::strcpy(right_img_topic , format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());    //"/Users/Shared/KITTI/object/testing/image_3/000001.png";
+    
+    std::strcpy(left_img_topic  , format("%s/left%d.png", kitti_path,  iImage).c_str());    //"/home/aditya/VSProjects/stereo-calibration/calib_imgs/6/left1.png";
+    std::strcpy(right_img_topic , format("%s/right%d.png", kitti_path, iImage).c_str());    //"/home/aditya/VSProjects/stereo-calibration/calib_imgs/6/right1.png";
     
     imgCallback(left_img_topic, right_img_topic);
     iImage++;
@@ -1045,10 +1073,10 @@ int main(int argc, const char** argv) {
 
   printf("KITTI Path: %s \n", kitti_path);
 
-  calib_width = 1242;
-  calib_height = 375;
-  out_width = 1242 /4 ;
-  out_height = 375 /4;
+  calib_width = 320;
+  calib_height = 240;
+  out_width = 320 ;
+  out_height = 240;
   
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);

@@ -20,8 +20,8 @@ fi
 if [ $1 == "1" ]
 	then
 		echo "nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler=\"-pthread\" \`pkg-config --cflags --libs opencv\` -w"
-		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" `pkg-config --cflags --libs opencv` -w && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
-		nvcc -shared -fPIC -o bin/stereo_vision.so src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" `pkg-config --cflags --libs opencv` -w && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
+		nvcc -o bin/stereo_vision src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/bayesian/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" `pkg-config --cflags --libs opencv` -w && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
+		#nvcc -shared -fPIC -o bin/stereo_vision.so src/stereo_vision.cu src/elas/*.cpp  src/yolo/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread" `pkg-config --cflags --libs opencv` -w && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
 		exit 0
 fi
 
