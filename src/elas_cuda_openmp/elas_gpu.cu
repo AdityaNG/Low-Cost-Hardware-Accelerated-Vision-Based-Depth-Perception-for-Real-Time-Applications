@@ -1,4 +1,5 @@
 #include "elas_gpu.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -273,6 +274,8 @@ void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int
   // Cuda Init
   //static int flag = 0;
   //if(flag==1) return;
+  D_copy = (float*)malloc(width*height*sizeof(float));
+  D_tmp  = (float*)malloc(width*height*sizeof(float));
   std::cout << "ELAS GPU initialization called";
   cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
   cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
@@ -286,8 +289,6 @@ void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int
   cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
   cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
   cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
-  cudaMalloc((void**) &d_D, width*height*sizeof(float));
-  //flag = 1;
 }
 
 void ElasGPU::cudaDest(){
@@ -307,7 +308,10 @@ void ElasGPU::cudaDest(){
   cudaFree(d_grid_dims);
   cudaFree(d_u_vals);
   cudaFree(d_v_vals);
-  cudaFree(d_D);
+
+  // Free host memory
+  free(D_copy);
+  free(D_tmp);
 }
 
 /**
@@ -602,8 +606,8 @@ void ElasGPU::adaptiveMean (float* D) {
   }
   
   // allocate temporary memory
-  float* D_copy = (float*)malloc(D_width*D_height*sizeof(float));
-  float* D_tmp  = (float*)malloc(D_width*D_height*sizeof(float));
+  //float* D_copy = (float*)malloc(D_width*D_height*sizeof(float));
+  //float* D_tmp  = (float*)malloc(D_width*D_height*sizeof(float));
   memcpy(D_copy,D,D_width*D_height*sizeof(float));
   
   // zero input disparity maps to -10 (this makes the bilateral
@@ -728,12 +732,11 @@ void ElasGPU::adaptiveMean (float* D) {
 
     // CUDA copy over needed memory information
     // disparity_grid and respective copies
-    float* d_D;
+    //float* d_D;
 
     // Allocate on global memory and copy
     //cudaMalloc((void**) &d_D, width*height*sizeof(float));
     cudaMemcpy(d_D, D, width*height*sizeof(float), cudaMemcpyHostToDevice);
-
     //Kernel go!
     adaptiveMeanGPU8<<<DimGrid, DimBlock>>>(d_D, width, height);
 
@@ -818,6 +821,6 @@ void ElasGPU::adaptiveMean (float* D) {
   _mm_free(val);
   _mm_free(weight);
   _mm_free(factor);
-  free(D_copy);
-  free(D_tmp);
+  //free(D_copy);
+  //free(D_tmp);
 }

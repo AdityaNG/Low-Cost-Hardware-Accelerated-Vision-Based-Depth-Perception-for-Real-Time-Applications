@@ -13,6 +13,7 @@
 #include <math.h>
 #include <popt.h>
 #include <future>
+#include <omp.h>
 
 #include "yolo/yolo.hpp"
 #include "elas_cuda_openmp/elas.h"
@@ -259,7 +260,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   cudaDeviceSynchronize();
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
 
-  for (auto& object : obj_list) {
+  for(auto& object : obj_list) {
     /*
     int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
     i_ub = i_lb + 1, 
@@ -271,8 +272,10 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     j_lb = constrain(object.y, 0, img_left.rows-1), 
     j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
     double X=0, Y=0, Z=0;
-    for (int i = i_lb; i < i_ub; i++) {
-      for (int j = j_lb; j < j_ub; j++) {   
+
+    #pragma omp parallel for //reduction(+:X,Y,Z)
+    for(int i = i_lb; i < i_ub; i++) {
+      for(int j = j_lb; j < j_ub; j++) {   
         X += points[j*out_width + i].x;  
         Y += points[j*out_width + i].y;     
         Z += points[j*out_width + i].z;  
@@ -512,7 +515,7 @@ void next(){
 
     play_video = 1;
     while (play_video){
-      for (int iFrame = 0; iFrame < max_files; iFrame++){
+      for(int iFrame = 0; iFrame < max_files; iFrame++){
         if (t_t!=0) printf("(FPS=%f) ", 1/t_t);
         
         start_timer;        
@@ -533,7 +536,7 @@ void next(){
         //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
         if (iFrame%frame_skip == 0) {
-          printf("(DISP) \t ");
+          //printf("(DISP) \t ");
           //imgCallback_video(left_img, right_img, dmap);
           left_img_OLD = left_img.clone();
           right_img_OLD = right_img.clone();
@@ -543,7 +546,7 @@ void next(){
         }
           
         if (iFrame%frame_skip == frame_skip-1) {
-          printf("(JOIN) \t");
+          //printf("(JOIN) \t");
           th1.join();
           dmap = dmapOLD.clone();
         }
@@ -560,7 +563,7 @@ void next(){
         color = (uchar4*)rgba.ptr<unsigned char>(0);
         //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
         publishPointCloud(left_img, dmap);
-        printf("(PC Done) ");
+        //printf("(PC Done) ");
         updateGraph();
 
         if (0){
@@ -608,7 +611,7 @@ int main(int argc, const char** argv){
   };
 
   poptContext poptCONT = poptGetContext("main", argc, argv, options, POPT_CONTEXT_KEEP_FIRST);
-  int c; while((c = poptGetNextOpt(poptCONT)) >= 0) {}
+  int c = 0; while(c >= 0) c = poptGetNextOpt(poptCONT);
 
   printf("KITTI Path: %s \n", kitti_path);
   

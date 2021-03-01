@@ -172,7 +172,7 @@ vector<triangle> tri_1, tri_2;
 void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height) {
   
   // for all valid support points do
-  #pragma omp for
+  #pragma omp parallel for
   for (int32_t u_can=0; u_can<D_can_width; u_can++) {
     for (int32_t v_can=0; v_can<D_can_height; v_can++) {
       int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
@@ -220,7 +220,7 @@ void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32
   }
     
   // for all valid support points do
-  #pragma omp for
+  #pragma omp parallel for
   for (int32_t u_can=0; u_can<D_can_width; u_can++) {
     for (int32_t v_can=0; v_can<D_can_height; v_can++) {
       int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
@@ -893,7 +893,7 @@ void Elas::computeDisparity(vector<support_pt> p_support,vector<triangle> tri,in
   #pragma omp parallel for num_threads(3) default(none)\
 	private(i, plane_a, plane_b, plane_c, plane_d, c1, c2, c3)\
 	shared(P, plane_radius, two_sigma_squared, disp_num, window_size, p_support, tri, disparity_grid, grid_dims, I1_desc, I2_desc, right_image, D)
-	for (i=0; i<tri.size(); i++) {   
+  for (i=0; i<tri.size(); i++) {   
     // get plane parameters
     uint32_t p_i = i*3;
     if (!right_image) {
