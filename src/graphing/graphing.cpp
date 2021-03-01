@@ -8,6 +8,7 @@
 #endif
 #include <stdlib.h>
 #include <iostream>
+//#include <omp.h>
 double *POINTS, *POINTS_OBJECTS;
 
 // Rotate X
@@ -54,7 +55,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   //printf("(%lf %lf %lf), ", x,y,z);
 
     double verts[8][3];
-    for (int i = 0; i < 8; i++){
+    for(int i = 0; i < 8; i++){
         int s3 = ((1<<0) & i)>>0 ? 1: -1;
         int s2 = ((1<<1) & i)>>1 ? 1: -1;
         int s1 = ((1<<2) & i)>>2 ? 1: -1;
@@ -66,9 +67,10 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
 
     glBegin(GL_LINE_STRIP);
     glColor3f(r, b, g);
-    for (int iItr=0; iItr < 8; iItr++ ){
+    //#pragma omp parallel for 
+    for(int iItr=0; iItr < 8; iItr++ ){
         int i = iItr%8;
-        for (int jItr = 0; jItr < 8; jItr++){
+        for(int jItr = 0; jItr < 8; jItr++){
             int j = jItr%8;
             glVertex3f(verts[i][0], verts[i][1], verts[i][2]);
             glVertex3f(verts[j][0], verts[j][1], verts[j][2]);
@@ -78,7 +80,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   /*
   glBegin(GL_QUADS);
     glColor3f(r, b, g);
-    for (int j = 0; j < 8; j++) {
+    for(int j = 0; j < 8; j++) {
       int i = j%8;
       glVertex3f(verts[i][0], verts[i][1], verts[i][2]);
       glVertex3f(verts[i+1][0], verts[i+1][1], verts[i+1][2]);
@@ -119,7 +121,8 @@ void drawCube(){
 
     // BACK
     glBegin(GL_POINTS);
-    for (int i = 0; i < Pindex; i+=6){
+    //#pragma omp parallel for 
+    for(int i = 0; i < Pindex; i+=6){
 		glColor3f(POINTS[i+3], POINTS[i+4], POINTS[i+5]);
 		glPointSize(1);
 		glVertex3f(POINTS[i], POINTS[i+1], POINTS[i+2]);
@@ -127,7 +130,8 @@ void drawCube(){
     glEnd();
 
     draw_cube(0,0,0, 1,0,0);
-    for (int iObj = 0; iObj < Oindex; iObj+=6){
+    //#pragma omp parallel for 
+    for(int iObj = 0; iObj < Oindex; iObj+=6){
       draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
       /*
         POINTS_OBJECTS[iObj + 0] = X;
@@ -224,7 +228,8 @@ void startGraphics(int out_width, int out_height) {
     POINTS = (double*) malloc(sizeof(double) * 6 * out_width * out_height);
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
-	for (int i = 0; i < 100; i+=6){
+    #pragma omp parallel for 
+	for(int i = 0; i < 100; i+=6){
 		POINTS[i]	= i/400.0;
 		POINTS[i+1]	= i/400.0;
 		POINTS[i+2]	= i/400.0;

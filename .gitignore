@@ -32,7 +32,7 @@
 
 *.kdev*
 build/
-bin/
+bin/*
 lib/
 
 # Ignore generated docs

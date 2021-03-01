@@ -49,5 +49,12 @@ if [ $1 == "4" ]
 		exit 0
 fi
 
-echo "MODE must be either 0 for CPU, 1 for CUDA, 2 for OpenMP, 3 for CUDA + OpenMP, 4 for CUDA + CUDA"
+if [ $1 == "5" ]
+	then
+		echo "nvcc -o bin/stereo_vision src/stereo_vision_v1.2.cu src/elas_cuda_openmp/*.cpp src/elas_cuda_openmp/*.cu  src/yolo/*.cpp src/graphing/*.cpp -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler=\"-pthread -fopenmp\" -lm \`pkg-config --cflags --libs opencv\` -w"
+		nvcc -o bin/stereo_vision src/stereo_vision_v1.2.cu src/elas_cuda_openmp/*.cpp src/elas_cuda_openmp/*.cu src/yolo/*.cpp src/bayesian/*.cpp src/graphing/*.cu -lpopt -lglut -lGLU -lGL -std=c++11 -Xcompiler="-pthread -fopenmp" -lm `pkg-config --cflags --libs opencv` -w && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
+		exit 0
+fi
+
+echo "MODE must be either 0 for CPU, 1 for CUDA, 2 for OpenMP, 3 for CUDA + OpenMP, 4 for CUDA + CUDA, 5 for Ultimate"
 exit 1
