@@ -582,8 +582,8 @@ void next(){
   else {
     printf("Next image\n");
     char left_img_topic[128], right_img_topic[128];
-    strcpy(left_img_topic , format("%s/object/testing/image_2/%06d.png", kitti_path, iImage).c_str());    
-    strcpy(right_img_topic, format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());       
+    strcpy(left_img_topic , format("%s/video/testing/image_2/0000/%06d.png", kitti_path, iImage).c_str());    
+    strcpy(right_img_topic, format("%s/video/testing/image_3/0000/%06d.png", kitti_path, iImage).c_str());       
     imgCallback(left_img_topic, right_img_topic);
     iImage++;
   }
