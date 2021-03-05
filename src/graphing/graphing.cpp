@@ -108,6 +108,7 @@ void drawCube(){
     
     glTranslatef(tX, tZ, tY);
 
+    /*
     int plane_size = 20;
     glBegin(GL_QUADS);
     glColor3f(0.5, 0.5, 0.5);
@@ -116,7 +117,8 @@ void drawCube(){
     glVertex3f(-plane_size, 0, -plane_size);
     glVertex3f(-plane_size, 0, plane_size);
     glEnd();
-
+    */
+   
     // BACK
     glBegin(GL_POINTS);
     for (int i = 0; i < Pindex; i+=6){
@@ -126,7 +128,7 @@ void drawCube(){
 	}
     glEnd();
 
-    draw_cube(0,0,0, 1,0,0);
+    //draw_cube(0,0,0, 1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6){
       draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
       /*

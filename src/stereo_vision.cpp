@@ -211,7 +211,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
       V.at<double>(3,0) = 1.;
       
       pos = Q * V; // 3D homogeneous coordinate
-      double X = pos.at<double>(0,0) / pos.at<double>(3,0);
+      double X = -pos.at<double>(0,0) / pos.at<double>(3,0);
       double Y = pos.at<double>(1,0) / pos.at<double>(3,0);
       double Z = pos.at<double>(2,0) / pos.at<double>(3,0);
       Mat point3d_cam = Mat(3, 1, CV_64FC1);
@@ -223,15 +223,15 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
       points.push_back(Point3d(point3d_robot));
       
       int32_t red, blue, green;
-      red = img_left.at<Vec3b>(j,i)[2];
-      green = img_left.at<Vec3b>(j,i)[1];
-      blue = img_left.at<Vec3b>(j,i)[0];
+      red = 0; // img_left.at<Vec3b>(j,i)[2];
+      green = 0; //img_left.at<Vec3b>(j,i)[1];
+      blue = 255; //img_left.at<Vec3b>(j,i)[0];
       //ch.values.push_back(*reinterpret_cast<float*>(&rgb));
       float scale_fact = 0.3;
       appendPOINT(X * scale_fact, Y * scale_fact, Z * scale_fact, red/255.0, green/255.0, blue/255.0);
       //appendPOINT(X, Y, Z, red/255.0, green/255.0, blue/255.0);
       //cout<<point3d_robot<< red << " " << green << " " << blue <<endl;
-      cout<<X<<", "<<Y<<", "<<Z<<endl;
+      //cout<<X<<", "<<Y<<", "<<Z<<endl;
     }
   }
   }
