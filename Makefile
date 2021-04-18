@@ -2,14 +2,29 @@ COMPILER := nvcc
 OBJ := obj
 SRC := src
 EXECUTABLE := bin/stereo_vision
+SHARED_LIBRARY := bin/stereo_vision.so
 LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` -Xcompiler="-pthread -fopenmp"
 OBJS := ${OBJ}/bayesian.o ${OBJ}/descriptor.o ${OBJ}/elas.o ${OBJ}/filter.o ${OBJ}/matrix.o ${OBJ}/triangle.o ${OBJ}/elas_gpu.o ${OBJ}/detector.o ${OBJ}/graphing.o ${OBJ}/stereo_vision_v1.2.o
-NVCCFLAGS ?=-O3 -std=c++11 -w # Has effect only if this variable hasn't been set externally
 
+ifeq ($(old), 1)
+	NVCCFLAGS := -gencode arch=compute_50,code=sm_50 -O3 -std=c++11 -w -Wno-deprecated-gpu-targets
+else
+	NVCCFLAGS := -O3 -std=c++11 -w
+endif
+
+ifeq ($(shared), 1)
+	NVCCFLAGS := ${NVCCFLAGS} -shared --compiler-options="-fPIC -pie"
+endif
+
+ifeq ($(debug), 1)
+	NVCCFLAGS := ${NVCCFLAGS} -g
+endif
 
 stereo_vision: ${OBJS}
 	${COMPILER} ${NVCCFLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 0 -f 1"
 
+shared_library: $(OBJS)
+	${COMPILER} ${NVCCFLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo "Compiled the Shared Library Successfully!!"
 
 ${OBJ}/bayesian.o: ${SRC}/bayesian/bayesian.cpp
 	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
@@ -42,4 +57,7 @@ ${OBJ}/stereo_vision_v1.2.o: ${SRC}/stereo_vision_v1.2.cu
 	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
 
 clean:
-	rm ${OBJ}/*.o ${EXECUTABLE}
+	rm ${OBJ}/*.o ${EXECUTABLE} ${SHARED_LIBRARY}
+
+clean_objs:
+	rm ${OBJ}/*.o
