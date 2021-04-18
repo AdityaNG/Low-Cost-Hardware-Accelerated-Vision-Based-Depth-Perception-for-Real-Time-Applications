@@ -5,7 +5,7 @@
 *.obj
 
 # vscode
-.vscode/*
+.vscode/
 
 # Precompiled Headers
 *.gch
@@ -32,8 +32,9 @@
 
 *.kdev*
 build/
-bin/*
+bin/
 lib/
+obj/
 
 # Ignore generated docs
 docs/

@@ -102,7 +102,7 @@ void drawCube(){
     glBegin(GL_POINTS);
     for (int i = 0; i < out_width * out_height; i++){
         if(color == NULL) break;
-		glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
+        glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
 		glVertex3f(points[i].y, -points[i].z, points[i].x);
     }

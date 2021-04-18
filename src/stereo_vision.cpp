@@ -660,7 +660,7 @@ int play_video = 0;
 
 void next() {
   printf("NEXT Called\n");
-  static int iImage=2;
+  static int iImage=0;
   if (video_mode == 1) {
     char left_img_topic[128];
     char right_img_topic[128];

@@ -35,6 +35,12 @@ Execute the `build.sh` script:
 $ chmod +x build.sh
 $ ./build.sh
 ```
+
+Or compile using the make utility:
+
+```bash
+$ make stereo_vision -j$(nproc) -s
+```
 ## License
 
 This software is released under the [GNU GPL v3 license](LICENSE).

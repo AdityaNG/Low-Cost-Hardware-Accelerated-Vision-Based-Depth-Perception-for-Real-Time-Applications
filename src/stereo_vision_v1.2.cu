@@ -1,4 +1,5 @@
-//#include <curl/curl.h>
+#include <cuda_device_runtime_api.h>
+#include <driver_types.h>
 #include <exception>
 #include <iostream>
 #include <opencv4/opencv2/highgui.hpp>
@@ -15,13 +16,13 @@
 #include <future>
 #include <omp.h>
 
+
 #include "yolo/yolo.hpp"
 #include "elas_cuda_openmp/elas.h"
 #include "elas_cuda_openmp/elas_gpu.h"
 #include "graphing/graphing.h"
 #include "cleanup/cleanup.hpp"
 #include "bayesian/bayesian.h"
-
 
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
@@ -35,14 +36,18 @@ std::vector<OBJ> obj_list, pred_list;
 using namespace cv;
 using namespace std;
 
-#define shrink_factor 2 // Modify to change the image resize factor
+#define shrink_factor 1 // Modify to change the image resize factor
 
 #define start_timer auto start = chrono::high_resolution_clock::now();  
 #define end_timer(var)\
   auto end = chrono::high_resolution_clock::now();\
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count();\
   time_taken *= 1e-9;\
-  var = time_taken;                                             
+  var = time_taken;      
+#define checkCudaError cudaError_t e = cudaGetLastError();\
+if (e!=cudaSuccess) {\
+  printf("Cuda error : %s\n", cudaGetErrorString(e));\
+}                                       
 
 //////////////////////////////////////// Globals ///////////////////////////////////////////////////////
 Mat XR, XT, Q, P1, P2;
@@ -176,6 +181,32 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   return (Mat_<double>(3,1) << x, y, z);
 }
 
+ __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
+  // Calculating the coordinates of the pixel
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	// To prevent trying to access data outside the image
+	if (x >= cols || y >= rows)
+        return;
+    
+  int pixelPosition = y * cols + x;
+  uchar d = dmap[pixelPosition];
+  //if(d < 2) return;
+
+  double pos[4];
+  for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
+    
+  double X = pos[0] / pos[3];
+  double Y = pos[1] / pos[3];
+  double Z = pos[2] / pos[3];
+
+  double point[3];
+  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
+    points[pixelPosition] = make_double3(point[0], point[1], point[2]);
+  //color[pixelPosition] = make_uchar4(1, 1, 1, 1);
+}
+
 /*
  * Function:  publishPointCloud 
  * --------------------
@@ -207,35 +238,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *  returns: void
  *
  */
-
-
- __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
-  // Calculating the coordinates of the pixel
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-	// To prevent trying to access data outside the image
-	if (x >= cols || y >= rows)
-        return;
-    
-  int pixelPosition = y * cols + x;
-  uchar d = dmap[pixelPosition];
-  //if(d < 2) return;
-
-  double pos[4];
-  for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
-    
-  double X = pos[0] / pos[3];
-  double Y = pos[1] / pos[3];
-  double Z = pos[2] / pos[3];
-
-  double point[3];
-  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
-    
-  points[pixelPosition] = make_double3(point[0], point[1], point[2]);
-}
-
  void publishPointCloud(Mat& img_left, Mat& dmap) { 
+  /*
   if (img_left.empty() || dmap.empty()) {
     printf("(empty)\t");
     return;
@@ -246,19 +250,22 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     cout << "Rotation matrix: " << XR << endl;
     cout << "Translation matrix: " << XT << endl;
   }
-
+*/
   start_timer; 
   
   cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1);
   cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
   cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);
   cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
+  
   cudaDeviceSynchronize();
-
   parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
-
   cudaDeviceSynchronize();
+  // checkCudaError;
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
+
+  //for (int i=0; i<out_width * out_height; i++) printf("%f, %f, %f\t", points[i].y, -points[i].z, points[i].x);
+  //printf("%f, %f, %f\n", points[i].y, -points[i].z, points[i].x);
 
   for(auto& object : obj_list) {
     /*
@@ -286,9 +293,10 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     appendOBJECTS(Y/((i_ub-i_lb)*(j_ub-j_lb)), -Z/((i_ub-i_lb)*(j_ub-j_lb)), X/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
    
+  /*
   if (!dmap.empty()) {
     // TODO : Do something
-  }
+  }*/
   //updateGraph();
   end_timer(pc_t);
 }
@@ -307,14 +315,12 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  */
 Mat generateDisparityMap(Mat& left, Mat& right) {
   resetOBJECTS();
-  if (left.empty() || right.empty()) 
-    return left;
+  if (left.empty() || right.empty()) return left;
   const Size imsize = left.size();
   const int32_t dims[3] = {imsize.width, imsize.height, imsize.width};
   Mat leftdpf = Mat::zeros(imsize, CV_32F);
   Mat rightdpf = Mat::zeros(imsize, CV_32F);
 
-  
   static Elas::parameters param(Elas::MIDDLEBURY);
   //Elas::parameters param(Elas::ROBOTICS);
   //Elas::parameters param;
@@ -349,10 +355,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 
 void imgCallback_video() {
   Mat left_img = left_img_OLD; Mat right_img = right_img_OLD;
-  if (left_img.empty() || right_img.empty()){
-    //printf("%s\n",left_img_topic);
-    return;
-  }
+  if (left_img.empty() || right_img.empty()) return;
+
 
   Mat img_left, img_right, img_left_color_flip;
 
@@ -367,7 +371,6 @@ void imgCallback_video() {
 }
 
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
-printf("imgCalback called\n");
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
   Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
   Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
