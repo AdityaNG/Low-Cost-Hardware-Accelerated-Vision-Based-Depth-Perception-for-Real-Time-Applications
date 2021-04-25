@@ -29,18 +29,19 @@ Clone the repository:
 $ git clone https://github.com/...
 ```
 
-Execute the `build.sh` script:
+Compile using the make utility:
+
+```bash
+$ make stereo_vision -j$(($(nproc) * 2)) -s
+```
+
+Or execute the `build.sh` script (deprecated):
 
 ```bash
 $ chmod +x build.sh
 $ ./build.sh
 ```
 
-Or compile using the make utility:
-
-```bash
-$ make stereo_vision -j$(nproc) -s
-```
 ## License
 
 This software is released under the [GNU GPL v3 license](LICENSE).
