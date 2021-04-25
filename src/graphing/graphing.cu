@@ -105,10 +105,11 @@ void drawCube(){
         glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
 		glVertex3f(points[i].y, -points[i].z, points[i].x);
+        //glVertex3f(points[i].x, points[i].y, points[i].z);
     }
     glEnd();
 
-    draw_cube(0,0,0, 1,0,0);
+    draw_cube(0,0,0,1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6){
       draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
       /*
@@ -228,11 +229,11 @@ void startGraphics(int out_width, int out_height){
     glutSpecialFunc(keyboard);
     glutKeyboardFunc(keyboard_chars);
     glutMouseFunc(mouse_callback);
-	//thread th1(test); 
+	//thread mainThread(test); 
 	
     // Pass control to GLUT for events
     glutMainLoop();
 	
-	//th1.join();
+	//mainThread.join();
     free(POINTS_OBJECTS);
 }

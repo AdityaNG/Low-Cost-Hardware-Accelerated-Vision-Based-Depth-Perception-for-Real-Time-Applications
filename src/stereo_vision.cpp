@@ -193,8 +193,8 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
   vector< Point3d > points;
 
   if (draw_points) {
-  for (int i = 0; i < img_left.cols; i++) {
-    for (int j = 0; j < img_left.rows; j++) {
+  for (int j = 0; j < img_left.rows; j++) {
+    for (int i = 0; i < img_left.cols; i++) {
       int d = dmap.at<uchar>(j,i);
       //cout<<d<<endl;
       // if low disparity, then ignore

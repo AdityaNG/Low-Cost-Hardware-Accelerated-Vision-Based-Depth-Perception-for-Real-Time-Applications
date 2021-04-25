@@ -16,7 +16,6 @@
 #include <future>
 #include <omp.h>
 
-
 #include "yolo/yolo.hpp"
 #include "elas_cuda_openmp/elas.h"
 #include "elas_cuda_openmp/elas_gpu.h"
@@ -37,6 +36,7 @@ using namespace cv;
 using namespace std;
 
 #define shrink_factor 1 // Modify to change the image resize factor
+#define SHOW_VIDEO // To show the yolo and disparity output as well
 
 #define start_timer auto start = chrono::high_resolution_clock::now();  
 #define end_timer(var)\
@@ -65,13 +65,13 @@ int calib_width = 1242, calib_height = 375,
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 
-double pc_t = 0, yd_t = 0, t_t = 0; // For calculating timings
+double pc_t = 0, yd_t = 0, y_t = 0, t_t = 0; // For calculating timings
 
-int video_mode = 0;
-int debug = 0;
-int draw_points = 0;
-int frame_skip = 1;
-int play_video = 0;
+int video_mode = 0; // Loop among all the images in the given directory
+int debug = 0;      // Applies different roation and translation to the points
+int draw_points = 0;// Plotting the points in 3D
+int frame_skip = 1; // Skip by frame_skip frames
+int play_video = 0; // Rename? 
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
@@ -105,6 +105,15 @@ void cudaInit(){
   cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
   points = (double3*)malloc(sizeof(double3) * out_width * out_height);
   cudaStreamCreate(&s1);  
+  if (debug == 1) { 
+    XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
+    XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
+    cout << "Rotation matrix: " << XR << endl;
+    cout << "Translation matrix: " << XT << endl;
+  }
+  cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice); 
+  cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);  
+  cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
   printf("CUDA Init done\n");
 }
 
@@ -203,8 +212,7 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 
   double point[3];
   for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
-    points[pixelPosition] = make_double3(point[0], point[1], point[2]);
-  //color[pixelPosition] = make_uchar4(1, 1, 1, 1);
+  points[pixelPosition] = make_double3(point[0], point[1], point[2]);
 }
 
 /*
@@ -244,20 +252,11 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
     printf("(empty)\t");
     return;
   }
-  if (debug == 1) {
-    XR = composeRotationCamToRobot(1.3 ,-3.14,1.57);
-    XT = composeTranslationCamToRobot(0.0,0.0,0.28);
-    cout << "Rotation matrix: " << XR << endl;
-    cout << "Translation matrix: " << XT << endl;
-  }
+  
 */
   start_timer; 
   
-  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1);
-  cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
-  
+  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1); 
   cudaDeviceSynchronize();
   parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
   cudaDeviceSynchronize();
@@ -356,7 +355,6 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 void imgCallback_video() {
   Mat left_img = left_img_OLD; Mat right_img = right_img_OLD;
   if (left_img.empty() || right_img.empty()) return;
-
 
   Mat img_left, img_right, img_left_color_flip;
 
@@ -502,85 +500,78 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cv::initUndistortRectifyMap(K2, D2, R2, P2, finalSize, CV_32F, rmapx, rmapy);
   
   cout << "------------------" << endl;
-  cout << "Done rectification" << endl;
-  
+  cout << "Done rectification" << endl;  
 }
 
 void next(){
   static int iImage=0;
   if (video_mode){
     char left_img_topic[128], right_img_topic[128];
+    
     size_t max_files = 465; // Just hardcoded the value for now
 
     Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
-    //thread th1(imgCallback_video);
-    thread th1;
-
-    play_video = 1;
-    while (play_video){
-      for(int iFrame = 0; iFrame < max_files; iFrame++){
-        if (t_t!=0) printf("(FPS=%f) ", 1/t_t);
-        
-        start_timer;        
-        strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-        strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-
-        left_img = imread(left_img_topic, IMREAD_UNCHANGED);
-        right_img = imread(right_img_topic, IMREAD_UNCHANGED);
-        resize(left_img, left_img, out_img_size);
-        resize(right_img, right_img, out_img_size);        
-
-        YOLOL_Color = left_img.clone();
-        obj_list = processYOLO(YOLOL_Color);
-        pred_list = get_predicted_boxes();
-        append_old_objs(obj_list);
-        obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
-        
-        //auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
-
-        if (iFrame%frame_skip == 0) {
-          //printf("(DISP) \t ");
-          //imgCallback_video(left_img, right_img, dmap);
-          left_img_OLD = left_img.clone();
-          right_img_OLD = right_img.clone();
-
-          //disp_parallel = std::async(imgCallback_video);
-          th1 = thread(imgCallback_video);
-        }
-          
-        if (iFrame%frame_skip == frame_skip-1) {
-          //printf("(JOIN) \t");
-          th1.join();
-          dmap = dmapOLD.clone();
-        }
-
-        printf("(%d, %d) ", dmap.rows, dmap.cols);
-        
-        //if (iFrame%frame_skip == frame_skip-1) {
-        // th1.join();
-        //  dmap = dmapOLD.clone();
-        //}
     
-        Mat rgba;
-        cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-        color = (uchar4*)rgba.ptr<unsigned char>(0);
-        //obj_list = f.get(); // Getting obj_list from the future object which the async call return to f
-        publishPointCloud(left_img, dmap);
-        //printf("(PC Done) ");
-        updateGraph();
+    thread skipThread;
+    
+    for(int iFrame = 0; iFrame < max_files; iFrame++){
+      
+      if (t_t != 0) printf("(FPS=%f) ", 1/t_t);
+      
+      start_timer;        
+      strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+      strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+      
+      left_img = imread(left_img_topic, IMREAD_UNCHANGED);
+      right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+      
+      resize(left_img, left_img, out_img_size);
+      
+      YOLOL_Color = left_img.clone();
+      auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
-        if (0){
-          flip(left_img, img_left_color_flip,1);
-          namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-          namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-          imshow("Detections", YOLOL_Color);
-          imshow("Disparity", dmap);
-          waitKey(1);
-        }
-        end_timer(t_t);        
-        printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
+      resize(right_img, right_img, out_img_size);           
+                   
+      if (iFrame%frame_skip == 0) {
+        //printf("(DISP) \t ");
+        //imgCallback_video(left_img, right_img, dmap);
+        left_img_OLD = left_img.clone();
+        right_img_OLD = right_img.clone();
+        //disp_parallel = std::async(imgCallback_video);
+        skipThread = thread(imgCallback_video);
       }
+        
+      if (iFrame%frame_skip == frame_skip-1) {
+        //printf("(JOIN) \t");
+        skipThread.join();
+        dmap = dmapOLD.clone();
+      }
+      
+      printf("(%d, %d) ", dmap.rows, dmap.cols);
+  
+      Mat rgba;
+      cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+      color = (uchar4*)rgba.ptr<unsigned char>(0);
+
+      obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+      pred_list = get_predicted_boxes(); // Bayesian
+      append_old_objs(obj_list);
+      obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+      publishPointCloud(left_img, dmap);
+      
+      updateGraph();
+      #ifdef SHOW_VIDEO
+        flip(left_img, img_left_color_flip,1);
+        namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+        namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+        imshow("Detections", YOLOL_Color);
+        imshow("Disparity", dmap);
+        waitKey(1);
+      #endif
+      end_timer(t_t);        
+      printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
     }
+    
   } 
   else {
     printf("Next image\n");
@@ -630,19 +621,16 @@ int main(int argc, const char** argv){
   calib_file["T"]  >> T;
   calib_file["XR"] >> XR;
   calib_file["XT"] >> XT;
-
  
   cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
        << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
   
-  findRectificationMap(calib_file, out_img_size);
-  
+  findRectificationMap(calib_file, out_img_size); 
   cudaInit();
-
   setCallback(next_video);
-  thread th1(imageLoop);
+  thread mainThread(imageLoop); // Does all the calculations
   startGraphics(out_width, out_height);
-  th1.join();
+  mainThread.join();
   clean();
   return 0;
 }
