@@ -41,3 +41,6 @@ shared/
 docs/
 *.dox
 *.wikidoc
+
+# Core dump
+core

@@ -675,10 +675,7 @@ void next() {
 
     play_video = 0;
     //while (play_video)
-    while (1)
-    {
-
-      
+    while (1){      
       for (int iFrame = 0; iFrame < max_files; iFrame++)
       {
         while (!play_video) {}
@@ -780,7 +777,7 @@ void next() {
         while (!play_video) {}
 
         if (t_t!=0)
-          printf("(FPS=%f) ", 1/t_t);
+        printf("(FPS=%f) ", 1/t_t);
         auto start = chrono::high_resolution_clock::now();   
         ios_base::sync_with_stdio(false);
         
@@ -984,10 +981,7 @@ void next_video() {
 }
 
 void imageLoop() {
-  while (1)
-  {
-    next();
-  }
+  while (1) next();
 }
 
 int main(int argc, const char** argv) {

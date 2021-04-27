@@ -3,6 +3,7 @@
 #include <exception>
 #include <iostream>
 #include <opencv4/opencv2/highgui.hpp>
+#include <pthread.h>
 #include <vector>
 #include <thread> 
 #include <stdlib.h>
@@ -36,15 +37,16 @@ using namespace cv;
 using namespace std;
 
 #define shrink_factor 1 // Modify to change the image resize factor
-#define SHOW_VIDEO // To show the yolo and disparity output as well
+#define SHOW_VIDEO      // To show the yolo and disparity output as well
 
-#define start_timer auto start = chrono::high_resolution_clock::now();  
-#define end_timer(var)\
-  auto end = chrono::high_resolution_clock::now();\
-  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(end - start).count();\
+#define start_timer(start) auto start = chrono::high_resolution_clock::now();  
+
+#define end_timer(start, var)\
+  double time_taken =  chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();\
   time_taken *= 1e-9;\
   var = time_taken;      
-#define checkCudaError cudaError_t e = cudaGetLastError();\
+
+  #define checkCudaError cudaError_t e = cudaGetLastError();\
 if (e!=cudaSuccess) {\
   printf("Cuda error : %s\n", cudaGetErrorString(e));\
 }                                       
@@ -65,13 +67,17 @@ int calib_width = 1242, calib_height = 375,
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 
-double pc_t = 0, yd_t = 0, y_t = 0, t_t = 0; // For calculating timings
+double pc_t = 0, dmap_t = 0, t_t = 0; // For calculating timings
+
+pthread_t mainThread; // The main thread that generates the point cloud
 
 int video_mode = 0; // Loop among all the images in the given directory
 int debug = 0;      // Applies different roation and translation to the points
-int draw_points = 0;// Plotting the points in 3D
+int draw_points = 0;// Render the points in 3D
 int frame_skip = 1; // Skip by frame_skip frames
 int play_video = 0; // Rename? 
+
+bool valid = true; // The main thread terminates when this flag is made false
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
@@ -79,22 +85,9 @@ uchar *d_dmap; // Disparity map needs to be pushed to GPU
 double3 *points; // Holds the coordinates of each pixel in 3D space
 double3 *d_points;
 uchar4 *color = NULL;
-cudaStream_t s1;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-Elas::parameters param(Elas::MIDDLEBURY);
-param.postprocess_only_left = true;
-ElasGPU elas(param);*/
-  //Elas::parameters param(Elas::ROBOTICS);
-  //Elas::parameters param;
-  
-
-  //param.postprocess_only_left = false;
-  
-  //Elas elas(param);
-  
 
 void cudaInit(){
   // Cuda Init
@@ -104,7 +97,6 @@ void cudaInit(){
   cudaMalloc(&d_dmap, sizeof(uchar) * out_width * out_height);
   cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
   points = (double3*)malloc(sizeof(double3) * out_width * out_height);
-  cudaStreamCreate(&s1);  
   if (debug == 1) { 
     XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
     XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
@@ -117,28 +109,27 @@ void cudaInit(){
   printf("CUDA Init done\n");
 }
 
-void clean(){
-  // Cuda Cleanup
+void clean(){ // Not working for some reason
   printf("Exitting the program.....\n");
+  valid = false;
   destroyAllWindows();
+  pthread_join(mainThread, NULL);
+  printf("Main thread joined\n");
   free(points);
-  cudaStreamDestroy(s1);
   cudaFree(d_XR);
   cudaFree(d_XT);
   cudaFree(d_Q);
   cudaFree(d_points);
   cudaFree(d_dmap);
-  //elas.cudaDest();
+  //elas.cudaDest(); // Needs to be handled
+  printf("All memory freed\n");
   exit(0);
 }
 
 int constrain(int a, int lb, int ub) {
-  if (a<lb)
-    return lb;
-  else if (a>ub)
-    return ub;
-  else
-    return a;
+       if(a<lb) return lb;
+  else if(a>ub) return ub;
+           else return a;
 }
 
 /*
@@ -190,18 +181,17 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   return (Mat_<double>(3,1) << x, y, z);
 }
 
- __global__ void parallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
+// Projecting the disparity map onto 3D space
+ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
   // Calculating the coordinates of the pixel
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 	// To prevent trying to access data outside the image
-	if (x >= cols || y >= rows)
-        return;
+	if (x >= cols || y >= rows) return;
     
   int pixelPosition = y * cols + x;
   uchar d = dmap[pixelPosition];
-  //if(d < 2) return;
 
   double pos[4];
   for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
@@ -210,9 +200,9 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   double Y = pos[1] / pos[3];
   double Z = pos[2] / pos[3];
 
-  double point[3];
-  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
-  points[pixelPosition] = make_double3(point[0], point[1], point[2]);
+  //for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
+  //points[pixelPosition] = make_double3(point[0], point[1], point[2]);
+  points[pixelPosition] = make_double3(X, Y, Z);
 }
 
 /*
@@ -254,32 +244,25 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   }
   
 */
-  start_timer; 
+  start_timer(pc_start); 
   
-  cudaMemcpyAsync(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice, s1); 
+  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice); 
   cudaDeviceSynchronize();
-  parallel <<<gridSize, blockSize, 0, s1>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
+  projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
   cudaDeviceSynchronize();
-  // checkCudaError;
+  // checkCudaError; // Uncomment for error checking
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
 
   //for (int i=0; i<out_width * out_height; i++) printf("%f, %f, %f\t", points[i].y, -points[i].z, points[i].x);
   //printf("%f, %f, %f\n", points[i].y, -points[i].z, points[i].x);
 
   for(auto& object : obj_list) {
-    /*
-    int i_lb = constrain(object.x + object.w/2, 0, img_left.cols-1), 
-    i_ub = i_lb + 1, 
-    j_lb = constrain(object.y + object.h/2, 0, img_left.rows-1), 
-    j_ub = j_lb + 1;
-    */
     int i_lb = constrain(object.x, 0, img_left.cols-1), 
-    i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
-    j_lb = constrain(object.y, 0, img_left.rows-1), 
-    j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
+        i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
+        j_lb = constrain(object.y, 0, img_left.rows-1), 
+        j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
     double X=0, Y=0, Z=0;
-
-    #pragma omp parallel for //reduction(+:X,Y,Z)
+    
     for(int i = i_lb; i < i_ub; i++) {
       for(int j = j_lb; j < j_ub; j++) {   
         X += points[j*out_width + i].x;  
@@ -287,17 +270,9 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
         Z += points[j*out_width + i].z;  
       }
     } 
-    //appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
-    //if (draw_points == 1)
-    appendOBJECTS(Y/((i_ub-i_lb)*(j_ub-j_lb)), -Z/((i_ub-i_lb)*(j_ub-j_lb)), X/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+    appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
   }
-   
-  /*
-  if (!dmap.empty()) {
-    // TODO : Do something
-  }*/
-  //updateGraph();
-  end_timer(pc_t);
+  end_timer(pc_start, pc_t);
 }
 
 /*
@@ -320,14 +295,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   Mat leftdpf = Mat::zeros(imsize, CV_32F);
   Mat rightdpf = Mat::zeros(imsize, CV_32F);
 
-  static Elas::parameters param(Elas::MIDDLEBURY);
-  //Elas::parameters param(Elas::ROBOTICS);
-  //Elas::parameters param;
-  
-  param.postprocess_only_left = true;
-  //param.postprocess_only_left = false;
-  
-  //Elas elas(param);
+  static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
+  param.postprocess_only_left = true;//false;
   static ElasGPU elas(param);
   
   elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
@@ -353,25 +322,23 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  */
 
 void imgCallback_video() {
-  Mat left_img = left_img_OLD; Mat right_img = right_img_OLD;
+  Mat left_img = left_img_OLD; Mat right_img = right_img_OLD, img_left, img_right;
   if (left_img.empty() || right_img.empty()) return;
-
-  Mat img_left, img_right, img_left_color_flip;
 
   cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
   cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
-  start_timer;   
+  start_timer(dmap_start);   
   dmapOLD = generateDisparityMap(img_left, img_right);  
-  end_timer(yd_t);
+  end_timer(dmap_start, dmap_t);
 }
 
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
-  Mat tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
-  Mat tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
+  Mat       tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
+  Mat       tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
   
   if (tmpL.empty() || tmpR.empty()) return;
 
@@ -386,17 +353,22 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
 
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
-  start_timer;
   auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
-  Mat dmap = generateDisparityMap(img_left, img_right);  
-  obj_list = f.get(); // Getting obj_list from the future object which the async call returns to f  
-  end_timer(yd_t);
+  
+  start_timer(yd_start);
+  Mat dmap = generateDisparityMap(img_left, img_right);    
+  end_timer(yd_start, dmap_t);
 
-  publishPointCloud(frame, dmap);
-  
-  flip(tmpL_Color, img_left_color_flip,1);
-  
-  imshow("LEFT_C", img_left_color_flip);
+  obj_list = f.get(); // Getting obj_list from the future object which the async call returns to f
+  publishPointCloud(frame, dmap);  
+  updateGraph();
+  //flip(tmpL_Color, img_left_color_flip,1);
+  //imshow("LEFT_C", img_left_color_flip);
+  //waitKey(1);
+  namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+  //namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+  imshow("Detections", img_left_color_flip);
+  //imshow("Disparity", dmap);
 }
 
 /*
@@ -407,7 +379,7 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
  * and initUndistortRectifyMap functions respectively.
  *
  *  FileStorage& calib_file: The List in question
- *  Size finalSize: The data to tbe inserted
+ *  Size finalSize: The data to be inserted
  *  returns: void
  *
  */
@@ -458,9 +430,8 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
     validPixROI1    Optional output rectangles inside the rectified images where all the pixels are valid. If alpha=0 , the ROIs cover the whole images. Otherwise, they are likely to be smaller (see the picture below).
     validPixROI2    Optional output rectangles inside the rectified images where all the pixels are valid. If alpha=0 , the ROIs cover the whole images. Otherwise, they are likely to be smaller (see the picture below).
   */
-  //stereoRectify(K1, D1, K2, D2, calib_img_size, R, Mat(T), R1, R2, P1, P2, Q, CV_CALIB_ZERO_DISPARITY, 0, finalSize, &validRoi[0], &validRoi[1]);
-  stereoRectify(K1, D1, K2, D2, calib_img_size, R, Mat(T), R1, R2, P1, P2, Q, 
-                CALIB_ZERO_DISPARITY, 0, finalSize, &validRoi[0], &validRoi[1]);
+  
+  stereoRectify(K1, D1, K2, D2, calib_img_size, R, Mat(T), R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY, 0, finalSize, &validRoi[0], &validRoi[1]);
   
   //P1 = (Mat_<double>(3,4) << 7.215377000000e+02, 0.000000000000e+00, 6.095593000000e+02, 4.485728000000e+01, 0.000000000000e+00, 7.215377000000e+02, 1.728540000000e+02, 2.163791000000e-01, 0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00, 2.745884000000e-03);
   //P2 = (Mat_<double>(3,4) << 7.215377000000e+02, 0.000000000000e+00, 6.095593000000e+02, -3.395242000000e+02, 0.000000000000e+00, 7.215377000000e+02, 1.728540000000e+02, 2.199936000000e+00, 0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00, 2.729905000000e-03);
@@ -506,19 +477,15 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 void next(){
   static int iImage=0;
   if (video_mode){
-    char left_img_topic[128], right_img_topic[128];
-    
+    char left_img_topic[128], right_img_topic[128];    
     size_t max_files = 465; // Just hardcoded the value for now
-
-    Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;
-    
+    Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;    
     thread skipThread;
     
-    for(int iFrame = 0; iFrame < max_files; iFrame++){
+    for(int iFrame = 0; iFrame < max_files; iFrame++){      
+      if (t_t) printf("(FPS=%f) ", 1/t_t);
       
-      if (t_t != 0) printf("(FPS=%f) ", 1/t_t);
-      
-      start_timer;        
+      start_timer(t_start);        
       strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
       strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
       
@@ -561,34 +528,34 @@ void next(){
       
       updateGraph();
       #ifdef SHOW_VIDEO
-        flip(left_img, img_left_color_flip,1);
+        //flip(left_img, img_left_color_flip,1);
         namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
         namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
         imshow("Detections", YOLOL_Color);
         imshow("Disparity", dmap);
         waitKey(1);
       #endif
-      end_timer(t_t);        
-      printf("(t_t=%f, \t yd_t=%f, \t pc_t=%f)\n",t_t, yd_t, pc_t);
+      end_timer(t_start, t_t);        
+      printf("(t_t=%f, \t dmap_t=%f, \t pc_t=%f)\n",t_t, dmap_t, pc_t);
+      if(!valid) break;
     }
-    
   } 
   else {
-    printf("Next image\n");
+    printf("Waiting for input...\n");
+    while(!play_video);
+    printf("Next image pair loading...\n");
     char left_img_topic[128], right_img_topic[128];
     strcpy(left_img_topic , format("%s/object/testing/image_2/%06d.png", kitti_path, iImage).c_str());    
     strcpy(right_img_topic, format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());       
     imgCallback(left_img_topic, right_img_topic);
-    iImage++;
+    iImage++; 
+    play_video = 0;   
   }
 }
 
-void next_video() {
-  play_video = 0;
-}
-
-void imageLoop() {
-  while (1) next();
+void *imageLoop(void *arg) {
+  while(valid) next();
+  cout << "Exitting loop\n";
 }
 
 int main(int argc, const char** argv){  
@@ -627,10 +594,15 @@ int main(int argc, const char** argv){
   
   findRectificationMap(calib_file, out_img_size); 
   cudaInit();
-  setCallback(next_video);
-  thread mainThread(imageLoop); // Does all the calculations
-  startGraphics(out_width, out_height);
-  mainThread.join();
+  //setCallback(next_video);
+  //thread mainThread(imageLoop); // Does all the calculations
+  int ret = pthread_create(&mainThread, NULL, imageLoop, NULL);
+  if(ret){
+    fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
+    exit(-1);
+  }
+  startGraphics(out_width, out_height, &play_video);
+  //mainThread.join();
   clean();
   return 0;
 }

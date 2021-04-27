@@ -104,8 +104,7 @@ void drawCube(){
         if(color == NULL) break;
         glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
 		glPointSize(1);
-		glVertex3f(points[i].y, -points[i].z, points[i].x);
-        //glVertex3f(points[i].x, points[i].y, points[i].z);
+        glVertex3f(points[i].x, points[i].y, points[i].z);
     }
     glEnd();
 
@@ -143,8 +142,9 @@ void setCallback(void (*f)(void)) {
     nextCALLBACK = f;
 }
 
-void keyboard_chars(unsigned char key, int x, int y)
-{
+int *flags;
+//extern int play_video;
+void keyboard_chars(unsigned char key, int x, int y){
          if (key == 'w') tY += VEL_T;
     else if (key == 'a') tX -= VEL_T;
     else if (key == 's') tY -= VEL_T;
@@ -152,18 +152,17 @@ void keyboard_chars(unsigned char key, int x, int y)
     else if (key == 'q') clean();
     else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
     else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
-    else if (key == 'n'){
-        if (nextCALLBACK) nextCALLBACK();
-    }
+    else if (key == 'n') *flags = 1;
+    //play_video = !play_video;
     // Request display update
     glutPostRedisplay();
 }
 
-void updateGraph() {
+void updateGraph(){
     glutPostRedisplay();
 }
 
-void mouse_callback(int button, int state, int x, int y) {
+void mouse_callback(int button, int state, int x, int y){
 	static int xp=0, yp=0;
 	//printf("%d %d %d %d\n", button, state, x, y);
 
@@ -202,7 +201,9 @@ void mouse_callback(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-void startGraphics(int out_width, int out_height){
+
+void startGraphics(int out_width, int out_height, int *f){
+    flags = f;
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
     // Initialize GLUT and process user parameters

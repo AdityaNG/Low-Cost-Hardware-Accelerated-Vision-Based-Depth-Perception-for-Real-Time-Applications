@@ -342,7 +342,7 @@ void imgCallback_video() {
   //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
   start_timer;   
-  dmapOLD = generateDisparityMap(img_left, img_right);  
+  dmapOLD = generateDisparityMap(img_left, img_right);
   end_timer(yd_t);
 }
 
@@ -372,7 +372,7 @@ printf("imgCalback called\n");
   end_timer(yd_t);
 
   publishPointCloud(frame, dmap);
-  
+  updateGraph();
   flip(tmpL_Color, img_left_color_flip,1);
   
   imshow("LEFT_C", img_left_color_flip);
