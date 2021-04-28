@@ -27,8 +27,6 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 // Enable profiling
 //#define PROFILE
 
-#include <iostream>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vector>

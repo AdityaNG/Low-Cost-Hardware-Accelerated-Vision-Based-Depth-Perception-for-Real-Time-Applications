@@ -154,7 +154,7 @@ void keyboard_chars(unsigned char key, int x, int y){
     else if (key == 'q') clean();
     else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
     else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
-    else if (key == 'n') *flags = 1;
+    else if (key == 'n') *flags = 1; // Unused for now
     //play_video = !play_video;
     // Request display update
     glutPostRedisplay();

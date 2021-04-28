@@ -276,7 +276,6 @@ void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int
   //if(flag==1) return;
   D_copy = (float*)malloc(width*height*sizeof(float));
   D_tmp  = (float*)malloc(width*height*sizeof(float));
-  std::cout << "ELAS GPU initialization called";
   cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
   cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
   cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));

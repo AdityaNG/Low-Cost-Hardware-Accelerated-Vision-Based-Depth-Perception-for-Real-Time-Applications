@@ -29,7 +29,11 @@ public:
   // Constructor, input: parameters
   // Pass this to the super constructor
   ElasGPU(parameters param) : Elas(param) {}
-
+  
+  // Destructor
+  ~ElasGPU () {
+    cudaDest();
+  }
 // This was originally "private"
 // Was converted to allow sub-classes to call this
 // This assumes the user knows what they are doing

@@ -4,8 +4,8 @@ constexpr float CONFIDENCE_THRESHOLD = 0.5;
 constexpr float NMS_THRESHOLD = 0.4;
 constexpr int NUM_CLASSES = 80;
 
-auto net = cv::dnn::readNetFromDarknet("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights");
-auto output_names = net.getUnconnectedOutLayersNames();
+static auto net = cv::dnn::readNetFromDarknet("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights");
+static auto output_names = net.getUnconnectedOutLayersNames();
 
 // colors for bounding boxes
 const cv::Scalar colors[] = {

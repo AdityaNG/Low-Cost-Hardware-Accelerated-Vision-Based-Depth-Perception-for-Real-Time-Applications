@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <cuda_device_runtime_api.h>
 #include <driver_types.h>
 #include <exception>
@@ -46,7 +47,7 @@ using namespace std;
   time_taken *= 1e-9;\
   var = time_taken;      
 
-  #define checkCudaError cudaError_t e = cudaGetLastError();\
+  #define checkCudaError e = cudaGetLastError();\
 if (e!=cudaSuccess) {\
   printf("Cuda error : %s\n", cudaGetErrorString(e));\
 }                                       
@@ -77,7 +78,7 @@ bool draw_points = false;// Render the points in 3D
 int frame_skip = 1; // Skip by frame_skip frames
 int play_video = 0; // Rename? 
 
-bool valid = true; // The main thread terminates when this flag is made false
+bool valid = true; // mainThread terminates when this flag is made false
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
@@ -87,6 +88,7 @@ double3 *d_points;
 uchar4 *color = NULL;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
+cudaError_t e;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cudaInit(){
@@ -109,19 +111,18 @@ void cudaInit(){
   printf("CUDA Init done\n");
 }
 
-void clean(){ // Not working for some reason
+void clean(){ 
   printf("Exitting the program.....\n");
   valid = false;
   destroyAllWindows();
   pthread_join(mainThread, NULL);
-  printf("Main thread joined\n");
+  printf("mainThread joined\n");
   free(points);
   cudaFree(d_XR);
   cudaFree(d_XT);
   cudaFree(d_Q);
   cudaFree(d_points);
   cudaFree(d_dmap);
-  //elas.cudaDest(); // Needs to be handled
   printf("All memory freed\n");
   exit(0);
 }
@@ -247,10 +248,13 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   start_timer(pc_start); 
   
   cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice); 
+  checkCudaError;
   cudaDeviceSynchronize();
+  checkCudaError;
   projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
+  checkCudaError;
   cudaDeviceSynchronize();
-  // checkCudaError; // Uncomment for error checking
+  checkCudaError; // Uncomment for error checking
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
 
   //for (int i=0; i<out_width * out_height; i++) printf("%f, %f, %f\t", points[i].y, -points[i].z, points[i].x);
@@ -321,19 +325,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
  *
  */
 
-void imgCallback_video() {
-  Mat left_img = left_img_OLD; Mat right_img = right_img_OLD, img_left, img_right;
-  if (left_img.empty() || right_img.empty()) return;
-
-  cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
-  cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
-
-  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
-  
-  start_timer(dmap_start);   
-  dmapOLD = generateDisparityMap(img_left, img_right);  
-  end_timer(dmap_start, dmap_t);
-}
+ 
 
 void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
   Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
@@ -361,14 +353,29 @@ void imgCallback(const char* left_img_topic, const char* right_img_topic, int wa
 
   obj_list = f.get(); // Getting obj_list from the future object which the async call returns to f
   publishPointCloud(frame, dmap);  
-  updateGraph();
-  //flip(tmpL_Color, img_left_color_flip,1);
-  //imshow("LEFT_C", img_left_color_flip);
-  //waitKey(1);
-  namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-  //namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-  imshow("Detections", img_left_color_flip);
-  //imshow("Disparity", dmap);
+  
+  #ifdef SHOW_VIDEO
+    //flip(tmpL_Color, img_left_color_flip, 1);
+    imshow("Detections", tmpL_Color);
+    imshow("Disparity", dmap);
+    waitKey(0);
+  #endif
+
+  printf("Done\n\n");
+}
+
+void imgCallback_video() {
+  Mat left_img = left_img_OLD; Mat right_img = right_img_OLD, img_left, img_right;
+  if (left_img.empty() || right_img.empty()) return;
+
+  cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
+  cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
+
+  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+  
+  start_timer(dmap_start);   
+  dmapOLD = generateDisparityMap(img_left, img_right);  
+  end_timer(dmap_start, dmap_t);
 }
 
 /*
@@ -474,7 +481,7 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-void next(){
+void *imageLoop(void *arg){
   static int iImage=0;
   if (video_mode){
     char left_img_topic[128], right_img_topic[128];    
@@ -482,7 +489,7 @@ void next(){
     Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;    
     thread skipThread;
     
-    for(int iFrame = 0; iFrame < max_files; iFrame++){      
+    for(int iFrame = 0; (iFrame < max_files) && valid; iFrame++){      
       if (t_t) printf("(FPS=%f) ", 1/t_t);
       
       start_timer(t_start);        
@@ -529,34 +536,39 @@ void next(){
       updateGraph();
       #ifdef SHOW_VIDEO
         //flip(left_img, img_left_color_flip,1);
-        namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-        namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
         imshow("Detections", YOLOL_Color);
         imshow("Disparity", dmap);
         waitKey(1);
       #endif
       end_timer(t_start, t_t);        
       printf("(t_t=%f, \t dmap_t=%f, \t pc_t=%f)\n",t_t, dmap_t, pc_t);
-      if(!valid) break;
     }
   } 
-  else {
-    printf("Waiting for input...\n");
-    while(!play_video);
-    printf("Next image pair loading...\n");
-    char left_img_topic[128], right_img_topic[128];
-    strcpy(left_img_topic , format("%s/object/testing/image_2/%06d.png", kitti_path, iImage).c_str());    
-    strcpy(right_img_topic, format("%s/object/testing/image_3/%06d.png", kitti_path, iImage).c_str());       
-    imgCallback(left_img_topic, right_img_topic);
-    iImage++; 
-    play_video = 0;   
+  else{
+    printf("Draw points = %d\n", draw_points);
+    while(valid){  
+      #ifndef SHOW_VIDEO
+        printf("Hit any key to load the next image pair: ");
+        getchar();
+      #endif
+      static int iFrame = 0;
+      char left_img_topic[128], right_img_topic[128];
+      strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+      strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());  
+      printf("Loading image pair: %s\t%s\n", left_img_topic, right_img_topic);    
+      imgCallback(left_img_topic, right_img_topic);
+      updateGraph();
+      iFrame++; 
+    }
   }
+  pthread_exit(NULL);
 }
 
+/*
 void *imageLoop(void *arg) {
   while(valid) next();
   cout << "Exitting loop\n";
-}
+}*/
 
 int main(int argc, const char** argv){  
   initYOLO();
@@ -601,7 +613,11 @@ int main(int argc, const char** argv){
     fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
     exit(-1);
   }
-  startGraphics(out_width, out_height, &play_video);
+  #ifdef SHOW_VIDEO
+    namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+    namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+  #endif
+    startGraphics(out_width, out_height, &play_video);
   //mainThread.join();
   clean();
   return 0;
