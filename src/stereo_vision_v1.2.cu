@@ -73,7 +73,7 @@ pthread_t mainThread; // The main thread that generates the point cloud
 
 int video_mode = 0; // Loop among all the images in the given directory
 int debug = 0;      // Applies different roation and translation to the points
-int draw_points = 0;// Render the points in 3D
+bool draw_points = false;// Render the points in 3D
 int frame_skip = 1; // Skip by frame_skip frames
 int play_video = 0; // Rename? 
 
@@ -564,7 +564,7 @@ int main(int argc, const char** argv){
   static struct poptOption options[] = { 
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
     { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
-    { "draw_points",'p',POPT_ARG_INT,&draw_points,0,"Set p=1 to plot out points","NUM" },
+    { "draw_points",'p',POPT_ARG_SHORT,&draw_points,0,"Set p=1 to plot out points","NUM" },
     { "frame_skip",'f',POPT_ARG_INT,&frame_skip,0,"Set frame_skip to skip disparity generation for f frames","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
     POPT_AUTOHELP

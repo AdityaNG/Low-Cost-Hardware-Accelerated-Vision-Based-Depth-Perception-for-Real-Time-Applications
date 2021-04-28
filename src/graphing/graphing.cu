@@ -14,6 +14,7 @@ extern int out_width;
 extern int out_height;
 extern double3 *points;
 extern uchar4 *color;
+extern bool draw_points; // Flag to enable or disable point cloud plotting
 double *POINTS_OBJECTS;
 int Oindex = 0;
 
@@ -98,16 +99,17 @@ void drawCube(){
     glVertex3f(-plane_size, 0, plane_size);
     glEnd();
 
-    // BACK
-    glBegin(GL_POINTS);
-    for (int i = 0; i < out_width * out_height; i++){
-        if(color == NULL) break;
-        glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
-		glPointSize(1);
-        glVertex3f(points[i].x, points[i].y, points[i].z);
+    if(draw_points){
+        glBegin(GL_POINTS);
+        for (int i = 0; i < out_width * out_height; i++){
+            if(color == NULL) break;
+            glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
+            glPointSize(1);
+            glVertex3f(points[i].x, points[i].y, points[i].z);
+        }
+        glEnd();    
     }
-    glEnd();
-
+    
     draw_cube(0,0,0,1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6){
       draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
