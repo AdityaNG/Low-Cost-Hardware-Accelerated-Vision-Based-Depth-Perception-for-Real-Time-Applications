@@ -5,6 +5,7 @@
 #include <iostream>
 #include <opencv4/opencv2/highgui.hpp>
 #include <pthread.h>
+#include <sched.h>
 #include <vector>
 #include <thread> 
 #include <stdlib.h>
@@ -27,9 +28,9 @@
 
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
-#include <GLUT/glut.h>
+  #include <GLUT/glut.h>
 #else
-#include <GL/glut.h>
+  #include <GL/glut.h>
 #endif
 
 std::vector<OBJ> obj_list, pred_list;
@@ -47,10 +48,10 @@ using namespace std;
   time_taken *= 1e-9;\
   var = time_taken;      
 
-  #define checkCudaError e = cudaGetLastError();\
-if (e!=cudaSuccess) {\
-  printf("Cuda error : %s\n", cudaGetErrorString(e));\
-}                                       
+#define checkCudaError e = cudaGetLastError();\
+  if (e!=cudaSuccess) {\
+    printf("Cuda error : %s\n", cudaGetErrorString(e));\
+  }                                       
 
 //////////////////////////////////////// Globals ///////////////////////////////////////////////////////
 Mat XR, XT, Q, P1, P2;
@@ -68,36 +69,33 @@ int calib_width = 1242, calib_height = 375,
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 
-double pc_t = 0, dmap_t = 0, t_t = 0; // For calculating timings
+double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
-pthread_t mainThread; // The main thread that generates the point cloud
+pthread_t mainThread;     // The main thread that generates the point cloud (in the shared library, this will be the openGL thread that plots the points in 3D)
 
-int video_mode = 0; // Loop among all the images in the given directory
-int debug = 0;      // Applies different roation and translation to the points
-bool draw_points = false;// Render the points in 3D
-int frame_skip = 1; // Skip by frame_skip frames
-int play_video = 0; // Rename? 
-
-bool valid = true; // mainThread terminates when this flag is made false
+int debug = 0;            // Applies different roation and translation to the points
+int frame_skip = 1;       // Skip by frame_skip frames
+int video_mode = 0;       // Loop among all the images in the given directory
+bool draw_points = false; // Render the points in 3D
+bool valid = true;        // mainThread terminates when this flag is made false
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
 uchar *d_dmap; // Disparity map needs to be pushed to GPU
+uchar4 *color = NULL;
 double3 *points; // Holds the coordinates of each pixel in 3D space
 double3 *d_points;
-uchar4 *color = NULL;
 const dim3 blockSize(32, 32, 1);
 const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 cudaError_t e;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cudaInit(){
-  // Cuda Init
-  cudaMalloc(&d_XT, sizeof(double) * 3);
-  cudaMalloc(&d_XR, sizeof(double) * 9);
-  cudaMalloc(&d_Q, sizeof(double) * 16);
-  cudaMalloc(&d_dmap, sizeof(uchar) * out_width * out_height);
-  cudaMalloc(&d_points, sizeof(double3) * out_width * out_height);
+  cudaMalloc((void **)&d_XT, sizeof(double) * 3);
+  cudaMalloc((void **)&d_XR, sizeof(double) * 9);
+  cudaMalloc((void **)&d_Q, sizeof(double) * 16);
+  cudaMalloc((void **)&d_dmap, sizeof(uchar) * out_width * out_height);
+  cudaMalloc((void **)&d_points, sizeof(double3) * out_width * out_height);
   points = (double3*)malloc(sizeof(double3) * out_width * out_height);
   if (debug == 1) { 
     XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
@@ -113,8 +111,8 @@ void cudaInit(){
 
 void clean(){ 
   printf("Exitting the program.....\n");
-  valid = false;
-  destroyAllWindows();
+  valid = false; // Invalidating the main thread so that it exits gracefully
+  destroyAllWindows(); // Destroying the openCV imshow windows
   pthread_join(mainThread, NULL);
   printf("mainThread joined\n");
   free(points);
@@ -242,23 +240,28 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   if (img_left.empty() || dmap.empty()) {
     printf("(empty)\t");
     return;
-  }
-  
-*/
+  }*/
+
   start_timer(pc_start); 
   
-  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice); 
-  checkCudaError;
+  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
+  //printf("1 ");
+  //checkCudaError;
   cudaDeviceSynchronize();
-  checkCudaError;
+  //printf("2 ");
+  //checkCudaError;
   projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
-  checkCudaError;
+  //printf("3 ");
+  //checkCudaError;
   cudaDeviceSynchronize();
-  checkCudaError; // Uncomment for error checking
+  //printf("4 ");
+  //checkCudaError; // Uncomment for error checking
   cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
-
-  //for (int i=0; i<out_width * out_height; i++) printf("%f, %f, %f\t", points[i].y, -points[i].z, points[i].x);
-  //printf("%f, %f, %f\n", points[i].y, -points[i].z, points[i].x);
+  //printf("5 ");
+  //checkCudaError; // Uncomment for error checking
+  cudaDeviceSynchronize();
+  //printf("6 ");
+  //checkCudaError; // Uncomment for error checking
 
   for(auto& object : obj_list) {
     int i_lb = constrain(object.x, 0, img_left.cols-1), 
@@ -282,9 +285,10 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 /*
  * Function:  generateDisparityMap 
  * --------------------
- * This function computes the dense disparity map using LIBELAS, and returns an 8-bit grayscale image Mat.
+ * This function computes the dense disparity map using our upgraded LIBELAS, and returns an 8-bit grayscale image Mat.
  * The disparity map is constructed with the left image as reference. The parameters for LIBELAS can be changed in the file src/elas/elas.h.
- * Any method other than LIBELAS can be implemented inside the generateDisparityMap function to generate disparity maps. One can use OpenCV’s StereoBM class as well. The output should be a 8-bit grayscale image.
+ * Any method other than LIBELAS can be implemented inside the generateDisparityMap function to generate disparity maps. 
+ * One can use OpenCV’s StereoBM class as well. The output should be a 8-bit grayscale image.
  *
  *  Mat& left: The input left image
  *  Mat& right: The input right image
@@ -293,7 +297,10 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  */
 Mat generateDisparityMap(Mat& left, Mat& right) {
   resetOBJECTS();
-  if (left.empty() || right.empty()) return left;
+  if (left.empty() || right.empty()){
+    printf("Image empty\n");
+    return left;
+  } 
   const Size imsize = left.size();
   const int32_t dims[3] = {imsize.width, imsize.height, imsize.width};
   Mat leftdpf = Mat::zeros(imsize, CV_32F);
@@ -306,64 +313,22 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
   Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
   
-  leftdpf.convertTo(dmap, CV_8UC1, 4.0);
-  
+  leftdpf.convertTo(dmap, CV_8UC1, 4.0);  
   return dmap;
 }
 
 /*
- * Function:  imgCallback 
+ * Function:  imgCallback_video 
  * --------------------
  * Loads the input images into Mats
  * Undistorts and Rectifies the images with remap()
  * Generates disparity map with generateDisparityMap(img_left, img_right)
- * Displays output with imshow() and publishPointCloud()
  *
  *  const char* left_img_topic: path to left image
  *  const char* right_img_topic: path to right image
  *  returns: void
  *
  */
-
- 
-
-void imgCallback(const char* left_img_topic, const char* right_img_topic, int wait=0) {
-  Mat tmpL_Color = imread(left_img_topic, IMREAD_UNCHANGED);
-  Mat       tmpL = imread(left_img_topic, IMREAD_GRAYSCALE);
-  Mat       tmpR = imread(right_img_topic, IMREAD_GRAYSCALE);
-  
-  if (tmpL.empty() || tmpR.empty()) return;
-
-  resize(tmpL_Color, tmpL_Color, out_img_size);
-  resize(tmpL, tmpL, out_img_size);
-  resize(tmpR, tmpR, out_img_size);
-
-  Mat frame = tmpL_Color.clone();
-  Mat img_left, img_right, img_left_color, img_left_color_flip;  
-  
-  img_left = tmpL; img_right = tmpR;
-
-  //remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
-  
-  auto f = std::async(std::launch::async, processYOLO, tmpL_Color); // Asynchronous call to YOLO
-  
-  start_timer(yd_start);
-  Mat dmap = generateDisparityMap(img_left, img_right);    
-  end_timer(yd_start, dmap_t);
-
-  obj_list = f.get(); // Getting obj_list from the future object which the async call returns to f
-  publishPointCloud(frame, dmap);  
-  
-  #ifdef SHOW_VIDEO
-    //flip(tmpL_Color, img_left_color_flip, 1);
-    imshow("Detections", tmpL_Color);
-    imshow("Disparity", dmap);
-    waitKey(0);
-  #endif
-
-  printf("Done\n\n");
-}
-
 void imgCallback_video() {
   Mat left_img = left_img_OLD; Mat right_img = right_img_OLD, img_left, img_right;
   if (left_img.empty() || right_img.empty()) return;
@@ -481,94 +446,120 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-void *imageLoop(void *arg){
-  static int iImage=0;
-  if (video_mode){
-    char left_img_topic[128], right_img_topic[128];    
-    size_t max_files = 465; // Just hardcoded the value for now
-    Mat left_img, right_img, dmap, YOLOL_Color, img_left_color_flip;    
-    thread skipThread;
-    
-    for(int iFrame = 0; (iFrame < max_files) && valid; iFrame++){      
-      if (t_t) printf("(FPS=%f) ", 1/t_t);
-      
-      start_timer(t_start);        
-      strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-      strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-      
-      left_img = imread(left_img_topic, IMREAD_UNCHANGED);
-      right_img = imread(right_img_topic, IMREAD_UNCHANGED);
-      
-      resize(left_img, left_img, out_img_size);
-      
-      YOLOL_Color = left_img.clone();
-      auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
-
-      resize(right_img, right_img, out_img_size);           
-                   
-      if (iFrame%frame_skip == 0) {
-        //printf("(DISP) \t ");
-        //imgCallback_video(left_img, right_img, dmap);
-        left_img_OLD = left_img.clone();
-        right_img_OLD = right_img.clone();
-        //disp_parallel = std::async(imgCallback_video);
-        skipThread = thread(imgCallback_video);
-      }
-        
-      if (iFrame%frame_skip == frame_skip-1) {
-        //printf("(JOIN) \t");
-        skipThread.join();
-        dmap = dmapOLD.clone();
-      }
-      
-      printf("(%d, %d) ", dmap.rows, dmap.cols);
+int externalInit(){ // This init function is called while using the program as a shared library
+  draw_points = true;
+  initYOLO();
+  calib_img_size = Size(calib_width, calib_height);
+  out_img_size = Size(out_width, out_height);  
+  calib_file = FileStorage(calib_file_name, FileStorage::READ); 
+  calib_file["K1"] >> K1;
+  calib_file["K2"] >> K2;
+  calib_file["D1"] >> D1;
+  calib_file["D2"] >> D2;
+  calib_file["R"]  >> R;
+  calib_file["T"]  >> T;
+  calib_file["XR"] >> XR;
+  calib_file["XT"] >> XT; 
+  cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
+       << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
   
-      Mat rgba;
-      cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-      color = (uchar4*)rgba.ptr<unsigned char>(0);
+  #ifdef SHOW_VIDEO
+    namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+    namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+  #endif     
 
-      obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-      pred_list = get_predicted_boxes(); // Bayesian
-      append_old_objs(obj_list);
-      obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
-      publishPointCloud(left_img, dmap);
+  findRectificationMap(calib_file, out_img_size); 
+  cudaInit();
+  return 1;
+}
+
+extern "C"{ // This function is exposed in the shared library along with the main function
+  bool graphicsThreadExit = false;
+  double3* generatePointCloud(uchar *left, uchar *right, int width, int height){ // Returns the double3 points array
+    static int init = externalInit();
+    static int ret = pthread_create(&mainThread, NULL, startGraphics, (void*)true);
+    if(ret){
+      fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
+      exit(-1);
+    }
+    if(graphicsThreadExit) clean();
+    start_timer(t_start);        
+    Mat left_img(Size(width, height), CV_8UC4, left);
+    Mat right_img(Size(width, height), CV_8UC4, right);
+
+    resize(left_img, left_img_OLD, out_img_size);
+    resize(right_img, right_img_OLD, out_img_size);
+    Mat YOLOL_Color;
+    cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
+    
+    auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
+    imgCallback_video();
+    color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
+    obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+    pred_list = get_predicted_boxes(); // Bayesian
+    append_old_objs(obj_list);
+    obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+    
+    publishPointCloud(left_img_OLD, dmapOLD);
+
+    end_timer(t_start, t_t);
+    updateGraph();
+    #ifdef SHOW_VIDEO
+      //flip(left_img, img_left_color_flip,1);
+      imshow("Detections", YOLOL_Color);
+      imshow("Disparity", dmapOLD);
+      waitKey(1);
+    #endif    
+    printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
+    //for(int i = 0; i < out_width * out_height; i++) fprintf(stderr, "%f, %f, %f\n", points[i].x, points[i].y, points[i].z);
+    return points;
+  }
+}
+
+void *imageLoop(void *arg){
+  int iImage=0;
+  char left_img_topic[128], right_img_topic[128];    
+  size_t max_files = 465; // Just hardcoded the value for now
+  Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
+  //thread skipThread;
+    
+  for(int iFrame = 0; (iFrame < max_files) && valid; iFrame++){            
+    start_timer(t_start);        
+    strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
+    strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
       
-      updateGraph();
-      #ifdef SHOW_VIDEO
-        //flip(left_img, img_left_color_flip,1);
-        imshow("Detections", YOLOL_Color);
-        imshow("Disparity", dmap);
-        waitKey(1);
-      #endif
-      end_timer(t_start, t_t);        
-      printf("(t_t=%f, \t dmap_t=%f, \t pc_t=%f)\n",t_t, dmap_t, pc_t);
-    }
-  } 
-  else{
-    printf("Draw points = %d\n", draw_points);
-    while(valid){  
-      #ifndef SHOW_VIDEO
-        printf("Hit any key to load the next image pair: ");
-        getchar();
-      #endif
-      static int iFrame = 0;
-      char left_img_topic[128], right_img_topic[128];
-      strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
-      strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());  
-      printf("Loading image pair: %s\t%s\n", left_img_topic, right_img_topic);    
-      imgCallback(left_img_topic, right_img_topic);
-      updateGraph();
-      iFrame++; 
-    }
+    left_img = imread(left_img_topic, IMREAD_UNCHANGED);
+    right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+      
+    resize(left_img, left_img_OLD, out_img_size);
+      
+    YOLOL_Color = left_img_OLD.clone();
+    auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
+
+    resize(right_img, right_img_OLD, out_img_size);   
+    imgCallback_video();
+
+    cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+    color = (uchar4*)rgba.ptr<unsigned char>(0);
+    obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+    pred_list = get_predicted_boxes(); // Bayesian
+    append_old_objs(obj_list);
+    obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+
+    publishPointCloud(left_img, dmapOLD);
+
+    updateGraph();
+    end_timer(t_start, t_t);
+    #ifdef SHOW_VIDEO
+      //flip(left_img, img_left_color_flip,1);
+      imshow("Detections", YOLOL_Color);
+      imshow("Disparity", dmapOLD);
+      waitKey(video_mode);
+    #endif        
+    printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
   }
   pthread_exit(NULL);
 }
-
-/*
-void *imageLoop(void *arg) {
-  while(valid) next();
-  cout << "Exitting loop\n";
-}*/
 
 int main(int argc, const char** argv){  
   initYOLO();
@@ -606,19 +597,18 @@ int main(int argc, const char** argv){
   
   findRectificationMap(calib_file, out_img_size); 
   cudaInit();
-  //setCallback(next_video);
-  //thread mainThread(imageLoop); // Does all the calculations
   int ret = pthread_create(&mainThread, NULL, imageLoop, NULL);
   if(ret){
     fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
     exit(-1);
   }
+  
   #ifdef SHOW_VIDEO
     namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
     namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
   #endif
-    startGraphics(out_width, out_height, &play_video);
-  //mainThread.join();
+  
+  startGraphics(NULL);
   clean();
   return 0;
 }

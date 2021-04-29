@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdlib.h>
 #include "graphing.h"
 #include "../cleanup/cleanup.hpp"
@@ -21,6 +22,8 @@ int Oindex = 0;
 double rX=17; // Rotate X
 double rY=0;  // Rotate Y
 double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+
+bool sideThread = false; // If false, the graphics thread is the main thread. Else, it isn't the main thread
 
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
@@ -144,18 +147,22 @@ void setCallback(void (*f)(void)) {
     nextCALLBACK = f;
 }
 
-int *flags;
-//extern int play_video;
+extern bool graphicsThreadExit;
 void keyboard_chars(unsigned char key, int x, int y){
          if (key == 'w') tY += VEL_T;
     else if (key == 'a') tX -= VEL_T;
     else if (key == 's') tY -= VEL_T;
     else if (key == 'd') tX += VEL_T; 
-    else if (key == 'q') clean();
+    else if (key == 'q') {
+        free(POINTS_OBJECTS);
+        if(sideThread){
+            graphicsThreadExit = true;  
+            pthread_exit(NULL);
+        } 
+        else clean();
+    }
     else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
     else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
-    else if (key == 'n') *flags = 1; // Unused for now
-    //play_video = !play_video;
     // Request display update
     glutPostRedisplay();
 }
@@ -204,8 +211,8 @@ void mouse_callback(int button, int state, int x, int y){
 }
 
 
-void startGraphics(int out_width, int out_height, int *f){
-    flags = f;
+void *startGraphics(void *args){
+    if(args) sideThread = true;
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
     // Initialize GLUT and process user parameters
@@ -232,11 +239,8 @@ void startGraphics(int out_width, int out_height, int *f){
     glutSpecialFunc(keyboard);
     glutKeyboardFunc(keyboard_chars);
     glutMouseFunc(mouse_callback);
-	//thread mainThread(test); 
 	
     // Pass control to GLUT for events
     glutMainLoop();
-	
-	//mainThread.join();
-    free(POINTS_OBJECTS);
+    return NULL;
 }
