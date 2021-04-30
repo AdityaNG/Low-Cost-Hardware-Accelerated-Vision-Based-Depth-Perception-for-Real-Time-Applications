@@ -23,6 +23,7 @@ if __name__ == "__main__":
     s = stereo_vision()
     kittiPath = sys.argv[1]
     scale_factor = 4
+    
     for iFrame in range(465):
         leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)
         rightName = "{}/video/testing/image_03/0000/{:0>6}.png".format(kittiPath, iFrame)

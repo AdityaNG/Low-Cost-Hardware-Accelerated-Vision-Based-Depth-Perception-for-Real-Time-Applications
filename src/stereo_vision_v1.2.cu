@@ -449,8 +449,7 @@ int externalInit(int width, int height){ // This init function is called while u
   out_height = height;
   out_width = width;
   initYOLO();
-  //calib_img_size = Size(calib_width, calib_height);
-  calib_img_size = Size(out_width, out_width);
+  calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);  
   calib_file = FileStorage(calib_file_name, FileStorage::READ); 
   calib_file["K1"] >> K1;
