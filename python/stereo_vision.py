@@ -3,32 +3,24 @@ import os
 import sys
 import cv2
 from numpy.ctypeslib import ndpointer
-#import pandas as pd
 
-def call_shared(L, function):
-    arr = (ctypes.c_char_p * len(L))()
-    arr[:] = L
-    function(len(L), arr)
+class stereo_vision:
 
-#os.chdir(os.path.dirname(os.path.abspath(__file__))) # Might be useful some other time
-args = ["-k", "../kitti", "-v", "1", "-p", "0", "-f", "1"]
-args = [s.encode('utf-8') for s in args]
+    def __init__(self, so_lib_path='bin/stereo_vision.so'):
+        self.sv = ctypes.CDLL(so_lib_path)
+        self.sv.generatePointCloud.restype = ndpointer(dtype=ctypes.c_double, shape=(1242*375,3))
 
-sv = ctypes.CDLL('bin/stereo_vision.so')
-#call_shared(args, sv.main)
-
-sv.generatePointCloud.restype = ndpointer(dtype=ctypes.c_double, shape=(1242*375,3))
-
-def generatePointCloud(left, right):
-    left = cv2.cvtColor(left, cv2.COLOR_BGR2BGRA)
-    right = cv2.cvtColor(right, cv2.COLOR_BGR2BGRA)
-    length = left.shape[0]
-    width = left.shape[1]
-    left = left.tostring()
-    right = right.tostring()
-    return sv.generatePointCloud(left, right, width, length)
+    def generatePointCloud(self, left, right):
+        left = cv2.cvtColor(left, cv2.COLOR_BGR2BGRA)
+        right = cv2.cvtColor(right, cv2.COLOR_BGR2BGRA)
+        length = left.shape[0]
+        width = left.shape[1]
+        left = left.tostring()
+        right = right.tostring()
+        return self.sv.generatePointCloud(left, right, width, length)
 
 if __name__ == "__main__":
+    s = stereo_vision()
     kittiPath = sys.argv[1]
     scale_factor = 4
     for iFrame in range(465):
@@ -39,5 +31,5 @@ if __name__ == "__main__":
         right = cv2.imread(rightName)
         left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
         right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
-        generatePointCloud(left, right)
+        s.generatePointCloud(left, right)
     
