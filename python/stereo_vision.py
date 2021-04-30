@@ -30,11 +30,14 @@ def generatePointCloud(left, right):
 
 if __name__ == "__main__":
     kittiPath = sys.argv[1]
+    scale_factor = 4
     for iFrame in range(465):
         leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)
         rightName = "{}/video/testing/image_03/0000/{:0>6}.png".format(kittiPath, iFrame)
         #print(leftName, rightName)
         left = cv2.imread(leftName)
         right = cv2.imread(rightName)
+        left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
+        right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
         generatePointCloud(left, right)
     

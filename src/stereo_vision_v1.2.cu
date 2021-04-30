@@ -446,8 +446,10 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-int externalInit(){ // This init function is called while using the program as a shared library
+int externalInit(int width, int height){ // This init function is called while using the program as a shared library
   draw_points = true;
+  out_height = height;
+  out_width = width;
   initYOLO();
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);  
@@ -476,7 +478,7 @@ int externalInit(){ // This init function is called while using the program as a
 extern "C"{ // This function is exposed in the shared library along with the main function
   bool graphicsThreadExit = false;
   double3* generatePointCloud(uchar *left, uchar *right, int width, int height){ // Returns the double3 points array
-    static int init = externalInit();
+    static int init = externalInit(width, height);
     static int ret = pthread_create(&mainThread, NULL, startGraphics, (void*)true);
     if(ret){
       fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
