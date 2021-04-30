@@ -71,13 +71,13 @@ const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
 
 double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
-pthread_t mainThread;     // The main thread that generates the point cloud (in the shared library, this will be the openGL thread that plots the points in 3D)
-
-int debug = 0;            // Applies different roation and translation to the points
-int frame_skip = 1;       // Skip by frame_skip frames
-int video_mode = 0;       // Loop among all the images in the given directory
-bool draw_points = false; // Render the points in 3D
-bool valid = true;        // mainThread terminates when this flag is made false
+pthread_t graphicsThread;        // This is the openGL thread that plots the points in 3D)
+      
+int debug = 0;                   // Applies different roation and translation to the points
+int frame_skip = 1;              // Skip by frame_skip frames
+int video_mode = 0;              // Loop among all the images in the given directory
+bool draw_points = true;        // Render the points in 3D
+bool graphicsThreadExit = false; // The graphics thread toggles this when it exits
 
 // Cuda globals
 double *d_XT, *d_XR, *d_Q;
@@ -109,19 +109,17 @@ void cudaInit(){
   printf("CUDA Init done\n");
 }
 
-void clean(){ 
-  printf("Exitting the program.....\n");
-  valid = false; // Invalidating the main thread so that it exits gracefully
+void clean(){
   destroyAllWindows(); // Destroying the openCV imshow windows
-  pthread_join(mainThread, NULL);
-  printf("mainThread joined\n");
+  pthread_join(graphicsThread, NULL);
+  printf("\ngraphicsThread joined\n");
   free(points);
   cudaFree(d_XR);
   cudaFree(d_XT);
   cudaFree(d_Q);
   cudaFree(d_points);
   cudaFree(d_dmap);
-  printf("All memory freed\n");
+  printf("All memory freed\n\nProgram exitted successfully!\n\n");
   exit(0);
 }
 
@@ -476,10 +474,9 @@ int externalInit(int width, int height){ // This init function is called while u
 }
 
 extern "C"{ // This function is exposed in the shared library along with the main function
-  bool graphicsThreadExit = false;
   double3* generatePointCloud(uchar *left, uchar *right, int width, int height){ // Returns the double3 points array
     static int init = externalInit(width, height);
-    static int ret = pthread_create(&mainThread, NULL, startGraphics, (void*)true);
+    static int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
     if(ret){
       fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
       exit(-1);
@@ -518,14 +515,14 @@ extern "C"{ // This function is exposed in the shared library along with the mai
   }
 }
 
-void *imageLoop(void *arg){
+void imageLoop(){
   int iImage=0;
   char left_img_topic[128], right_img_topic[128];    
   size_t max_files = 465; // Just hardcoded the value for now
   Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
   //thread skipThread;
     
-  for(int iFrame = 0; (iFrame < max_files) && valid; iFrame++){            
+  for(int iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; iFrame++){            
     start_timer(t_start);        
     strcpy(left_img_topic , format("%s/video/testing/image_02/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
     strcpy(right_img_topic, format("%s/video/testing/image_03/%04d/%06d.png", kitti_path, iImage, iFrame).c_str());    
@@ -560,7 +557,6 @@ void *imageLoop(void *arg){
     #endif        
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
   }
-  pthread_exit(NULL);
 }
 
 int main(int argc, const char** argv){  
@@ -599,7 +595,7 @@ int main(int argc, const char** argv){
   
   findRectificationMap(calib_file, out_img_size); 
   cudaInit();
-  int ret = pthread_create(&mainThread, NULL, imageLoop, NULL);
+  int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
   if(ret){
     fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
     exit(-1);
@@ -610,7 +606,8 @@ int main(int argc, const char** argv){
     namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
   #endif
   
-  startGraphics(NULL);
+  imageLoop();
+  printf("imageLoop exitted...\n");
   clean();
   return 0;
 }

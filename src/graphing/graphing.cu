@@ -23,8 +23,6 @@ double rX=17; // Rotate X
 double rY=0;  // Rotate Y
 double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
 
-bool sideThread = false; // If false, the graphics thread is the main thread. Else, it isn't the main thread
-
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
     POINTS_OBJECTS[Oindex + 1] = Y;
@@ -155,11 +153,8 @@ void keyboard_chars(unsigned char key, int x, int y){
     else if (key == 'd') tX += VEL_T; 
     else if (key == 'q') {
         free(POINTS_OBJECTS);
-        if(sideThread){
-            graphicsThreadExit = true;  
-            pthread_exit(NULL);
-        } 
-        else clean();
+        graphicsThreadExit = true;  
+        pthread_exit(NULL);
     }
     else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
     else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
@@ -212,7 +207,6 @@ void mouse_callback(int button, int state, int x, int y){
 
 
 void *startGraphics(void *args){
-    if(args) sideThread = true;
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
     // Initialize GLUT and process user parameters
