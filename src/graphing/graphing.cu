@@ -1,7 +1,7 @@
+#include <GL/freeglut_std.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include "graphing.h"
-#include "../cleanup/cleanup.hpp"
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -205,6 +205,9 @@ void mouse_callback(int button, int state, int x, int y){
     glutPostRedisplay();
 }
 
+void mouse_movement(int x, int y){
+    glutPostRedisplay();
+}
 
 void *startGraphics(void *args){
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
@@ -233,6 +236,7 @@ void *startGraphics(void *args){
     glutSpecialFunc(keyboard);
     glutKeyboardFunc(keyboard_chars);
     glutMouseFunc(mouse_callback);
+    glutPassiveMotionFunc(mouse_movement);
 	
     // Pass control to GLUT for events
     glutMainLoop();

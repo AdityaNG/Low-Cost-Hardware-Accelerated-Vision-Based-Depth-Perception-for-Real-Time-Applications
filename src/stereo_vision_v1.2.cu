@@ -23,7 +23,6 @@
 #include "elas_cuda_openmp/elas.h"
 #include "elas_cuda_openmp/elas_gpu.h"
 #include "graphing/graphing.h"
-#include "cleanup/cleanup.hpp"
 #include "bayesian/bayesian.h"
 
 #define GL_GLEXT_PROTOTYPES
@@ -68,10 +67,13 @@ int calib_width = 1242, calib_height = 375,
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
+const char* fsds_calib_file_name = "calibration/fsds.yml";
 
 double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
 pthread_t graphicsThread;        // This is the openGL thread that plots the points in 3D)
+bool graphicsBeingUsed = true;   // To know if graphics is used or not
+bool objectTracking = true;      // To know if object tracking is being done
       
 int debug = 0;                   // Applies different roation and translation to the points
 int frame_skip = 1;              // Skip by frame_skip frames
@@ -109,18 +111,20 @@ void cudaInit(){
   printf("CUDA Init done\n");
 }
 
-void clean(){
-  destroyAllWindows(); // Destroying the openCV imshow windows
-  pthread_join(graphicsThread, NULL);
-  printf("\ngraphicsThread joined\n");
-  free(points);
-  cudaFree(d_XR);
-  cudaFree(d_XT);
-  cudaFree(d_Q);
-  cudaFree(d_points);
-  cudaFree(d_dmap);
-  printf("All memory freed\n\nProgram exitted successfully!\n\n");
-  exit(0);
+extern "C"{
+  void clean(){
+    destroyAllWindows(); // Destroying the openCV imshow windows
+    if(graphicsBeingUsed) pthread_join(graphicsThread, NULL);
+    printf("\ngraphicsThread joined\n");
+    free(points);
+    cudaFree(d_XR);
+    cudaFree(d_XT);
+    cudaFree(d_Q);
+    cudaFree(d_points);
+    cudaFree(d_dmap);
+    printf("All memory freed\n\nProgram exitted successfully!\n\n");
+    exit(0);
+  }
 }
 
 int constrain(int a, int lb, int ub) {
@@ -261,21 +265,23 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   //printf("6 ");
   //checkCudaError; // Uncomment for error checking
 
-  for(auto& object : obj_list) {
-    int i_lb = constrain(object.x, 0, img_left.cols-1), 
-        i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
-        j_lb = constrain(object.y, 0, img_left.rows-1), 
-        j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
-    double X=0, Y=0, Z=0;
-    
-    for(int i = i_lb; i < i_ub; i++) {
-      for(int j = j_lb; j < j_ub; j++) {   
-        X += points[j*out_width + i].x;  
-        Y += points[j*out_width + i].y;     
-        Z += points[j*out_width + i].z;  
-      }
-    } 
-    appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+  if(objectTracking){
+    for(auto& object : obj_list) {
+      int i_lb = constrain(object.x, 0, img_left.cols-1), 
+          i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
+          j_lb = constrain(object.y, 0, img_left.rows-1), 
+          j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
+      double X=0, Y=0, Z=0;
+      
+      for(int i = i_lb; i < i_ub; i++) {
+        for(int j = j_lb; j < j_ub; j++) {   
+          X += points[j*out_width + i].x;  
+          Y += points[j*out_width + i].y;     
+          Z += points[j*out_width + i].z;  
+        }
+      } 
+      if(graphicsBeingUsed) appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+    }
   }
   end_timer(pc_start, pc_t);
 }
@@ -444,14 +450,26 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-int externalInit(int width, int height){ // This init function is called while using the program as a shared library
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects){ // This init function is called while using the program as a shared library
   draw_points = true;
   out_height = height;
   out_width = width;
-  initYOLO();
-  calib_img_size = Size(calib_width, calib_height);
+  if(trackObjects){
+    objectTracking = true;
+    printf("\n** Object tracking enabled\n");
+    initYOLO();
+  }
+  else printf("\n** Object tracking disabled\n"); 
+  calib_img_size = Size(out_width, out_height);  
   out_img_size = Size(out_width, out_height);  
-  calib_file = FileStorage(calib_file_name, FileStorage::READ); 
+  if(kittiCalibration){
+    printf("Using default kitti calibration parameters...\n");
+    calib_file = FileStorage(calib_file_name, FileStorage::READ); 
+  } 
+  else{
+    printf("Using FSDS calibration parameters...\n");
+    calib_file = FileStorage(fsds_calib_file_name, FileStorage::READ);
+  } 
   calib_file["K1"] >> K1;
   calib_file["K2"] >> K2;
   calib_file["D1"] >> D1;
@@ -463,25 +481,34 @@ int externalInit(int width, int height){ // This init function is called while u
   cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
        << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
   
-  #ifdef SHOW_VIDEO
+  if(display){
+    printf("\n** Display enabled\n");
     namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
     namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-  #endif     
-
+  }
+  else printf("\n** Display disabled\n");
   findRectificationMap(calib_file, out_img_size); 
   cudaInit();
-  return 1;
-}
-
-extern "C"{ // This function is exposed in the shared library along with the main function
-  double3* generatePointCloud(uchar *left, uchar *right, int width, int height){ // Returns the double3 points array
-    static int init = externalInit(width, height);
-    static int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
+  if(graphics){
+    printf("\n** 3D plotting enabled\n");
+    int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
     if(ret){
       fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
       exit(-1);
     }
-    if(graphicsThreadExit) clean();
+  }
+  else{
+    graphicsBeingUsed = false;
+    printf("\n** 3D plotting disabled\n");
+  } 
+  return 1;
+}
+
+extern "C"{ // This function is exposed in the shared library along with the main function
+  double3* generatePointCloud(uchar *left, uchar *right, int width, int height, bool kittiCalibration=true, 
+                              bool objectTracking=true, bool graphics=false, bool display=false){ // Returns the double3 points array
+    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking);
+
     start_timer(t_start);        
     Mat left_img(Size(width, height), CV_8UC4, left);
     Mat right_img(Size(width, height), CV_8UC4, right);
@@ -491,24 +518,33 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
     
-    auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
-    imgCallback_video();
-    color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
-    obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-    pred_list = get_predicted_boxes(); // Bayesian
-    append_old_objs(obj_list);
-    obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+    if(objectTracking){
+      auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
     
+      imgCallback_video();
+      color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
+
+      obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+      pred_list = get_predicted_boxes(); // Bayesian
+      append_old_objs(obj_list);
+      obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+    }
+    else{
+      imgCallback_video();
+      color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
+    }
     publishPointCloud(left_img_OLD, dmapOLD);
 
     end_timer(t_start, t_t);
-    updateGraph();
-    #ifdef SHOW_VIDEO
+    
+    if(graphicsThreadExit) clean(); 
+    
+    if(display){
       //flip(left_img, img_left_color_flip,1);
       imshow("Detections", YOLOL_Color);
       imshow("Disparity", dmapOLD);
       waitKey(1);
-    #endif    
+    }
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
     //for(int i = 0; i < out_width * out_height; i++) fprintf(stderr, "%f, %f, %f\n", points[i].x, points[i].y, points[i].z);
     return points;
@@ -546,8 +582,7 @@ void imageLoop(){
     obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
 
     publishPointCloud(left_img, dmapOLD);
-
-    updateGraph();
+    
     end_timer(t_start, t_t);
     #ifdef SHOW_VIDEO
       //flip(left_img, img_left_color_flip,1);
