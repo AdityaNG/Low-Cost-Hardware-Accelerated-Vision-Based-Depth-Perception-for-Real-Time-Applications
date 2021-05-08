@@ -8,7 +8,7 @@
 ## Dependencies
 
 - [Cuda Toolkit](https://developer.nvidia.com/cuda-downloads)
-- A C++ compiler (*e.g.*, [GCC](http://gcc.gnu.org/))
+- A C++ compiler (*e.g.*, [G++](http://gcc.gnu.org/))
 - [LIBELAS](http://www.cvlibs.net/software/libelas/) 
 - [OpenCV](https://github.com/opencv/opencv)
 - [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
@@ -33,13 +33,6 @@ Compile using the make utility:
 
 ```bash
 $ make stereo_vision -j$(($(nproc) * 2)) -s
-```
-
-Or execute the `build.sh` script (deprecated):
-
-```bash
-$ chmod +x build.sh
-$ ./build.sh
 ```
 
 ## License
