@@ -63,7 +63,8 @@ FileStorage calib_file;
 Size out_img_size;
 Size calib_img_size;
 int calib_width = 1242, calib_height = 375,
-    out_width = 1242/shrink_factor, out_height = 375/shrink_factor;
+    out_width = 1242/shrink_factor, out_height = 375/shrink_factor,
+    out_width_gpu = 1242/shrink_factor, out_height_gpu = 375/shrink_factor;
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
@@ -96,9 +97,9 @@ void cudaInit(){
   cudaMalloc((void **)&d_XT, sizeof(double) * 3);
   cudaMalloc((void **)&d_XR, sizeof(double) * 9);
   cudaMalloc((void **)&d_Q, sizeof(double) * 16);
-  cudaMalloc((void **)&d_dmap, sizeof(uchar) * out_width * out_height);
-  cudaMalloc((void **)&d_points, sizeof(double3) * out_width * out_height);
-  points = (double3*)malloc(sizeof(double3) * out_width * out_height);
+  cudaMalloc((void **)&d_dmap, sizeof(uchar) * out_width_gpu * out_height_gpu);
+  cudaMalloc((void **)&d_points, sizeof(double3) * out_width_gpu * out_height_gpu);
+  points = (double3*)malloc(sizeof(double3) * out_width_gpu * out_height_gpu);
   if (debug == 1) { 
     XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
     XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
@@ -237,7 +238,10 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *  returns: void
  *
  */
- void publishPointCloud(Mat& img_left, Mat& dmap) { 
+ void publishPointCloud(Mat& img_left_old, Mat& dmap_old) { 
+  Mat img_left, dmap;
+  resize(img_left_old, img_left, Size(out_width_gpu, out_height_gpu));
+  resize(dmap_old, dmap, Size(out_width_gpu, out_height_gpu));
   /*
   if (img_left.empty() || dmap.empty()) {
     printf("(empty)\t");
@@ -246,19 +250,19 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 
   start_timer(pc_start); 
   
-  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width * out_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
+  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width_gpu * out_height_gpu, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
   //printf("1 ");
   //checkCudaError;
   cudaDeviceSynchronize();
   //printf("2 ");
   //checkCudaError;
-  projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height, out_width, d_XT, d_XR, d_Q);
+  projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height_gpu, out_width_gpu, d_XT, d_XR, d_Q);
   //printf("3 ");
   //checkCudaError;
   cudaDeviceSynchronize();
   //printf("4 ");
   //checkCudaError; // Uncomment for error checking
-  cudaMemcpy(points, d_points, sizeof(double3) * out_width * out_height, cudaMemcpyDeviceToHost);
+  cudaMemcpy(points, d_points, sizeof(double3) * out_width_gpu * out_height_gpu, cudaMemcpyDeviceToHost);
   //printf("5 ");
   //checkCudaError; // Uncomment for error checking
   cudaDeviceSynchronize();
@@ -450,10 +454,12 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects){ // This init function is called while using the program as a shared library
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale){ // This init function is called while using the program as a shared library
   draw_points = true;
   out_height = height;
   out_width = width;
+  out_width_gpu = width * scale;
+  out_height_gpu = height * scale;
   if(trackObjects){
     objectTracking = true;
     printf("\n** Object tracking enabled\n");
@@ -506,12 +512,14 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, int width, int height, bool kittiCalibration=true, 
-                              bool objectTracking=true, bool graphics=false, bool display=false){ // Returns the double3 points array
-    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking);
+                              bool objectTracking=true, bool graphics=false, bool display=false, int scale=1){ // Returns the double3 points array
+    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale);
 
     start_timer(t_start);        
     Mat left_img(Size(width, height), CV_8UC4, left);
     Mat right_img(Size(width, height), CV_8UC4, right);
+
+    cout<<out_img_size<<endl;
 
     resize(left_img, left_img_OLD, out_img_size);
     resize(right_img, right_img_OLD, out_img_size);
@@ -541,8 +549,12 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     
     if(display){
       //flip(left_img, img_left_color_flip,1);
+      imwrite("Detections.png", YOLOL_Color);
+      imwrite("Disparity.png", dmapOLD);
+
       imshow("Detections", YOLOL_Color);
       imshow("Disparity", dmapOLD);
+      
       waitKey(1);
     }
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);

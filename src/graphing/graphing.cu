@@ -21,7 +21,7 @@ int Oindex = 0;
 
 double rX=17; // Rotate X
 double rY=0;  // Rotate Y
-double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+double tX=0, tY=0, tZ=0, ZOOM=-0.2;
 
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
