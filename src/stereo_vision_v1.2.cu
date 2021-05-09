@@ -549,8 +549,8 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     
     if(display){
       //flip(left_img, img_left_color_flip,1);
-      imwrite("Detections.png", YOLOL_Color);
-      imwrite("Disparity.png", dmapOLD);
+      //imwrite("Detections.png", YOLOL_Color);
+      //imwrite("Disparity.png", dmapOLD);
 
       imshow("Detections", YOLOL_Color);
       imshow("Disparity", dmapOLD);

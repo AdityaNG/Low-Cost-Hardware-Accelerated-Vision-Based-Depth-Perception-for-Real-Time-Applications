@@ -9,6 +9,8 @@
 #include <GL/glut.h>
 #endif
 
+#include <math.h>
+
 #define SIZE 1
 
 extern int out_width;
@@ -101,15 +103,28 @@ void drawCube(){
     glEnd();
 
     if(draw_points){
+        glPointSize(1);
         glBegin(GL_POINTS);
-        for (int i = 0; i < out_width * out_height; i++){
+        for (int i = 0; i < out_width * out_height; i++) {
             if(color == NULL) break;
             glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
-            glPointSize(1);
             glVertex3f(points[i].x, points[i].y, points[i].z);
         }
         glEnd();    
     }
+    int draw_radius = 1;
+    if (draw_radius) {
+        glPointSize(3);
+        glBegin(GL_POINTS);
+        for (int r = 1; r < 10; r++) {
+            for (float theta = 1.0; theta < 2*M_PI; theta+=2*M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(r * sin(theta), 0.0 , r * cos(theta));
+            }
+        }
+        glEnd();       
+    }
+    
     
     draw_cube(0,0,0,1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6){
