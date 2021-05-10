@@ -112,14 +112,40 @@ void drawCube(){
         }
         glEnd();    
     }
+    // (x, y, z) -> (-y, -z, x)
     int draw_radius = 1;
     if (draw_radius) {
+
+        /*
+            x - Positive, along left of car
+            y - Positive, below ground
+            z - Positive, along direction of car
+
+            (x, y, z)
+            (z, y, x)
+            (z, x, y)
+            (z, -x, -y)
+        */
+        glPointSize(10);
+        glBegin(GL_POINTS);
+        glColor3f(0.0, 1.0, 0.0);
+        glVertex3f(0, 0, 1);
+        glEnd();   
+
+
         glPointSize(3);
         glBegin(GL_POINTS);
         for (int r = 1; r < 10; r++) {
-            for (float theta = 1.0; theta < 2*M_PI; theta+=2*M_PI/100) {
+            /*for (float theta = 1.0; theta < 2*M_PI; theta+=2*M_PI/100) {
                 glColor3f(1.0, 0.0, 0.0);
                 glVertex3f(r * sin(theta), 0.0 , r * cos(theta));
+                // (x, y, z) -> (y, -z, x)
+            }*/
+
+            for (float theta = 0.0; theta < 2*M_PI; theta+=M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(-r * sin(theta), 0.0 , r * cos(theta));
+                
             }
         }
         glEnd();       
