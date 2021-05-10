@@ -1,6 +1,7 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
-![demo](https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices/blob/main/imgs/single_loop.gif?raw=true)
+<img src="imgs/single_loop.gif" height=400>
+<img src="imgs/fsds.gif" height=400>
 
 
 - Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
@@ -26,7 +27,7 @@ matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration fi
 Clone the repository:
 
 ```bash
-$ git clone https://github.com/...
+$ git clone https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
 ```
 
 Compile using the make utility:
