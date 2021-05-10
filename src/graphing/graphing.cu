@@ -9,6 +9,8 @@
 #include <GL/glut.h>
 #endif
 
+#include <math.h>
+
 #define SIZE 1
 
 extern int out_width;
@@ -21,7 +23,7 @@ int Oindex = 0;
 
 double rX=17; // Rotate X
 double rY=0;  // Rotate Y
-double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+double tX=0, tY=0, tZ=0, ZOOM=-0.2;
 
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
@@ -101,15 +103,54 @@ void drawCube(){
     glEnd();
 
     if(draw_points){
+        glPointSize(1);
         glBegin(GL_POINTS);
-        for (int i = 0; i < out_width * out_height; i++){
+        for (int i = 0; i < out_width * out_height; i++) {
             if(color == NULL) break;
             glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
-            glPointSize(1);
             glVertex3f(points[i].x, points[i].y, points[i].z);
         }
         glEnd();    
     }
+    // (x, y, z) -> (-y, -z, x)
+    int draw_radius = 1;
+    if (draw_radius) {
+
+        /*
+            x - Positive, along left of car
+            y - Positive, below ground
+            z - Positive, along direction of car
+
+            (x, y, z)
+            (z, y, x)
+            (z, x, y)
+            (z, -x, -y)
+        */
+        glPointSize(10);
+        glBegin(GL_POINTS);
+        glColor3f(0.0, 1.0, 0.0);
+        glVertex3f(0, 0, 1);
+        glEnd();   
+
+
+        glPointSize(3);
+        glBegin(GL_POINTS);
+        for (int r = 1; r < 10; r++) {
+            /*for (float theta = 1.0; theta < 2*M_PI; theta+=2*M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(r * sin(theta), 0.0 , r * cos(theta));
+                // (x, y, z) -> (y, -z, x)
+            }*/
+
+            for (float theta = 0.0; theta < 2*M_PI; theta+=M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(-r * sin(theta), 0.0 , r * cos(theta));
+                
+            }
+        }
+        glEnd();       
+    }
+    
     
     draw_cube(0,0,0,1,0,0);
     for (int iObj = 0; iObj < Oindex; iObj+=6){

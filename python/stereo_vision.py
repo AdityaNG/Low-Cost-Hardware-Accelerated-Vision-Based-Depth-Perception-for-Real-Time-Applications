@@ -7,7 +7,7 @@ from numpy.ctypeslib import ndpointer
 class stereo_vision:
 
     def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
-                defaultCalibFile=True, objectTracking=False, graphics=False, display=False):
+                defaultCalibFile=True, objectTracking=False, graphics=False, display=False, scale=1):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
         self.height = height
@@ -17,13 +17,14 @@ class stereo_vision:
         self.objectTracking = objectTracking
         self.graphics = graphics
         self.display = display
+        self.scale = scale
 
     def generatePointCloud(self, left, right):
         left = cv2.cvtColor(left, cv2.COLOR_BGR2BGRA)
         right = cv2.cvtColor(right, cv2.COLOR_BGR2BGRA)
         left = left.tostring()
         right = right.tostring()
-        return self.sv.generatePointCloud(left, right, self.width, self.height, self.defaultCalibFile, self.objectTracking, self.graphics, self.display)
+        return self.sv.generatePointCloud(left, right, self.width, self.height, self.defaultCalibFile, self.objectTracking, self.graphics, self.display, self.scale)
     
     def __del__(self):
         self.sv.clean()
@@ -31,7 +32,7 @@ class stereo_vision:
 if __name__ == "__main__":
     kittiPath = sys.argv[1]
     scale_factor = int(sys.argv[2])
-    s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, display=True, graphics=True)
+    s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, display=True, graphics=True, scale=1)
     
     for iFrame in range(465):
         leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)
