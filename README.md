@@ -41,7 +41,7 @@ Compile using the make utility:
 
 ```bash
 $ make stereo_vision -j$(($(nproc) * 2)) -s               # binary
-$ make shared_library shared=1 -j$(($(nproc) * 2)) -s     # shared object file
+$ make shared_library -j$(($(nproc) * 2)) -s              # shared object file
 ```
 
 # TODO 
@@ -77,6 +77,8 @@ matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration fi
 - [LIBELAS](http://www.cvlibs.net/software/libelas/) 
 - [OpenCV](https://github.com/opencv/opencv)
 - [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
+- popt.h
+- OpenGL
 
 ## License
 

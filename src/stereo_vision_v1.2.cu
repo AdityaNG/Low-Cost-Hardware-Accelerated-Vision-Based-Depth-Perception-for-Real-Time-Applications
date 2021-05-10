@@ -26,12 +26,6 @@
 #include "graphing/graphing.h"
 #include "bayesian/bayesian.h"
 
-#define GL_GLEXT_PROTOTYPES
-#ifdef __APPLE__
-  #include <GLUT/glut.h>
-#else
-  #include <GL/glut.h>
-#endif
 
 std::vector<OBJ> obj_list, pred_list;
 
@@ -64,9 +58,9 @@ Size out_img_size;
 Size calib_img_size;
 
 float scale_factor = 1; // Modify to change the image resize factor
-int calib_width = 1242, calib_height = 375,
-    out_width = 1242/scale_factor, out_height = 375/scale_factor,
-    out_width_gpu = 1242/scale_factor, out_height_gpu = 375/scale_factor;
+float point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
+int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
+int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
@@ -90,8 +84,6 @@ uchar *d_dmap; // Disparity map needs to be pushed to GPU
 uchar4 *color = NULL;
 double3 *points; // Holds the coordinates of each pixel in 3D space
 double3 *d_points;
-const dim3 blockSize(32, 32, 1);
-const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 cudaError_t e;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -99,9 +91,9 @@ void cudaInit(){
   cudaMalloc((void **)&d_XT, sizeof(double) * 3);
   cudaMalloc((void **)&d_XR, sizeof(double) * 9);
   cudaMalloc((void **)&d_Q, sizeof(double) * 16);
-  cudaMalloc((void **)&d_dmap, sizeof(uchar) * out_width_gpu * out_height_gpu);
-  cudaMalloc((void **)&d_points, sizeof(double3) * out_width_gpu * out_height_gpu);
-  points = (double3*)malloc(sizeof(double3) * out_width_gpu * out_height_gpu);
+  cudaMalloc((void **)&d_dmap, sizeof(uchar) * point_cloud_width * point_cloud_height);
+  cudaMalloc((void **)&d_points, sizeof(double3) * point_cloud_width * point_cloud_height);
+  points = (double3*)malloc(sizeof(double3) * point_cloud_width * point_cloud_height);
   if (debug == 1) { 
     XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
     XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
@@ -242,8 +234,8 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  */
  void publishPointCloud(Mat& img_left_old, Mat& dmap_old) { 
   Mat img_left, dmap;
-  resize(img_left_old, img_left, Size(out_width_gpu, out_height_gpu));
-  resize(dmap_old, dmap, Size(out_width_gpu, out_height_gpu));
+  resize(img_left_old, img_left, Size(point_cloud_width, point_cloud_height));
+  resize(dmap_old, dmap, Size(point_cloud_width, point_cloud_height));
   /*
   if (img_left.empty() || dmap.empty()) {
     printf("(empty)\t");
@@ -252,23 +244,21 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 
   start_timer(pc_start); 
   
-  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * out_width_gpu * out_height_gpu, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
-  //printf("1 ");
+  cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * point_cloud_width * point_cloud_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
   //checkCudaError;
   cudaDeviceSynchronize();
-  //printf("2 ");
   //checkCudaError;
-  projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, out_height_gpu, out_width_gpu, d_XT, d_XR, d_Q);
-  //printf("3 ");
+
+  static const dim3 blockSize(32, 32, 1);
+  static const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
+  projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, point_cloud_height, point_cloud_width, d_XT, d_XR, d_Q);
   //checkCudaError;
+  
   cudaDeviceSynchronize();
-  //printf("4 ");
   //checkCudaError; // Uncomment for error checking
-  cudaMemcpy(points, d_points, sizeof(double3) * out_width_gpu * out_height_gpu, cudaMemcpyDeviceToHost);
-  //printf("5 ");
+  cudaMemcpy(points, d_points, sizeof(double3) * point_cloud_width * point_cloud_height, cudaMemcpyDeviceToHost);
   //checkCudaError; // Uncomment for error checking
   cudaDeviceSynchronize();
-  //printf("6 ");
   //checkCudaError; // Uncomment for error checking
 
   if(objectTracking){
@@ -369,11 +359,22 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   Rect validRoi[2];
   cout << "Starting rectification" << endl;
 
-  Mat scaler(3, 3, CV_64F, {1/scale_factor,       0      , 0,
-                                 0       , 1/scale_factor, 0, 
-                                 0       ,       0      , 1});
-  K1 = scaler * K1;
-  K2 = scaler * K2;
+  K1.at<double>(0, 0) /= scale_factor; 
+  K1.at<double>(0, 1) /= scale_factor;
+  K1.at<double>(0, 2) /= scale_factor; 
+  K1.at<double>(1, 0) /= scale_factor;
+  K1.at<double>(1, 1) /= scale_factor;
+  K1.at<double>(1, 2) /= scale_factor; 
+
+  K2.at<double>(0, 0) /= scale_factor; 
+  K2.at<double>(0, 1) /= scale_factor;
+  K2.at<double>(0, 2) /= scale_factor; 
+  K2.at<double>(1, 0) /= scale_factor;
+  K2.at<double>(1, 1) /= scale_factor;
+  K2.at<double>(1, 2) /= scale_factor; 
+  
+  cout << "Scaled K1: " << K1 << '\n';
+  cout << "Scaled K2: " << K2 << '\n';
 
   // Divide K1 and K2's first two rows with scale factor
 
@@ -468,8 +469,8 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
   draw_points = graphics;
   out_height = height;
   out_width = width;
-  out_width_gpu = width * scale;
-  out_height_gpu = height * scale;
+  point_cloud_width = width * scale;
+  point_cloud_height = height * scale;
   scale_factor = scale;
   if(trackObjects){
     objectTracking = true;
@@ -590,19 +591,30 @@ void imageLoop(){
     right_img = imread(right_img_topic, IMREAD_UNCHANGED);
       
     resize(left_img, left_img_OLD, out_img_size);
-      
+    
     YOLOL_Color = left_img_OLD.clone();
-    auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
-    resize(right_img, right_img_OLD, out_img_size);   
-    imgCallback_video();
+    if(objectTracking){
+      auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
 
-    cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-    color = (uchar4*)rgba.ptr<unsigned char>(0);
-    obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-    pred_list = get_predicted_boxes(); // Bayesian
-    append_old_objs(obj_list);
-    obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+      resize(right_img, right_img_OLD, out_img_size);   
+      imgCallback_video();
+
+      cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+      color = (uchar4*)rgba.ptr<unsigned char>(0);
+      obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+      pred_list = get_predicted_boxes(); // Bayesian
+      append_old_objs(obj_list);
+      obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+    }
+
+    else{
+      resize(right_img, right_img_OLD, out_img_size);   
+      imgCallback_video();
+
+      cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
+      color = (uchar4*)rgba.ptr<unsigned char>(0);
+    }
 
     publishPointCloud(left_img, dmapOLD);
     
@@ -618,15 +630,17 @@ void imageLoop(){
 }
 
 int main(int argc, const char** argv){  
-  initYOLO();
-
   static struct poptOption options[] = { 
     { "kitti_path",'k',POPT_ARG_STRING,&kitti_path,0,"Path to KITTI Dataset","STR" },
     { "video_mode",'v',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
     { "draw_points",'p',POPT_ARG_SHORT,&draw_points,0,"Set p=1 to plot out points","NUM" },
     { "frame_skip",'f',POPT_ARG_INT,&frame_skip,0,"Set frame_skip to skip disparity generation for f frames","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
-    { "scale_factor",'s',POPT_ARG_INT,&scale_factor,0,"Set v=1 Kitti video mode","NUM" },
+    { "scale_factor",'s',POPT_ARG_FLOAT,&scale_factor,0,"All operations will be applied after shrinking the image by this factor","NUM" },
+    { "object_tracking",'t',POPT_ARG_SHORT,&objectTracking,0,"Set t=1 for enabling object tracking","NUM" },
+    { "input_image_width",'w',POPT_ARG_INT,&frame_skip,0,"Set the input image width (default value is 1242, i.e Kitti image width)","NUM" },
+    { "input_image_height",'h',POPT_ARG_INT,&frame_skip,0,"Set the input image height (default value is 375, i.e Kitti image height)","NUM" },
+    { "extrapolate_point_cloud",'e',POPT_ARG_FLOAT,&point_cloud_extrapolation,0,"Extrapolate the point cloud by this factor","NUM" },
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
@@ -634,8 +648,21 @@ int main(int argc, const char** argv){
   poptContext poptCONT = poptGetContext("main", argc, argv, options, POPT_CONTEXT_KEEP_FIRST);
   int c = 0; while(c >= 0) c = poptGetNextOpt(poptCONT);
 
+  if(objectTracking){
+    printf("** Object Tracking enabled\n");
+    initYOLO();
+  } 
+  else printf("** Object tracking disabled\n"); 
+
   printf("KITTI Path: %s \n", kitti_path);
   
+  calib_width = input_image_width;
+  calib_height = input_image_height;
+  out_width = input_image_width/scale_factor;
+  out_height = input_image_height/scale_factor;
+  point_cloud_width = out_width * point_cloud_extrapolation;
+  point_cloud_height = out_height * point_cloud_extrapolation;
+
   calib_img_size = Size(calib_width, calib_height);
   out_img_size = Size(out_width, out_height);
   
