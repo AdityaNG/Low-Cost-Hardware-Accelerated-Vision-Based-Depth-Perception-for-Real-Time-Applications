@@ -57,8 +57,8 @@ FileStorage calib_file;
 Size out_img_size;
 Size calib_img_size;
 
-float scale_factor = 1; // Modify to change the image resize factor
-float point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
+int scale_factor = 1; // Modify to change the image resize factor
+int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
 int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
 
@@ -465,13 +465,14 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale){ // This init function is called while using the program as a shared library
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation){ // This init function is called while using the program as a shared library
+  scale_factor = scale;
+  point_cloud_extrapolation = pc_extrapolation;
   draw_points = graphics;
   out_height = height;
   out_width = width;
-  point_cloud_width = width * scale;
-  point_cloud_height = height * scale;
-  scale_factor = scale;
+  point_cloud_width = out_width * point_cloud_extrapolation;
+  point_cloud_height = out_height * point_cloud_extrapolation;
   if(trackObjects){
     objectTracking = true;
     printf("\n** Object tracking enabled\n");
@@ -524,14 +525,12 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, int width, int height, bool kittiCalibration=true, 
-                              bool objectTracking=true, bool graphics=false, bool display=false, int scale=1){ // Returns the double3 points array
-    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale);
+                              bool objectTracking=true, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1){ // Returns the double3 points array
+    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale, point_cloud_extrapolation);
 
     start_timer(t_start);        
     Mat left_img(Size(width, height), CV_8UC4, left);
     Mat right_img(Size(width, height), CV_8UC4, right);
-
-    cout<<out_img_size<<endl;
 
     resize(left_img, left_img_OLD, out_img_size);
     resize(right_img, right_img_OLD, out_img_size);
@@ -636,11 +635,11 @@ int main(int argc, const char** argv){
     { "draw_points",'p',POPT_ARG_SHORT,&draw_points,0,"Set p=1 to plot out points","NUM" },
     { "frame_skip",'f',POPT_ARG_INT,&frame_skip,0,"Set frame_skip to skip disparity generation for f frames","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
-    { "scale_factor",'s',POPT_ARG_FLOAT,&scale_factor,0,"All operations will be applied after shrinking the image by this factor","NUM" },
+    { "scale_factor",'s',POPT_ARG_INT,&scale_factor,0,"All operations will be applied after shrinking the image by this factor","NUM" },
     { "object_tracking",'t',POPT_ARG_SHORT,&objectTracking,0,"Set t=1 for enabling object tracking","NUM" },
     { "input_image_width",'w',POPT_ARG_INT,&frame_skip,0,"Set the input image width (default value is 1242, i.e Kitti image width)","NUM" },
     { "input_image_height",'h',POPT_ARG_INT,&frame_skip,0,"Set the input image height (default value is 375, i.e Kitti image height)","NUM" },
-    { "extrapolate_point_cloud",'e',POPT_ARG_FLOAT,&point_cloud_extrapolation,0,"Extrapolate the point cloud by this factor","NUM" },
+    { "extrapolate_point_cloud",'e',POPT_ARG_INT,&point_cloud_extrapolation,0,"Extrapolate the point cloud by this factor","NUM" },
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
