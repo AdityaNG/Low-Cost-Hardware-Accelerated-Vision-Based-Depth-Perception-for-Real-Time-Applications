@@ -17,19 +17,16 @@ else
 	NVCCFLAGS := -O3 -std=c++11 -w
 endif
 
-ifeq ($(shared), 1)
-	NVCCFLAGS := ${NVCCFLAGS} -shared --compiler-options="-fPIC -pie"
-endif
-
-ifeq ($(debug), 1)
-	NVCCFLAGS := ${NVCCFLAGS} -g
-endif
-
 stereo_vision: ${OBJS}
 	${COMPILER} ${NVCCFLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 1 -f 1"
 
+shared_library: NVCCFLAGS := ${NVCCFLAGS} -shared --compiler-options="-fPIC -pie"
 shared_library: ${SHARED_OBJS}
 	${COMPILER} ${NVCCFLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo "Compiled the Shared Library Successfully!!"
+
+debug: NVCCFLAGS := -g 
+debug: ${OBJS}
+	${COMPILER} ${NVCCFLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 1 -f 1"
 
 %/bayesian.o: ${SRC}/bayesian/bayesian.cpp
 	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
