@@ -3,6 +3,7 @@
 #include <driver_types.h>
 #include <exception>
 #include <iostream>
+#include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/highgui.hpp>
 #include <pthread.h>
 #include <sched.h>
@@ -37,7 +38,6 @@ std::vector<OBJ> obj_list, pred_list;
 using namespace cv;
 using namespace std;
 
-#define shrink_factor 1 // Modify to change the image resize factor
 #define SHOW_VIDEO      // To show the yolo and disparity output as well
 
 #define start_timer(start) auto start = chrono::high_resolution_clock::now();  
@@ -62,8 +62,10 @@ FileStorage calib_file;
 
 Size out_img_size;
 Size calib_img_size;
+
+float scale_factor = 1; // Modify to change the image resize factor
 int calib_width = 1242, calib_height = 375,
-    out_width = 1242/shrink_factor, out_height = 375/shrink_factor;
+    out_width = 1242/scale_factor, out_height = 375/scale_factor;
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
@@ -363,6 +365,14 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   Rect validRoi[2];
   cout << "Starting rectification" << endl;
 
+  Mat scaler(3, 3, CV_64F, {1/ScaleFactor,       0      , 0,
+                                 0       , 1/ScaleFactor, 0, 
+                                 0       ,       0      , 1});
+  K1 = scaler * K1;
+  K2 = scaler * K2;
+
+  // Divide K1 and K2's first two rows with scale factor
+
   /*
   void cv::stereoRectify  ( 
     InputArray  cameraMatrix1,
@@ -603,6 +613,7 @@ int main(int argc, const char** argv){
     { "draw_points",'p',POPT_ARG_SHORT,&draw_points,0,"Set p=1 to plot out points","NUM" },
     { "frame_skip",'f',POPT_ARG_INT,&frame_skip,0,"Set frame_skip to skip disparity generation for f frames","NUM" },
     { "debug",'d',POPT_ARG_INT,&debug,0,"Set d=1 for cam to robot frame calibration","NUM" },
+    { "scale_factor",'s',POPT_ARG_INT,&video_mode,0,"Set v=1 Kitti video mode","NUM" },
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
