@@ -1,7 +1,7 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
-<img src="imgs/single_loop.gif" height=400>
-<img src="imgs/fsds.gif" height=400>
+<img src="imgs/single_loop.gif" height=200>
+<img src="imgs/fsds.gif" height=200>
 
 
 - Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
