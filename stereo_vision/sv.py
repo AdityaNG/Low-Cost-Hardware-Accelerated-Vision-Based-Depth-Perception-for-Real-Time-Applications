@@ -6,7 +6,7 @@ from numpy.ctypeslib import ndpointer
 
 class stereo_vision:
 
-    def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
+    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision.so'), width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=False, graphics=False, display=False, scale=1, pc_extrapolation=1):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
@@ -35,7 +35,7 @@ def main():
     kittiPath = sys.argv[1]
     scale_factor = int(sys.argv[2])
     pc_extrapolation = int(sys.argv[3])
-    s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation)
+    s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation)
     
     for iFrame in range(465):
         leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)

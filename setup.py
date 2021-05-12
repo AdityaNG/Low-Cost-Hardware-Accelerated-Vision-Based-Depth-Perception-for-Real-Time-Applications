@@ -1,16 +1,20 @@
-import setuptools
-
+#import setuptools
+from distutils.core import setup, Extension
+import glob
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-setuptools.setup(
+setup(
     name="stereo_vision",
     version="0.0.1",
     author="Aditya NG",
     author_email="adityang5@gmail.com",
     packages=['stereo_vision'],
+    package_dir={'stereo_vision': 'stereo_vision'},
+    include_package_data=True,
+    package_data={'stereo_vision': glob.glob("bin/*.so")},
     #scripts=['bin/vivp'],
     license='LICENSE.txt',
     url='https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices',
