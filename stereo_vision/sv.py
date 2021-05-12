@@ -30,7 +30,8 @@ class stereo_vision:
     def __del__(self):
         self.sv.clean()
 
-if __name__ == "__main__":
+
+def main():
     kittiPath = sys.argv[1]
     scale_factor = int(sys.argv[2])
     pc_extrapolation = int(sys.argv[3])
@@ -45,4 +46,6 @@ if __name__ == "__main__":
         left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
         right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
         s.generatePointCloud(left, right)
-    
+
+#if __name__ == "__main__":
+#    main()
