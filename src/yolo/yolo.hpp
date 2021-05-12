@@ -20,4 +20,4 @@ void print(std::vector<OBJ> &objects);
 
 std::vector<OBJ> processYOLO(Mat frame);
 
-void initYOLO();
+void initYOLO(const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES);

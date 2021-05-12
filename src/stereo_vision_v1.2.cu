@@ -465,7 +465,9 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
   cout << "Done rectification" << endl;  
 }
 
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation){ // This init function is called while using the program as a shared library
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
+		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML) 
+{ // This init function is called while using the program as a shared library
   scale_factor = scale;
   point_cloud_extrapolation = pc_extrapolation;
   draw_points = graphics;
@@ -476,19 +478,16 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
   if(trackObjects){
     objectTracking = true;
     printf("\n** Object tracking enabled\n");
-    initYOLO();
+    printf("Using YOLO_CFG : %s\n", YOLO_CFG);
+    initYOLO(YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES);
   }
   else printf("\n** Object tracking disabled\n"); 
   calib_img_size = Size(out_width, out_height);  
   out_img_size = Size(out_width, out_height);  
-  if(kittiCalibration){
-    printf("Using default kitti calibration parameters...\n");
-    calib_file = FileStorage(calib_file_name, FileStorage::READ); 
-  } 
-  else{
-    printf("Using FSDS calibration parameters...\n");
-    calib_file = FileStorage(fsds_calib_file_name, FileStorage::READ);
-  } 
+  
+  printf("Using CAMERA_CALIBRATION_YAML : %s\n", CAMERA_CALIBRATION_YAML);
+  calib_file = FileStorage(CAMERA_CALIBRATION_YAML, FileStorage::READ); 
+ 
   calib_file["K1"] >> K1;
   calib_file["K2"] >> K2;
   calib_file["D1"] >> D1;
@@ -524,9 +523,12 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 }
 
 extern "C"{ // This function is exposed in the shared library along with the main function
-  double3* generatePointCloud(uchar *left, uchar *right, int width, int height, bool kittiCalibration=true, 
-                              bool objectTracking=true, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1){ // Returns the double3 points array
-    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale, point_cloud_extrapolation);
+  double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
+                              bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
+			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="")
+{ // Returns the double3 points array
+    static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
+		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
 
     start_timer(t_start);        
     Mat left_img(Size(width, height), CV_8UC4, left);
@@ -649,7 +651,7 @@ int main(int argc, const char** argv){
 
   if(objectTracking){
     printf("** Object Tracking enabled\n");
-    initYOLO();
+    initYOLO("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights", "src/yolo/classes.txt");
   } 
   else printf("** Object tracking disabled\n"); 
 
