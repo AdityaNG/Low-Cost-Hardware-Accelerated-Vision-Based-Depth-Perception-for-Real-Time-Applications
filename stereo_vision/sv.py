@@ -42,20 +42,33 @@ class stereo_vision:
 
 
 def main():
-    kittiPath = sys.argv[1]
-    scale_factor = int(sys.argv[2])
-    pc_extrapolation = int(sys.argv[3])
+    import argparse
 
-    CAMERA_CALIBRATION_YAML = os.path.join(os.getcwd(), str(sys.argv[4]))
+    parser = argparse.ArgumentParser(description='Training a DQN agent to play CarRacing.')
+    parser.add_argument('-k', '--kitti', type=str, default='~/KITTI', help='Path to KITTI directory of test images')
+    parser.add_argument('-s', '--scale', type=int, default=1, help='By what factor to scale down the image by')
+    parser.add_argument('-p', '--pointcloud_interpolation', default=False, action='store_true', help='TODO')
+    parser.add_argument('-c', '--camera_calibration', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/kitti_2011_09_26.yml'), help='')
+    parser.add_argument('-o', '--object_track', default=False, action='store_true', help='Enables Object Tracking with YOLO')
+    parser.add_argument('-ycfg', '--yolo_cfg', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.cfg'), help='YOLO CFG file')
+    parser.add_argument('-yw', '--yolo_weights', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.weights'), help='YOLO Weights file')
+    parser.add_argument('-ycl', '--yolo_classes', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/classes.txt'), help='YOLO Classes to track')
+    args = parser.parse_args()
+
+    kittiPath = args.kitti # sys.argv[1]
+    scale_factor = args.scale #int(sys.argv[2])
+    pc_extrapolation = args.pointcloud_interpolation# int(sys.argv[3])
+
+    CAMERA_CALIBRATION_YAML = os.path.join(os.getcwd(), args.camera_calibration)
     
-    OBJ_TRACK = int(sys.argv[5])
+    OBJ_TRACK = args.object_track
     YOLO_CFG = ""
     YOLO_WEIGHTS = ""
     YOLO_CLASSES = ""
     if OBJ_TRACK:
-        YOLO_CFG = os.path.join(os.getcwd(), str(sys.argv[6]))
-        YOLO_WEIGHTS = os.path.join(os.getcwd(), str(sys.argv[7]))
-        YOLO_CLASSES = os.path.join(os.getcwd(), str(sys.argv[8]))
+        YOLO_CFG = os.path.join(os.getcwd(), args.yolo_cfg)
+        YOLO_WEIGHTS = os.path.join(os.getcwd(), args.yolo_weights)
+        YOLO_CLASSES = os.path.join(os.getcwd(), args.yolo_classes)
 
     if OBJ_TRACK:
         s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
