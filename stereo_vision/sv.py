@@ -53,6 +53,9 @@ def main():
     parser.add_argument('-ycfg', '--yolo_cfg', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.cfg'), help='YOLO CFG file')
     parser.add_argument('-yw', '--yolo_weights', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.weights'), help='YOLO Weights file')
     parser.add_argument('-ycl', '--yolo_classes', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/classes.txt'), help='YOLO Classes to track')
+    
+    parser.add_argument('-ctu', '--camera_to_use', default=-1, type=int, help='Enables camera use')
+    parser.add_argument('-sw', '--swap', default=False, action='store_true', help='Swaps cameras')
     args = parser.parse_args()
 
     kittiPath = args.kitti # sys.argv[1]
@@ -70,20 +73,60 @@ def main():
         YOLO_WEIGHTS = os.path.join(os.getcwd(), args.yolo_weights)
         YOLO_CLASSES = os.path.join(os.getcwd(), args.yolo_classes)
 
-    if OBJ_TRACK:
-        s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
-    else:
-        s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+    if args.camera_to_use == -1:
+        if OBJ_TRACK:
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
+        else:
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
     
-    for iFrame in range(465):
-        leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)
-        rightName = "{}/video/testing/image_03/0000/{:0>6}.png".format(kittiPath, iFrame)
-        #print(leftName, rightName)
-        left = cv2.imread(leftName)
-        right = cv2.imread(rightName)
-        left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
-        right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
-        s.generatePointCloud(left, right)
+    
+        for iFrame in range(465):
+            leftName  = "{}/video/testing/image_02/0000/{:0>6}.png".format(kittiPath, iFrame)
+            rightName = "{}/video/testing/image_03/0000/{:0>6}.png".format(kittiPath, iFrame)
+            #print(leftName, rightName)
+            left = cv2.imread(leftName)
+            right = cv2.imread(rightName)
+            left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
+            right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
+            s.generatePointCloud(left, right)
+    else:
+        camL = cv2.VideoCapture()
+        camR = cv2.VideoCapture()
+        if not(
+            (camL.open(
+                    args.camera_to_use)) and
+            (camR.open(args.camera_to_use +2))):
+            print(
+            "Cannot open pair of system cameras connected \
+                starting at camera #:",
+                args.camera_to_use)
+            exit()
+        camL.grab()
+        camR.grab()
+        _, left = camL.retrieve()
+        _, right = camR.retrieve()
+
+        h, w, d = left.shape
+
+        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+        
+        while True:
+            camL.grab()
+            camR.grab()
+
+            # then retrieve the images in slow(er) time
+            # (do not be tempted to use read() !)
+
+            _, left = camL.retrieve()
+            _, right = camR.retrieve()
+
+            if args.swap:
+                tmp = left
+                left = right
+                right = tmp
+            
+            s.generatePointCloud(left, right)
+
 
 #if __name__ == "__main__":
 #    main()
