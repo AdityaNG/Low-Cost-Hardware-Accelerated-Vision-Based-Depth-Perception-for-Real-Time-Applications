@@ -16,7 +16,7 @@ stereo_vision/__pycache__
 *.pch
 
 # Compiled Dynamic libraries
-#*.so
+*.so
 *.dylib
 *.dll
 
@@ -36,7 +36,7 @@ stereo_vision/__pycache__
 
 *.kdev*
 build/
-#bin/
+bin/
 lib/
 obj/
 shared/

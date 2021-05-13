@@ -44,7 +44,7 @@ class stereo_vision:
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Training a DQN agent to play CarRacing.')
+    parser = argparse.ArgumentParser(description='stereo_vision CLI for disparity calculation and 3D depth map generation from a stereo pair')
     parser.add_argument('-k', '--kitti', type=str, default='~/KITTI', help='Path to KITTI directory of test images')
     parser.add_argument('-s', '--scale', type=int, default=1, help='By what factor to scale down the image by')
     parser.add_argument('-p', '--pointcloud_interpolation', default=False, action='store_true', help='TODO')
