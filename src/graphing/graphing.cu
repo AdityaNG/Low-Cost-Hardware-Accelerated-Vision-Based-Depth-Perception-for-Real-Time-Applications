@@ -1,15 +1,9 @@
-#include <GL/freeglut_std.h>
-#include <pthread.h>
+#include <GL/freeglut.h>
+#include <GL/gl.h>
 #include <stdlib.h>
-#include "graphing.h"
-#define GL_GLEXT_PROTOTYPES
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-
 #include <math.h>
+#define GL_GLEXT_PROTOTYPES
+#include "graphing.h"
 
 #define SIZE 1
 
@@ -32,10 +26,7 @@ void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 3] = r;
     POINTS_OBJECTS[Oindex + 4] = g;
     POINTS_OBJECTS[Oindex + 5] = b;
-    Oindex+=6;
-}
-void resetOBJECTS() {
-    Oindex = 0;
+    Oindex += 6;
 }
 
 void draw_cube(double x, double y, double z, double r, double g, double b){
@@ -79,11 +70,9 @@ void drawCube(){
     // Set Background Color
     //glClearColor(0.4, 0.4, 0.4, 1.0);
     glClearColor(0,0,0, 1.0);
-    // Clear screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear screen
 
-    // Reset transformations
-    glLoadIdentity();
+    glLoadIdentity(); // Reset transformations
 
     // Rotate when user changes rX and rY
     glRotatef( rX, 1.0, 0.0, 0.0 );
@@ -180,73 +169,59 @@ void keyboard(int key, int x, int y){
     glutPostRedisplay();
 }
 
-void (*nextCALLBACK)(void);
-
-void setCallback(void (*f)(void)) {
-    nextCALLBACK = f;
-}
-
 extern bool graphicsThreadExit;
 void keyboard_chars(unsigned char key, int x, int y){
-         if (key == 'w') tY += VEL_T;
-    else if (key == 'a') tX -= VEL_T;
-    else if (key == 's') tY -= VEL_T;
-    else if (key == 'd') tX += VEL_T; 
-    else if (key == 'q') {
-        free(POINTS_OBJECTS);
-        graphicsThreadExit = true;  
-        pthread_exit(NULL);
+    switch(key){
+        case 'w': tY += VEL_T; break; 
+        case 'a': tX -= VEL_T; break;
+        case 's': tY -= VEL_T; break;
+        case 'd': tX += VEL_T; break; 
+        case 'q': return;
+        case 'e': ZOOM -= ZOOM * 0.2; break;
+        case 'r': ZOOM += ZOOM * 0.2; break; 
+        default: break;
     }
-    else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
-    else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
-    // Request display update
-    glutPostRedisplay();
-}
-
-void updateGraph(){
-    glutPostRedisplay();
+    glutPostRedisplay(); // Request display update
 }
 
 void mouse_callback(int button, int state, int x, int y){
 	static int xp=0, yp=0;
 	//printf("%d %d %d %d\n", button, state, x, y);
+    switch (button){
+        case MOUSE_LEFT:
+            if (state == 0){
+                xp = x;
+                yp = y;
+            } 
+            else if (state == 1){
+                rX = x-xp;
+                rY = y-yp;
+            }
+            break;
 
-	if (button == MOUSE_LEFT){
-		if (state == 0){
-			xp = x;
-			yp = y;
-		} 
-        else if (state == 1){
-			rX = x-xp;
-			rY = y-yp;
-		}
-	} 
-    else if (button == MOUSE_MIDDLE){
-		if (state == 0){
-			xp = x;
-			yp = y;
-		} 
-        else if (state == 1){
-			tX = (x-xp) * TRANSLATION_SENSITIVITY;
-			tY = -(y-yp) * TRANSLATION_SENSITIVITY;
-		}
-	} 
-    else if (button == MOUSE_SCROLL_UP){
-		if (state == 0){
-			ZOOM += VEL_T;
-		}
-	} 
-    else if (button == MOUSE_SCROLL_DOWN){
-		if (state == 0){
-			ZOOM -= VEL_T;
-		}
-	}
+        case MOUSE_MIDDLE:
+            if (state == 0){
+                xp = x;
+                yp = y;
+            } 
+            else if (state == 1){
+                tX = (x-xp) * TRANSLATION_SENSITIVITY;
+                tY = -(y-yp) * TRANSLATION_SENSITIVITY;
+            } 
+            break;
+
+        case MOUSE_SCROLL_UP:
+            if (state == 0) ZOOM += VEL_T;
+            break;
+
+        case MOUSE_SCROLL_DOWN:
+            if (state == 0) ZOOM -= VEL_T;
+            break;
+
+        default: break;
+    }
     //printf("%f %f %f %f %f %f\n", ZOOM, rX, rY, tX, tY, tZ);
     // Request display update
-    glutPostRedisplay();
-}
-
-void mouse_movement(int x, int y){
     glutPostRedisplay();
 }
 
@@ -257,6 +232,7 @@ void *startGraphics(void *args){
     int argc = 1;
     char *argv[1] = {(char*)"Something"};
     glutInit(&argc, argv);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
     // Request double buffered true color window with Z-buffer
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -277,9 +253,12 @@ void *startGraphics(void *args){
     glutSpecialFunc(keyboard);
     glutKeyboardFunc(keyboard_chars);
     glutMouseFunc(mouse_callback);
-    glutPassiveMotionFunc(mouse_movement);
+    glutIdleFunc(glutPostRedisplay);
 	
     // Pass control to GLUT for events
     glutMainLoop();
+    
+    free(POINTS_OBJECTS);
+    graphicsThreadExit = true;  
     return NULL;
 }

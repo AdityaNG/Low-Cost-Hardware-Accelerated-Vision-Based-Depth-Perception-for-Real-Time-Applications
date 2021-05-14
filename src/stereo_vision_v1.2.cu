@@ -1,33 +1,26 @@
-#include <cstdio>
-#include <cuda_device_runtime_api.h>
-#include <driver_types.h>
-#include <exception>
-#include <iostream>
-#include <opencv4/opencv2/core/hal/interface.h>
-#include <opencv4/opencv2/highgui.hpp>
+#include <stdio.h>
 #include <pthread.h>
-#include <sched.h>
-#include <vector>
-#include <thread> 
 #include <stdlib.h>
-#include <fstream>
-#include <ctime>
-#include <opencv2/opencv.hpp>
-#include <opencv2/calib3d.hpp>
 #include <string.h>
+#include <time.h>
 #include <math.h>
 #include <popt.h>
-#include <future>
 #include <omp.h>
+#include <opencv4/opencv2/core/hal/interface.h>
+#include <opencv4/opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/calib3d.hpp>
+#include <iostream>
+#include <vector>
+#include <thread> 
+#include <fstream>
+#include <future>
 
 #include "yolo/yolo.hpp"
 #include "elas_cuda_openmp/elas.h"
 #include "elas_cuda_openmp/elas_gpu.h"
 #include "graphing/graphing.h"
 #include "bayesian/bayesian.h"
-
-
-std::vector<OBJ> obj_list, pred_list;
 
 using namespace cv;
 using namespace std;
@@ -47,6 +40,7 @@ using namespace std;
   }                                       
 
 //////////////////////////////////////// Globals ///////////////////////////////////////////////////////
+vector<OBJ> obj_list, pred_list;
 Mat XR, XT, Q, P1, P2;
 Mat R1, R2, K1, K2, D1, D2, R;
 Mat lmapx, lmapy, rmapx, rmapy;
@@ -295,8 +289,9 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
  *  returns: Mat output 8-bit grayscale image
  *
  */
+extern int Oindex;
 Mat generateDisparityMap(Mat& left, Mat& right) {
-  resetOBJECTS();
+  Oindex = 0;
   if (left.empty() || right.empty()){
     printf("Image empty\n");
     return left;
