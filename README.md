@@ -1,6 +1,6 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
-<img src="imgs/fsds.gif" height=400>
+<img src="imgs/fsds.gif">
 
 A library to simplify disparity calculation and 3D depth map generation from a stereo pair
 - Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
@@ -9,7 +9,7 @@ A library to simplify disparity calculation and 3D depth map generation from a s
 
 Depth estimation and 3D object detection are important for autonomous systems to be able to estimate their own state and gain greater context of their external environment. The project is an implementation of the software side of a perception stack.
 
-<img src="imgs/single_loop.gif" height=400>
+<img src="imgs/single_loop.gif">
 
 # Getting Started 
 
@@ -57,6 +57,8 @@ Things that we are currently working on
  - calibration functionality
  - Start using "issues" on github
  - Add CONTRIBUTING.md
+ - Add "Good Starter" Issues
+ - Understand and change LICENSE
 
 # Stereo Calibration
 

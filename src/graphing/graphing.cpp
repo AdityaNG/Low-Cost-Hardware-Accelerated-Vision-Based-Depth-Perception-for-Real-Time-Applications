@@ -1,42 +1,24 @@
-#include "graphing.h"
-//#include "../cleanup/cleanup.hpp"
-#define GL_GLEXT_PROTOTYPES
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include <GL/freeglut.h>
+#include <GL/gl.h>
 #include <stdlib.h>
-#include <iostream>
-//#include <omp.h>
-double *POINTS, *POINTS_OBJECTS;
-
-// Rotate X
-double rX=17;
-// Rotate Y
-double rY=0;
-
-double tX=0, tY=-7., tZ=0, ZOOM=-0.2;
+#include <math.h>
+#define GL_GLEXT_PROTOTYPES
+#include "graphing.h"
 
 #define SIZE 1
 
-// The coordinates for the vertices of the cube
-
-int Pindex = 0;
-void appendPOINT(double X, double Y, double Z, double r, double g, double b) {
-    POINTS[Pindex + 0] = X;
-    POINTS[Pindex + 1] = Y;
-    POINTS[Pindex + 2] = Z;
-    POINTS[Pindex + 3] = r;
-    POINTS[Pindex + 4] = g;
-    POINTS[Pindex + 5] = b;
-    Pindex+=6;
-}
-void resetPOINTS() {
-    Pindex = 0;
-}
-
+extern int out_width;
+extern int out_height;
+extern double *points;
+extern unsigned char *color;
+extern bool draw_points; // Flag to enable or disable point cloud plotting
+double *POINTS_OBJECTS;
 int Oindex = 0;
+
+double rX=17; // Rotate X
+double rY=0;  // Rotate Y
+double tX=0, tY=0, tZ=0, ZOOM=-0.2;
+
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 0] = X;
     POINTS_OBJECTS[Oindex + 1] = Y;
@@ -44,18 +26,13 @@ void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
     POINTS_OBJECTS[Oindex + 3] = r;
     POINTS_OBJECTS[Oindex + 4] = g;
     POINTS_OBJECTS[Oindex + 5] = b;
-    Oindex+=6;
-}
-void resetOBJECTS() {
-    Oindex = 0;
+    Oindex += 6;
 }
 
-void draw_cube(double x, double y, double z, double r, double g, double b) {
-
+void draw_cube(double x, double y, double z, double r, double g, double b){
   //printf("(%lf %lf %lf), ", x,y,z);
-
     double verts[8][3];
-    for(int i = 0; i < 8; i++){
+    for (int i = 0; i < 8; i++){
         int s3 = ((1<<0) & i)>>0 ? 1: -1;
         int s2 = ((1<<1) & i)>>1 ? 1: -1;
         int s1 = ((1<<2) & i)>>2 ? 1: -1;
@@ -64,13 +41,11 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
         verts[i][1] = y+ s2*SIZE/2.0;
         verts[i][2] = z+ s3*SIZE/2.0;
     }
-
     glBegin(GL_LINE_STRIP);
     glColor3f(r, b, g);
-    //#pragma omp parallel for 
-    for(int iItr=0; iItr < 8; iItr++ ){
+    for (int iItr=0; iItr < 8; iItr++ ){
         int i = iItr%8;
-        for(int jItr = 0; jItr < 8; jItr++){
+        for (int jItr = 0; jItr < 8; jItr++){
             int j = jItr%8;
             glVertex3f(verts[i][0], verts[i][1], verts[i][2]);
             glVertex3f(verts[j][0], verts[j][1], verts[j][2]);
@@ -80,7 +55,7 @@ void draw_cube(double x, double y, double z, double r, double g, double b) {
   /*
   glBegin(GL_QUADS);
     glColor3f(r, b, g);
-    for(int j = 0; j < 8; j++) {
+    for (int j = 0; j < 8; j++) {
       int i = j%8;
       glVertex3f(verts[i][0], verts[i][1], verts[i][2]);
       glVertex3f(verts[i+1][0], verts[i+1][1], verts[i+1][2]);
@@ -95,16 +70,13 @@ void drawCube(){
     // Set Background Color
     //glClearColor(0.4, 0.4, 0.4, 1.0);
     glClearColor(0,0,0, 1.0);
-    // Clear screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear screen
 
-    // Reset transformations
-    glLoadIdentity();
+    glLoadIdentity(); // Reset transformations
 
     // Rotate when user changes rX and rY
     glRotatef( rX, 1.0, 0.0, 0.0 );
     glRotatef( rY, 0.0, 1.0, 0.0 );
-
 
     glScalef(ZOOM, ZOOM, ZOOM);
     
@@ -119,19 +91,58 @@ void drawCube(){
     glVertex3f(-plane_size, 0, plane_size);
     glEnd();
 
-    // BACK
-    glBegin(GL_POINTS);
-    //#pragma omp parallel for 
-    for(int i = 0; i < Pindex; i+=6){
-		glColor3f(POINTS[i+3], POINTS[i+4], POINTS[i+5]);
-		glPointSize(1);
-		glVertex3f(POINTS[i], POINTS[i+1], POINTS[i+2]);
-	}
-    glEnd();
+    if(draw_points){
+        glPointSize(1);
+        glBegin(GL_POINTS);
+        for (int i = 0; i < out_width * out_height; i += 3) {
+            if(color == NULL) break;
+            glColor3f(color[i]/255.0, color[i+1]/255.0, color[i+2]/255.0);
+            glVertex3f(points[i], points[i+1], points[i+2]);
+        }
+        glEnd();    
+    }
+    // (x, y, z) -> (-y, -z, x)
+    int draw_radius = 1;
+    if (draw_radius) {
 
-    draw_cube(0,0,0, 1,0,0);
-    //#pragma omp parallel for 
-    for(int iObj = 0; iObj < Oindex; iObj+=6){
+        /*
+            x - Positive, along left of car
+            y - Positive, below ground
+            z - Positive, along direction of car
+
+            (x, y, z)
+            (z, y, x)
+            (z, x, y)
+            (z, -x, -y)
+        */
+        glPointSize(10);
+        glBegin(GL_POINTS);
+        glColor3f(0.0, 1.0, 0.0);
+        glVertex3f(0, 0, 1);
+        glEnd();   
+
+
+        glPointSize(3);
+        glBegin(GL_POINTS);
+        for (int r = 1; r < 10; r++) {
+            /*for (float theta = 1.0; theta < 2*M_PI; theta+=2*M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(r * sin(theta), 0.0 , r * cos(theta));
+                // (x, y, z) -> (y, -z, x)
+            }*/
+
+            for (float theta = 0.0; theta < 2*M_PI; theta+=M_PI/100) {
+                glColor3f(1.0, 0.0, 0.0);
+                glVertex3f(-r * sin(theta), 0.0 , r * cos(theta));
+                
+            }
+        }
+        glEnd();       
+    }
+    
+    
+    draw_cube(0,0,0,1,0,0);
+    for (int iObj = 0; iObj < Oindex; iObj+=6){
       draw_cube(POINTS_OBJECTS[iObj + 0], POINTS_OBJECTS[iObj + 1], POINTS_OBJECTS[iObj + 2], POINTS_OBJECTS[iObj + 3], POINTS_OBJECTS[iObj + 4], POINTS_OBJECTS[iObj + 5]);
       /*
         POINTS_OBJECTS[iObj + 0] = X;
@@ -158,94 +169,74 @@ void keyboard(int key, int x, int y){
     glutPostRedisplay();
 }
 
-void (*nextCALLBACK)(void);
-
-void setCallback(void (*f)(void)) {
-    nextCALLBACK = f;
-}
-
-void keyboard_chars(unsigned char key, int x, int y)
-{
-         if (key == 'w') tY += VEL_T;
-    else if (key == 'a') tX -= VEL_T;
-    else if (key == 's') tY -= VEL_T;
-    else if (key == 'd') tX += VEL_T; 
-    else if (key == 'q') exit(0); //clean();
-    else if (key == 'e') ZOOM -= ZOOM * 0.2;//VEL_T; 
-    else if (key == 'r') ZOOM +=  ZOOM * 0.2;//VEL_T; 
-    else if (key == 'n'){
-        if (nextCALLBACK) nextCALLBACK();
+extern bool graphicsThreadExit;
+void keyboard_chars(unsigned char key, int x, int y){
+    switch(key){
+        case 'w': tY += VEL_T; break; 
+        case 'a': tX -= VEL_T; break;
+        case 's': tY -= VEL_T; break;
+        case 'd': tX += VEL_T; break; 
+        case 'e': ZOOM -= ZOOM * 0.2; break;
+        case 'r': ZOOM += ZOOM * 0.2; break; 
+        default: break;
     }
-    // Request display update
-    glutPostRedisplay();
+    glutPostRedisplay(); // Request display update
 }
 
-void updateGraph() {
-    glutPostRedisplay();
-}
-
-
-void mouse_callback(int button, int state, int x, int y) {
+void mouse_callback(int button, int state, int x, int y){
 	static int xp=0, yp=0;
 	//printf("%d %d %d %d\n", button, state, x, y);
+    switch (button){
+        case MOUSE_LEFT:
+            if (state == 0){
+                xp = x;
+                yp = y;
+            } 
+            else if (state == 1){
+                rX = x-xp;
+                rY = y-yp;
+            }
+            break;
 
-	if (button == MOUSE_LEFT){
-		if (state == 0){
-			xp = x;
-			yp = y;
-		} 
-        else if (state == 1){
-			rX = x-xp;
-			rY = y-yp;
-		}
-	} 
-    else if (button == MOUSE_MIDDLE){
-		if (state == 0){
-			xp = x;
-			yp = y;
-		} 
-        else if (state == 1){
-			tX = (x-xp) * TRANSLATION_SENSITIVITY;
-			tY = -(y-yp) * TRANSLATION_SENSITIVITY;
-		}
-	} 
-    else if (button == MOUSE_SCROLL_UP){
-		if (state == 0){
-			ZOOM += VEL_T;
-		}
-	} 
-    else if (button == MOUSE_SCROLL_DOWN){
-		if (state == 0){
-			ZOOM -= VEL_T;
-		}
-	}
+        case MOUSE_MIDDLE:
+            if (state == 0){
+                xp = x;
+                yp = y;
+            } 
+            else if (state == 1){
+                tX = (x-xp) * TRANSLATION_SENSITIVITY;
+                tY = -(y-yp) * TRANSLATION_SENSITIVITY;
+            } 
+            break;
+
+        case MOUSE_SCROLL_UP:
+            if (state == 0) ZOOM += VEL_T;
+            break;
+
+        case MOUSE_SCROLL_DOWN:
+            if (state == 0) ZOOM -= VEL_T;
+            break;
+
+        default: break;
+    }
     //printf("%f %f %f %f %f %f\n", ZOOM, rX, rY, tX, tY, tZ);
     // Request display update
     glutPostRedisplay();
 }
 
-void startGraphics(int out_width, int out_height) {
-    POINTS = (double*) malloc(sizeof(double) * 6 * out_width * out_height);
+void *startGraphics(void *args){
     POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
 	
-    #pragma omp parallel for 
-	for(int i = 0; i < 100; i+=6){
-		POINTS[i]	= i/400.0;
-		POINTS[i+1]	= i/400.0;
-		POINTS[i+2]	= i/400.0;
-		POINTS[i+3]	= i/400 + 0.5;
-		POINTS[i+4]	= i/400 + 0.5;
-		POINTS[i+5]	= i/400 + 0.5;
-	}
     // Initialize GLUT and process user parameters
     int argc = 1;
     char *argv[1] = {(char*)"Something"};
     glutInit(&argc, argv);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
     // Request double buffered true color window with Z-buffer
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
-    glutInitWindowSize(1400,800);
+    glutInitWindowSize(1400, 800);
     glutInitWindowPosition(100, 100);
 
     // Create window
@@ -261,13 +252,12 @@ void startGraphics(int out_width, int out_height) {
     glutSpecialFunc(keyboard);
     glutKeyboardFunc(keyboard_chars);
     glutMouseFunc(mouse_callback);
-	//thread th1(test); 
+    glutIdleFunc(glutPostRedisplay);
 	
     // Pass control to GLUT for events
     glutMainLoop();
-	
-	//th1.join();
-
-    free(POINTS);
+    
     free(POINTS_OBJECTS);
+    graphicsThreadExit = true;  
+    return NULL;
 }

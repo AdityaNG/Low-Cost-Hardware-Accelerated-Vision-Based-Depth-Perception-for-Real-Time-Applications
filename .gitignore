@@ -9,6 +9,7 @@
 
 # Python cache
 python/__pycache__
+stereo_vision/__pycache__
 
 # Precompiled Headers
 *.gch

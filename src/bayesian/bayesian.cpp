@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <numeric>
+#include <omp.h>
 
 using namespace std;
 
@@ -28,7 +29,7 @@ int match_object(int x, int y) {
     double old_dist = BAYESIAN_DISTANCE_THRESH;
     int prev = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
 
-        
+    //#pragma omp parallel for
     for (int jCount=0; jCount<MAX_BAYESIAN_OBJECTS; jCount++) {
         if (OLD_BAYES_OBJS[jCount].used[prev] != 0) {
             double dist = distance(OLD_BAYES_OBJS[jCount].x[prev], OLD_BAYES_OBJS[jCount].y[prev], x, y);
@@ -69,6 +70,7 @@ void append_old_objs(std::vector<OBJ> obj_list) {
     int top = OLD_OBJS_TOP % BAYESIAN_HISTORY;
     int iCount=0;
 
+    //#pragma omp parallel for
     for (int jCount=0; jCount<MAX_BAYESIAN_OBJECTS; jCount++) {
         OLD_BAYES_OBJS[jCount].used[top] = 0;
     }
@@ -99,6 +101,7 @@ int mean_change_position_vector(int* a, int* used) {
     int delta = 0;
     int recent = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
     int i = recent;
+    //#pragma omp parallel for
     for (int iCount=2; iCount<BAYESIAN_HISTORY; iCount++) {
         i = (recent + iCount) % BAYESIAN_HISTORY;
         if (used[i]) {
@@ -126,6 +129,7 @@ void predict(int id, int* x, int* y) {
     //printf("ID=%d, top=%d\n", id, recent);
     *x = OLD_BAYES_OBJS[id].x[recent] + mean_change_position_vector(OLD_BAYES_OBJS[id].x, OLD_BAYES_OBJS[id].used);
     *y = OLD_BAYES_OBJS[id].y[recent] + mean_change_position_vector(OLD_BAYES_OBJS[id].y, OLD_BAYES_OBJS[id].used);
+    
     if (OLD_BAYES_OBJS[id].predX!=0 && OLD_BAYES_OBJS[id].predY!=0) {
         float errX = abs(OLD_BAYES_OBJS[id].predX - OLD_BAYES_OBJS[id].x[recent]);
         float errY = abs(OLD_BAYES_OBJS[id].predY - OLD_BAYES_OBJS[id].y[recent]);
