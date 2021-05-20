@@ -176,7 +176,6 @@ void keyboard_chars(unsigned char key, int x, int y){
         case 'a': tX -= VEL_T; break;
         case 's': tY -= VEL_T; break;
         case 'd': tX += VEL_T; break; 
-        case 'q': return;
         case 'e': ZOOM -= ZOOM * 0.2; break;
         case 'r': ZOOM += ZOOM * 0.2; break; 
         default: break;
