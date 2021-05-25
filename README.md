@@ -1,6 +1,8 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
-<img src="imgs/fsds.gif">
+<center>
+    <img src="imgs/fsds.gif">
+</center>
 
 A library to simplify disparity calculation and 3D depth map generation from a stereo pair
 - Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
@@ -9,7 +11,9 @@ A library to simplify disparity calculation and 3D depth map generation from a s
 
 Depth estimation and 3D object detection are important for autonomous systems to be able to estimate their own state and gain greater context of their external environment. The project is an implementation of the software side of a perception stack.
 
-<img src="imgs/single_loop.gif">
+<center>
+    <img src="imgs/single_loop.gif">
+</center>
 
 # Getting Started 
 
@@ -29,7 +33,26 @@ Run the sample program
 python3 -m TODO
 ```
 
-## Compiling
+# Dependencies
+
+- [Cuda Toolkit](https://developer.nvidia.com/cuda-downloads)
+- A C++ compiler (*e.g.*, [G++](http://gcc.gnu.org/))
+- [LIBELAS](http://www.cvlibs.net/software/libelas/) 
+- [OpenCV](https://github.com/opencv/opencv)
+- [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
+- popt.h (for command line input)
+- OpenGL
+- Python 3 interpreter with all the packages in `requirements.txt` installed
+
+
+# Compiling and running
+
+Install the dependencies:
+
+```bash
+$ sudo apt install libpopt-dev freeglut3-dev       # popt.h and OpenGL
+$ python3 -m pip install -r Requirements.txt
+```
 
 Clone the repository:
 
@@ -40,9 +63,20 @@ $ git clone https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Visio
 Compile using the make utility:
 
 ```bash
-$ make stereo_vision -j$(($(nproc) * 2)) -s               # binary
-$ make shared_library -j$(($(nproc) * 2)) -s              # shared object file
+$ make stereo_vision -j$(($(nproc) * 2)) -s        # binary
+$ make shared_library -j$(($(nproc) * 2)) -s       # shared object file
 ```
+
+# Stereo Calibration
+
+A calibrated pair of cameras is required for stereo rectification and calibration files should be stored in a `.yml` file. 
+[github.com/sourishg/stereo-calibration](https://github.com/sourishg/stereo-calibration) contains all the tools and instructions to calibrate stereo cameras.
+
+The above should produce the camera intrinsic matrices `K1` and `K2` along with the distortion matrices `D1` and `D2`.
+The extrinsic parameters of the stereo pair is calculated during runtime.
+
+The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
+matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
 
 # TODO 
 
@@ -59,28 +93,6 @@ Things that we are currently working on
  - Add CONTRIBUTING.md
  - Add "Good Starter" Issues
  - Understand and change LICENSE
-
-# Stereo Calibration
-
-A calibrated pair of cameras is required for stereo rectification and calibration files should be stored in a `.yml` file. 
-[github.com/sourishg/stereo-calibration](https://github.com/sourishg/stereo-calibration) contains all the tools and instructions to calibrate stereo cameras.
-
-The above should produce the camera intrinsic matrices `K1` and `K2` along with the distortion matrices `D1` and `D2`.
-The extrinsic parameters of the stereo pair is calculated during runtime.
-
-The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
-matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
-
-
-# Dependencies
-
-- [Cuda Toolkit](https://developer.nvidia.com/cuda-downloads)
-- A C++ compiler (*e.g.*, [G++](http://gcc.gnu.org/))
-- [LIBELAS](http://www.cvlibs.net/software/libelas/) 
-- [OpenCV](https://github.com/opencv/opencv)
-- [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
-- popt.h
-- OpenGL
 
 ## License
 
