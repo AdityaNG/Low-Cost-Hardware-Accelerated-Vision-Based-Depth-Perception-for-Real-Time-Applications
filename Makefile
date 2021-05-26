@@ -5,61 +5,83 @@ SHARED_OBJ := shared
 BIN := bin
 EXECUTABLE := ${BIN}/stereo_vision
 SHARED_LIBRARY := ${BIN}/stereo_vision.so
-LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` -Xcompiler="-pthread -fopenmp"
-OBJS := ${OBJ}/bayesian.o ${OBJ}/descriptor.o ${OBJ}/elas.o ${OBJ}/filter.o ${OBJ}/matrix.o ${OBJ}/triangle.o ${OBJ}/elas_gpu.o ${OBJ}/detector.o ${OBJ}/graphing.o ${OBJ}/stereo_vision_v1.2.o
-SHARED_OBJS = ${SHARED_OBJ}/bayesian.o ${SHARED_OBJ}/descriptor.o ${SHARED_OBJ}/elas.o ${SHARED_OBJ}/filter.o ${SHARED_OBJ}/matrix.o ${SHARED_OBJ}/triangle.o ${SHARED_OBJ}/elas_gpu.o ${SHARED_OBJ}/detector.o ${SHARED_OBJ}/graphing.o ${SHARED_OBJ}/stereo_vision_v1.2.o
+ELAS_DIR := ${SRC}/elas_cuda_openmp
+FLAGS := -O3 -std=c++17 -w
+DEBUGFLAGS := -g -std=c++17 
+LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` 
+OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
 
 $(shell mkdir -p ${BIN} ${OBJ} ${SHARED_OBJ})
 
-ifeq ($(old), 1)
-	NVCCFLAGS := -gencode arch=compute_50,code=sm_50 -O3 -std=c++11 -w -Wno-deprecated-gpu-targets
+ifeq ($(serial), 1)
+	COMPILER := g++
+	ELAS_DIR := ${SRC}/elas_openmp
+	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
+	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS))
+	OBJS := ${OBJ}/stereo_vision.o ${ELAS_OBJS} ${OBJ}/graphing.o ${OBJS}
+	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
+	LIBS := ${LIBS} -lpthread -fopenmp
+	SHARED_FLAGS := ${FLAGS} -shared -fPIC -pie
 else
-	NVCCFLAGS := -O3 -std=c++11 -w
+	ifeq ($(old), 1)
+		FLAGS := -gencode arch=compute_50,code=sm_50 -Wno-deprecated-gpu-targets ${FLAGS}
+		DEBUGFLAGS := -gencode arch=compute_50,code=sm_50 ${DEBUGFLAGS}
+	endif
+	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
+	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS)) $(OBJ)/elas_gpu.o ${OBJS}  
+	OBJS := ${OBJ}/stereo_vision_v1.2.o ${ELAS_OBJS} ${OBJ}/graphing_gpu.o
+	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
+	LIBS := ${LIBS} -Xcompiler="-pthread -fopenmp"
+	SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie"
 endif
 
-ifeq ($(shared), 1)
-	NVCCFLAGS := ${NVCCFLAGS} -shared --compiler-options="-fPIC -pie"
-endif
-
-ifeq ($(debug), 1)
-	NVCCFLAGS := ${NVCCFLAGS} -g
-endif
 
 stereo_vision: ${OBJS}
-	${COMPILER} ${NVCCFLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 1 -f 1"
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 1 -f 1"
 
+shared_library: FLAGS := ${SHARED_FLAGS}
 shared_library: ${SHARED_OBJS}
-	${COMPILER} ${NVCCFLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo "Compiled the Shared Library Successfully!!"
+	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo "Compiled the Shared Library Successfully!!"
+
+debug: FLAGS := ${DEBUGFLAGS}
+debug: ${OBJS}
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./bin/stereo_vision -k path_to_kitti -v 1 -p 1 -f 1"
 
 %/bayesian.o: ${SRC}/bayesian/bayesian.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/descriptor.o: ${SRC}/elas_cuda_openmp/descriptor.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/descriptor.o: ${ELAS_DIR}/descriptor.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/elas.o: ${SRC}/elas_cuda_openmp/elas.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/elas.o: ${ELAS_DIR}/elas.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/filter.o: ${SRC}/elas_cuda_openmp/filter.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/filter.o: ${ELAS_DIR}/filter.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/matrix.o: ${SRC}/elas_cuda_openmp/matrix.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/matrix.o: ${ELAS_DIR}/matrix.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/triangle.o: ${SRC}/elas_cuda_openmp/triangle.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/triangle.o: ${ELAS_DIR}/triangle.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/elas_gpu.o: ${SRC}/elas_cuda_openmp/elas_gpu.cu
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/elas_gpu.o: ${ELAS_DIR}/elas_gpu.cu
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 %/detector.o: ${SRC}/yolo/detector.cpp
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
-%/graphing.o: ${SRC}/graphing/graphing.cu
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+%/graphing_gpu.o: ${SRC}/graphing/graphing.cu
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+
+%/graphing.o: ${SRC}/graphing/graphing.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 %/stereo_vision_v1.2.o: ${SRC}/stereo_vision_v1.2.cu
-	${COMPILER} ${NVCCFLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+
+%/stereo_vision.o: ${SRC}/stereo_vision.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 clean:
 	rm -rf ${OBJ} ${SHARED_OBJ} ${BIN}

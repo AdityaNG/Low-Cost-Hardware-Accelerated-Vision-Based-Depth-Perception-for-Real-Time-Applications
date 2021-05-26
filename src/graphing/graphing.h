@@ -11,13 +11,5 @@
 
 #define SIZE 1
 
-void appendPOINT(double X, double Y, double Z, double r, double g, double b);
-void resetPOINTS();
-
 void appendOBJECTS(double X, double Y, double Z, double r, double g, double b);
-void resetOBJECTS();
-
-void updateGraph();
-void setCallback(void (*f)(void));
-
 void *startGraphics(void *args);
