@@ -202,9 +202,11 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
   double Y = pos[1] / pos[3];
   double Z = pos[2] / pos[3];
 
-  //for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
-  //points[pixelPosition] = make_double3(point[0], point[1], point[2]);
-  points[pixelPosition] = make_double3(X, Y, Z);
+  double point[3];
+  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
+  points[pixelPosition] = make_double3(point[0], point[1], point[2]);
+  
+  //points[pixelPosition] = make_double3(X, Y, Z);
 }
 
 /*
