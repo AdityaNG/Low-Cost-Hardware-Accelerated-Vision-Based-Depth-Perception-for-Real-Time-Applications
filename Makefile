@@ -6,7 +6,7 @@ BIN := bin
 EXECUTABLE := ${BIN}/stereo_vision
 SHARED_LIBRARY := ${BIN}/stereo_vision.so
 ELAS_DIR := ${SRC}/elas_cuda_openmp
-FLAGS := -O3 -std=c++17 -w
+FLAGS := -O3 -std=c++17 -w 
 DEBUGFLAGS := -g -std=c++17 
 LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` 
 OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
@@ -14,7 +14,7 @@ OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o
 $(shell mkdir -p ${BIN} ${OBJ} ${SHARED_OBJ})
 
 ifeq ($(serial), 1)
-	COMPILER := g++
+	COMPILER := g++-8
 	ELAS_DIR := ${SRC}/elas_openmp
 	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
 	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS))
