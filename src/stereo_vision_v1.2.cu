@@ -459,6 +459,59 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 	cout << "Done rectification" << endl;  
 }
 
+const Scalar 
+white(255, 255, 255),
+white_dim(200, 200, 200),
+black(20, 20, 20),
+black_dim(0, 0, 0),
+
+organge(92, 156, 239),  //rgba(239,156,92,255)
+organge_dim(34, 100, 199), //rgba(199,100,34,255)
+
+blue(230, 200, 148),   //rgba(148,199,232,255)
+blue_dim(191, 126, 60),  //rgba(61,126,191,255)
+
+yellow(190, 235, 235), //rgba(226,224,176,255)
+yellow_dim(80, 130, 110); //rgba(119,131,88,255)
+
+Mat find_cones(Mat frame) {
+	cout<<"Finding cones"<<endl;
+	
+
+	Size s = frame.size();
+	//Mat total_mask = cv::Mat::zeros( cv::Size(400, 400), CV_8UC3);
+	Mat total_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
+
+	Mat white_mask;
+	inRange(frame, white_dim, white, white_mask);
+	bitwise_or(total_mask, white_mask, total_mask);
+
+	Mat black_mask;
+	inRange(frame, black_dim, black, black_mask);
+	bitwise_or(total_mask, black_mask, total_mask);
+
+	Mat yellow_mask;
+	inRange(frame, yellow_dim, yellow, yellow_mask);
+	bitwise_or(total_mask, yellow_mask, total_mask);
+
+	Mat orange_mask;
+	inRange(frame, organge_dim, organge, orange_mask);
+	bitwise_or(total_mask, orange_mask, total_mask);
+
+	Mat blue_mask;
+	inRange(frame, blue_dim, blue, blue_mask);
+	bitwise_or(total_mask, blue_mask, total_mask);
+
+	Mat sky_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
+	int start_height = s.height/2 * 1.1;
+	sky_mask(Rect(0, start_height, s.width,s.height-start_height)) = 255;
+	bitwise_and(total_mask, sky_mask, total_mask);
+
+	imshow("total_mask", total_mask);
+
+	return total_mask;
+}
+
 // This init function is called while using the program as a shared library
 int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML){ 
@@ -528,14 +581,17 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     Mat left_img(Size(width, height), CV_8UC4, left);
     Mat right_img(Size(width, height), CV_8UC4, right);
 
+	
+
     resize(left_img, left_img_OLD, out_img_size);
     resize(right_img, right_img_OLD, out_img_size);
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
+
+	Mat cones_mask = cv::Mat::ones( YOLOL_Color.size(), CV_8UC1);
     
     if(objectTracking){
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
-
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
@@ -544,10 +600,17 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
+		cones_mask = find_cones(YOLOL_Color);
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
-    publishPointCloud(left_img_OLD, dmapOLD);
+
+	Mat only_cones = cv::Mat::zeros( dmapOLD.size(), CV_8UC1);
+	//bitwise_and(cones_mask, dmapOLD, only_cones);
+	dmapOLD.copyTo(only_cones, cones_mask);
+	//cvCopy(dmapOLD, only_cones, cones_mask);
+
+    publishPointCloud(left_img_OLD, only_cones);
 
     end_timer(t_start, t_t);
     
@@ -559,6 +622,8 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	//imwrite("Disparity.png", dmapOLD);	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
+
+		imshow("only_cones", only_cones);
 		
     	waitKey(1);
     }
@@ -604,7 +669,8 @@ void imageLoop(){
 			append_old_objs(obj_list);
 			obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
 		}	
-		else{
+		else {
+			
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
