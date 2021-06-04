@@ -459,6 +459,14 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 	cout << "Done rectification" << endl;  
 }
 
+Mat remove_sky(Mat frame) {
+	static Size s = frame.size();
+	static Mat sky_mask = cv::Mat::ones( s, CV_8UC1);
+	static unsigned height = s.height/2 * 1.1;
+	sky_mask(Rect(0, 0, s.width, height)) = 0;
+	return sky_mask;
+}
+
 // This init function is called while using the program as a shared library
 int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML){ 
@@ -496,7 +504,8 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	if(display){
 		printf("\n** Display enabled\n");
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-		namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
+		namedWindow("Sky Removed", cv::WINDOW_NORMAL);// Needed to allow resizing of the image shown
 	}
 	else printf("\n** Display disabled\n");
 	findRectificationMap(calib_file, out_img_size); 
@@ -532,6 +541,8 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     resize(right_img, right_img_OLD, out_img_size);
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
+
+	Mat sky_mask;// = cv::Mat::ones(YOLOL_Color.size(), CV_8UC1);
     
     if(objectTracking){
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
@@ -544,10 +555,13 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
+		sky_mask = remove_sky(YOLOL_Color);
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
-    publishPointCloud(left_img_OLD, dmapOLD);
+	Mat sky_removed = cv::Mat::zeros(dmapOLD.size(), CV_8UC1);
+	dmapOLD.copyTo(sky_removed, sky_mask);
+	publishPointCloud(left_img_OLD, sky_removed);
 
     end_timer(t_start, t_t);
     
@@ -559,6 +573,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	//imwrite("Disparity.png", dmapOLD);	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
+		imshow("Sky Removed", sky_removed);
 		
     	waitKey(1);
     }
