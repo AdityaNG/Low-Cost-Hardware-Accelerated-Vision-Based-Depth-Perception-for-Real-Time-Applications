@@ -38,7 +38,8 @@ class stereo_vision:
         return self.sv.generatePointCloud(left, right, self.CAMERA_CALIBRATION_YAML.encode('utf-8'), self.width, self.height, self.defaultCalibFile, self.objectTracking, self.graphics, self.display, self.scale, self.pc_extrapolation,self.YOLO_CFG.encode('utf-8'), self.YOLO_WEIGHTS.encode('utf-8'), self.YOLO_CLASSES.encode('utf-8'))
     
     def __del__(self):
-        self.sv.clean()
+        if self.sv:
+            self.sv.clean()
 
 
 def main():
