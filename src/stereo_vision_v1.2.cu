@@ -82,6 +82,12 @@ uchar4 *color = NULL;
 double3 *points; // Holds the coordinates of each pixel in 3D space
 double3 *d_points;
 cudaError_t e;
+
+enum d_method {ELAS=0, SGBM};
+int disparity_method = SGBM;
+
+Ptr<StereoSGBM> sbgm_object;
+int max_disparity=16 * 5;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cudaInit(){
@@ -174,8 +180,11 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 	return (Mat_<double>(3,1) << x, y, z);
 }
 
+
+
 // Projecting the disparity map onto 3D space
 __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
+	double scaling_pc = 0.01;
 	// Calculating the coordinates of the pixel
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -189,9 +198,9 @@ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, in
 	double pos[4];
 	for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
     
-  double X = pos[0] / pos[3];
-  double Y = pos[1] / pos[3];
-  double Z = pos[2] / pos[3];
+  double X = pos[0] / pos[3] * scaling_pc;
+  double Y = pos[1] / pos[3] * scaling_pc;
+  double Z = pos[2] / pos[3] * scaling_pc;
 
   double point[3];
   for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
@@ -301,6 +310,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 	Mat rightdpf = Mat::zeros(imsize, CV_32F);	
 	
 	static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
+	//static Elas::parameters param(Elas::ROBOTICS);
 	static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
 	static ElasGPU elas(param);
 
@@ -333,7 +343,29 @@ void imgCallback_video() {
 	//remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
 	start_timer(dmap_start);   
-	dmapOLD = generateDisparityMap(img_left, img_right);  
+	if (disparity_method == SGBM) {
+		// TODO : Call SGBM
+		remap(img_left, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(img_right, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+		Mat tmp_dmapOLD = cv::Mat::zeros(img_left.size(), CV_64FC1);
+		sbgm_object->compute(img_left, img_right, tmp_dmapOLD);
+
+		tmp_dmapOLD.convertTo(dmapOLD, CV_8U);
+		
+		//cv::filterSpeckles(dmapOLD, 0, 40, max_disparity, dmapOLD);
+		//Mat tmp_dst;
+		//cv::threshold(dmapOLD, dmapOLD, 0, max_disparity, cv::THRESH_TOZERO);
+		//tmp_dst.copyTo(dmapOLD);
+		
+		//dmapOLD *= 256 / max_disparity / 16;
+		
+		//dmapOLD *= 256;
+		//dmapOLD /= max_disparity;
+		//dmapOLD /= 16;
+		
+	//} else if (disparity_method == ELAS) {
+	} else {
+		dmapOLD = generateDisparityMap(img_left, img_right);  
+	}
 	end_timer(dmap_start, dmap_t);
 }
 
@@ -507,14 +539,16 @@ Mat find_cones(Mat frame) {
 	sky_mask(Rect(0, start_height, s.width,s.height-start_height)) = 255;
 	bitwise_and(total_mask, sky_mask, total_mask);
 
-	imshow("total_mask", total_mask);
+	//imshow("total_mask", total_mask);
+
+	total_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
 
 	return total_mask;
 }
 
 // This init function is called while using the program as a shared library
 int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
-		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML){ 
+		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML, int disparity_method_input){ 
 	scale_factor = scale;
 	point_cloud_extrapolation = pc_extrapolation;
 	draw_points = graphics;
@@ -522,6 +556,8 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	out_width = width;
 	point_cloud_width = out_width * point_cloud_extrapolation;
 	point_cloud_height = out_height * point_cloud_extrapolation;
+	disparity_method = disparity_method_input;
+	//disparity_method = SGBM;
 	if(trackObjects){
 		objectTracking = true;
 		printf("\n** Object tracking enabled\n");
@@ -546,6 +582,8 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
 	     << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
 
+	cout << " XR : " << XR << "\n XT : " << XT << '\n';
+
 	if(display){
 		printf("\n** Display enabled\n");
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
@@ -566,6 +604,55 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 		graphicsBeingUsed = false;
 		printf("\n** 3D plotting disabled\n");
 	} 
+
+	if (disparity_method == SGBM) {
+		// TODO : Init SGBM
+		/*
+		cv::StereoSGBM::create	(
+			int 	minDisparity = 0,
+			int 	numDisparities = 16,
+			int 	blockSize = 3,
+			int 	P1 = 0,
+			int 	P2 = 0,
+			int 	disp12MaxDiff = 0,
+			int 	preFilterCap = 0,
+			int 	uniquenessRatio = 0,
+			int 	speckleWindowSize = 0,
+			int 	speckleRange = 0,
+			int 	mode = StereoSGBM::MODE_SGBM 
+		)
+		*/
+		int window_size = 2;
+		max_disparity = 16 * 5;
+		sbgm_object = cv::StereoSGBM::create(
+			4,
+			max_disparity,
+			3,
+			8 * 3 * window_size*window_size,
+			32 * 3 * window_size*window_size,
+			100,
+			63,
+			15,
+			10,
+			2,
+			StereoSGBM::MODE_SGBM_3WAY
+		);
+		/*
+		sbgm_object = cv::StereoSGBM::create(
+			4,
+			max_disparity,
+			3,
+			8 * 3 * window_size*window_size,
+			32 * 3 * window_size*window_size,
+			100,
+			63,
+			15,
+			10,
+			2,
+			StereoSGBM::MODE_SGBM_3WAY
+		);*/
+	}
+
 	return 1;
 }
 
@@ -573,9 +660,9 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
                               bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
-			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES=""){ 
+			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", int disparity_method_input=1){ 
     static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
-		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
+		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML, disparity_method_input);
 
     start_timer(t_start);        
     Mat left_img(Size(width, height), CV_8UC4, left);
@@ -599,18 +686,21 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	append_old_objs(obj_list);
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
-    else{
+    else {
 		cones_mask = find_cones(YOLOL_Color);
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
 
 	Mat only_cones = cv::Mat::zeros( dmapOLD.size(), CV_8UC1);
+	
 	//bitwise_and(cones_mask, dmapOLD, only_cones);
-	dmapOLD.copyTo(only_cones, cones_mask);
+	
+	//dmapOLD.copyTo(only_cones, cones_mask);
+	//publishPointCloud(left_img_OLD, only_cones);
+	publishPointCloud(left_img_OLD, dmapOLD);
+	
 	//cvCopy(dmapOLD, only_cones, cones_mask);
-
-    publishPointCloud(left_img_OLD, only_cones);
 
     end_timer(t_start, t_t);
     
@@ -623,7 +713,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
 
-		imshow("only_cones", only_cones);
+		//imshow("only_cones", only_cones);
 		
     	waitKey(1);
     }

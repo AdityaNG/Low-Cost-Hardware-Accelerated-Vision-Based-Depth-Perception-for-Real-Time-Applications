@@ -9,7 +9,7 @@ class stereo_vision:
     def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision.so'), width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=False, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
-                CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml'):
+                CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml', disparity_method=1):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
         self.height = height
@@ -26,7 +26,8 @@ class stereo_vision:
         self.YOLO_WEIGHTS = YOLO_WEIGHTS
         self.YOLO_CLASSES = YOLO_CLASSES
         self.CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML
-        self.sv.generatePointCloud.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_bool, ctypes.c_bool, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        self.disparity_method = disparity_method
+        self.sv.generatePointCloud.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_bool, ctypes.c_bool, ctypes.c_bool, ctypes.c_bool, ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
         print(self.sv.generatePointCloud.argtypes)
         print(CAMERA_CALIBRATION_YAML)
 
@@ -35,7 +36,7 @@ class stereo_vision:
         right = cv2.cvtColor(right, cv2.COLOR_BGR2BGRA)
         left = left.tostring()
         right = right.tostring()
-        return self.sv.generatePointCloud(left, right, self.CAMERA_CALIBRATION_YAML.encode('utf-8'), self.width, self.height, self.defaultCalibFile, self.objectTracking, self.graphics, self.display, self.scale, self.pc_extrapolation,self.YOLO_CFG.encode('utf-8'), self.YOLO_WEIGHTS.encode('utf-8'), self.YOLO_CLASSES.encode('utf-8'))
+        return self.sv.generatePointCloud(left, right, self.CAMERA_CALIBRATION_YAML.encode('utf-8'), self.width, self.height, self.defaultCalibFile, self.objectTracking, self.graphics, self.display, self.scale, self.pc_extrapolation,self.YOLO_CFG.encode('utf-8'), self.YOLO_WEIGHTS.encode('utf-8'), self.YOLO_CLASSES.encode('utf-8'), self.disparity_method)
     
     def __del__(self):
         if self.sv:
@@ -57,6 +58,8 @@ def main():
     
     parser.add_argument('-ctu', '--camera_to_use', default=-1, type=int, help='Enables camera use')
     parser.add_argument('-sw', '--swap', default=False, action='store_true', help='Swaps cameras')
+
+    parser.add_argument('-r', '--render_points', default=False, action='store_true', help='Enables Object Tracking with YOLO')
     args = parser.parse_args()
 
     kittiPath = args.kitti # sys.argv[1]
@@ -76,9 +79,9 @@ def main():
 
     if args.camera_to_use == -1:
         if OBJ_TRACK:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=args.render_points, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
         else:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=args.render_points, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
     
     
         for iFrame in range(465):
@@ -109,7 +112,7 @@ def main():
 
         h, w, d = left.shape
 
-        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=args.render_points, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
         
         while True:
             camL.grab()
