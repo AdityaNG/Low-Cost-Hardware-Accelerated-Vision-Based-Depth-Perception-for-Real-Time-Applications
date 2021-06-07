@@ -87,7 +87,8 @@ enum d_method {ELAS=0, SGBM};
 int disparity_method = SGBM;
 
 Ptr<StereoSGBM> sbgm_object;
-int max_disparity=16 * 5;
+float max_disparity=16 * 5;
+float min_disparity=6;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void cudaInit(){
@@ -345,22 +346,28 @@ void imgCallback_video() {
 	start_timer(dmap_start);   
 	if (disparity_method == SGBM) {
 		// TODO : Call SGBM
+		float disparity_multiplier = 1.0;
 		remap(img_left, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(img_right, img_right, rmapx, rmapy, cv::INTER_LINEAR);
-		Mat tmp_dmapOLD = cv::Mat::zeros(img_left.size(), CV_64FC1);
+		Mat tmp_dmapOLD;// = cv::Mat::zeros(img_left.size(), CV_64FC1);
 		sbgm_object->compute(img_left, img_right, tmp_dmapOLD);
-
-		tmp_dmapOLD.convertTo(dmapOLD, CV_8U);
 		
-		//cv::filterSpeckles(dmapOLD, 0, 40, max_disparity, dmapOLD);
+		if (tmp_dmapOLD.type() == CV_16S)
+            disparity_multiplier = 16.0f;
+		
+		cv::filterSpeckles(tmp_dmapOLD, 0, 40, max_disparity);
+		//cv::filterSpeckles(tmp_dmapOLD, 0, 40, max_disparity, tmp_dmapOLD);
 		//Mat tmp_dst;
 		//cv::threshold(dmapOLD, dmapOLD, 0, max_disparity, cv::THRESH_TOZERO);
 		//tmp_dst.copyTo(dmapOLD);
 		
-		//dmapOLD *= 256 / max_disparity / 16;
+		tmp_dmapOLD *= 255.0 / max_disparity / 16.0;
 		
 		//dmapOLD *= 256;
 		//dmapOLD /= max_disparity;
 		//dmapOLD /= 16;
+		//disp.convertTo(disp8, CV_8U, 255/(numberOfDisparities*16.));
+		
+		tmp_dmapOLD.convertTo(dmapOLD, CV_8U);
 		
 	//} else if (disparity_method == ELAS) {
 	} else {
@@ -492,19 +499,9 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 }
 
 const Scalar 
-white(255, 255, 255),
-white_dim(200, 200, 200),
-black(20, 20, 20),
-black_dim(0, 0, 0),
-
-organge(92, 156, 239),  //rgba(239,156,92,255)
-organge_dim(34, 100, 199), //rgba(199,100,34,255)
-
-blue(230, 200, 148),   //rgba(148,199,232,255)
-blue_dim(191, 126, 60),  //rgba(61,126,191,255)
-
-yellow(190, 235, 235), //rgba(226,224,176,255)
-yellow_dim(80, 130, 110); //rgba(119,131,88,255)
+blue(255, 100, 100),   //rgba(148,199,232,255)
+blue_dim(75, 0, 0)  //rgba(61,126,191,255)
+;
 
 Mat find_cones(Mat frame) {
 	cout<<"Finding cones"<<endl;
@@ -514,34 +511,20 @@ Mat find_cones(Mat frame) {
 	//Mat total_mask = cv::Mat::zeros( cv::Size(400, 400), CV_8UC3);
 	Mat total_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
 
-	Mat white_mask;
-	inRange(frame, white_dim, white, white_mask);
-	bitwise_or(total_mask, white_mask, total_mask);
-
-	Mat black_mask;
-	inRange(frame, black_dim, black, black_mask);
-	bitwise_or(total_mask, black_mask, total_mask);
-
-	Mat yellow_mask;
-	inRange(frame, yellow_dim, yellow, yellow_mask);
-	bitwise_or(total_mask, yellow_mask, total_mask);
-
-	Mat orange_mask;
-	inRange(frame, organge_dim, organge, orange_mask);
-	bitwise_or(total_mask, orange_mask, total_mask);
-
 	Mat blue_mask;
 	inRange(frame, blue_dim, blue, blue_mask);
 	bitwise_or(total_mask, blue_mask, total_mask);
 
+	/*
 	Mat sky_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
 	int start_height = s.height/2 * 1.1;
 	sky_mask(Rect(0, start_height, s.width,s.height-start_height)) = 255;
 	bitwise_and(total_mask, sky_mask, total_mask);
+	*/
 
 	//imshow("total_mask", total_mask);
 
-	total_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
+	//total_mask = cv::Mat::zeros( frame.size(), CV_8UC1);
 
 	return total_mask;
 }
@@ -622,19 +605,20 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 			int 	mode = StereoSGBM::MODE_SGBM 
 		)
 		*/
-		int window_size = 2;
-		max_disparity = 16 * 5;
+		float window_size = 8.0;
+		max_disparity = 16.0 * 10.0;
+		min_disparity = 6.0;
 		sbgm_object = cv::StereoSGBM::create(
-			4,
+			min_disparity,
 			max_disparity,
 			3,
-			8 * 3 * window_size*window_size,
-			32 * 3 * window_size*window_size,
-			100,
-			63,
-			15,
-			10,
-			2,
+			8.0 * 3.0 * window_size*window_size,
+			32.0 * 3.0 * window_size*window_size,
+			-100.0,
+			63.0,
+			15.0,
+			10.0,
+			2.0,
 			StereoSGBM::MODE_SGBM_3WAY
 		);
 		/*
@@ -696,9 +680,9 @@ extern "C"{ // This function is exposed in the shared library along with the mai
 	
 	//bitwise_and(cones_mask, dmapOLD, only_cones);
 	
-	//dmapOLD.copyTo(only_cones, cones_mask);
-	//publishPointCloud(left_img_OLD, only_cones);
-	publishPointCloud(left_img_OLD, dmapOLD);
+	dmapOLD.copyTo(only_cones, cones_mask);
+	publishPointCloud(left_img_OLD, only_cones);
+	//publishPointCloud(left_img_OLD, dmapOLD);
 	
 	//cvCopy(dmapOLD, only_cones, cones_mask);
 
@@ -710,10 +694,12 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	//flip(left_img, img_left_color_flip,1);
     	//imwrite("Detections.png", YOLOL_Color);
     	//imwrite("Disparity.png", dmapOLD);	
-    	imshow("Detections", YOLOL_Color);
-    	imshow("Disparity", dmapOLD);
 
-		//imshow("only_cones", only_cones);
+		imshow("only_cones", only_cones);
+
+    	imshow("Detections", YOLOL_Color);
+    	
+		imshow("Disparity", dmapOLD);
 		
     	waitKey(1);
     }
