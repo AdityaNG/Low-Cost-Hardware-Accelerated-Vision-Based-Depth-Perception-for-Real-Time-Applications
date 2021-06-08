@@ -9,7 +9,8 @@ ELAS_DIR := ${SRC}/elas_cuda_openmp
 FLAGS := -O3 -std=c++17 -w 
 DEBUGFLAGS := -g -std=c++17 
 LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` 
-OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
+#OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
+OBJS := ${OBJ}/bayesian.o
 
 $(shell mkdir -p ${BIN} ${OBJ} ${SHARED_OBJ})
 
