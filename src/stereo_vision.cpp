@@ -17,7 +17,7 @@
 #include <filesystem> 
 
 #include "yolo/yolo.hpp"
-#include "elas/elas.h"
+//#include "elas/elas.h"
 #include "graphing/graphing.h"
 #include "bayesian/bayesian.h"
 #include "common.h"
@@ -465,11 +465,11 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
   	Mat leftdpf = Mat::zeros(imsize, CV_32F);
   	Mat rightdpf = Mat::zeros(imsize, CV_32F);
 
-	static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
-	static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
-	static Elas elas(param);
+	//static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
+	//static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
+	//static Elas elas(param);
   	
-	elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
+	//elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
 	Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
 	
 	leftdpf.convertTo(dmap, CV_8UC1, 4.0);	
