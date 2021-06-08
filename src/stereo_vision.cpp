@@ -7,8 +7,8 @@
 #include <popt.h>
 #include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/calib3d.hpp>
+#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/calib3d.hpp>
 #include <iostream>
 #include <vector>
 #include <thread> 
