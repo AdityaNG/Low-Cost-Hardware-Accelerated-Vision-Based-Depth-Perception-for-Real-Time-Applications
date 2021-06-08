@@ -17,7 +17,7 @@ ifeq ($(serial), 1)
 	COMPILER := g++-8
 	ELAS_DIR := ${SRC}/elas_openmp
 	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
-	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS))
+	ELAS_OBJS := 
 	OBJS := ${OBJ}/stereo_vision.o ${ELAS_OBJS} ${OBJ}/graphing.o ${OBJS}
 	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
 	LIBS := ${LIBS} -lpthread -fopenmp -I /usr/local/include/opencv4
