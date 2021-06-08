@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -213,6 +214,7 @@ void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {
 
 
 	if (draw_points) {
+    #pragma omp parallel for
 		for (int j = 0; j < img_left.rows; j++) {
       pointCloudCol = 0;
 			for (int i = 0; i < img_left.cols; ++i) {
