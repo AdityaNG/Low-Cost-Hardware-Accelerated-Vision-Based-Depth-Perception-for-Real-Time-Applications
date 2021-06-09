@@ -20,7 +20,7 @@ ifeq ($(UNAME), x86_64)
 endif
 ifeq ($(UNAME), armv7l)
 # 	Raspberry Pi
-	LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv4` 
+	LIBS := -lstdc++fs -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv4` 
 endif
 
 #OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
