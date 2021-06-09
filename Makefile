@@ -1,3 +1,8 @@
+UNAME := $(shell uname -m)
+
+
+
+
 COMPILER := nvcc
 SRC := src
 OBJ := obj
@@ -9,8 +14,17 @@ ELAS_DIR := ${SRC}/elas_cuda_openmp
 FLAGS := -O3 -std=c++17 -w 
 DEBUGFLAGS := -g -std=c++17 
 LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` 
-#OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
-OBJS := ${OBJ}/bayesian.o
+
+ifeq ($(UNAME), x86_64)
+#	Default
+endif
+ifeq ($(UNAME), armv7l)
+# 	Raspberry Pi
+	LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv4` 
+endif
+
+OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
+#OBJS := ${OBJ}/bayesian.o
 
 $(shell mkdir -p ${BIN} ${OBJ} ${SHARED_OBJ})
 
@@ -21,7 +35,7 @@ ifeq ($(serial), 1)
 	ELAS_OBJS := 
 	OBJS := ${OBJ}/stereo_vision.o ${ELAS_OBJS} ${OBJ}/graphing.o ${OBJS}
 	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
-	LIBS := ${LIBS} -lpthread -fopenmp -I /usr/local/include/opencv4
+	LIBS := ${LIBS} -lpthread -fopenmp
 	SHARED_FLAGS := ${FLAGS} -shared -fPIC -pie
 else
 	ifeq ($(old), 1)

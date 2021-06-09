@@ -1039,7 +1039,7 @@ void imageLoop(){
 
 		YOLOL_Color = left_img_OLD.clone();	
 		if(objectTracking){
-			auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
+			//auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
