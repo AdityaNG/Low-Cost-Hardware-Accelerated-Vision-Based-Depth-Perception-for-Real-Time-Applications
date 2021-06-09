@@ -23,7 +23,7 @@ ifeq ($(UNAME), armv7l)
 	LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv4` 
 endif
 
-OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
+#OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o 
 #OBJS := ${OBJ}/bayesian.o
 
 $(shell mkdir -p ${BIN} ${OBJ} ${SHARED_OBJ})

@@ -1039,15 +1039,15 @@ void imageLoop(){
 
 		YOLOL_Color = left_img_OLD.clone();	
 		if(objectTracking){
-			auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
+			//auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
 			color = (uchar*)rgba.ptr<unsigned char>(0);
-			obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-			pred_list = get_predicted_boxes(); // Bayesian
-			append_old_objs(obj_list);
-			obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
+			//obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
+			//pred_list = get_predicted_boxes(); // Bayesian
+			//append_old_objs(obj_list);
+			//obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
 		}	
 		else{
 			resize(right_img, right_img_OLD, out_img_size);   
@@ -1097,7 +1097,7 @@ int main(int argc, const char** argv) {
 	}	
 	if(objectTracking){
 		printf("** Object Tracking enabled\n");
-		initYOLO("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights", "src/yolo/classes.txt");
+		//initYOLO("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights", "src/yolo/classes.txt");
 	} 
 	else printf("** Object tracking disabled\n"); 	
 	printf("KITTI Path: %s \n", kitti_path);
