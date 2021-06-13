@@ -4,13 +4,15 @@
 #include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #include "graphing.h"
+#define SERIAL
+#include "../common.h"
 
 #define SIZE 1
 
 extern int out_width;
 extern int out_height;
-extern double *points;
-extern unsigned char *color;
+extern double3 *points;
+extern uchar4 *color;
 extern bool draw_points; // Flag to enable or disable point cloud plotting
 double *POINTS_OBJECTS;
 int Oindex = 0;
@@ -94,10 +96,10 @@ void drawCube(){
     if(draw_points){
         glPointSize(1);
         glBegin(GL_POINTS);
-        for (int i = 0; i < out_width * out_height; i += 3) {
+        for (int i = 0; i < out_width * out_height; i++) {
             if(color == NULL) break;
-            glColor3f(color[i]/255.0, color[i+1]/255.0, color[i+2]/255.0);
-            glVertex3f(points[i], points[i+1], points[i+2]);
+            glColor3f(color[i].x/255.0, color[i].y/255.0, color[i].z/255.0);
+            glVertex3f(points[i].x, points[i].y, points[i].z);
         }
         glEnd();    
     }

@@ -55,7 +55,7 @@ def points_2_top_view(points, x_range, y_range, z_range, scale):
 
 class stereo_vision:
 
-    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision.so'), width=1242, height=375, 
+    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'build/bin/stereo_vision.so'), width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=False, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
                 CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml'):

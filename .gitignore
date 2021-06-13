@@ -36,10 +36,7 @@ stereo_vision/__pycache__
 
 *.kdev*
 build/
-bin/
 lib/
-obj/
-shared/
 
 # Ignore generated docs
 docs/

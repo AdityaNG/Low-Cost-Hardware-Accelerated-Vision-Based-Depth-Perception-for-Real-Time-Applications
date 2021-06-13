@@ -236,7 +236,7 @@ void *startGraphics(void *args){
     // Request double buffered true color window with Z-buffer
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
-    glutInitWindowSize(1400,800);
+    glutInitWindowSize(1400, 800);
     glutInitWindowPosition(100, 100);
 
     // Create window

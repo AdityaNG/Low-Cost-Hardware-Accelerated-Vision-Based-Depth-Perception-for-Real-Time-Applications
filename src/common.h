@@ -1,8 +1,6 @@
 #ifndef COMMON_OBJ
 #define COMMON_OBJ 
 #include <iostream>
-#include <stdio.h>
-
 typedef struct object {
   std::string name; // Name of the detection
   int x, y; // Coordinates
@@ -11,4 +9,14 @@ typedef struct object {
   double r, g, b;
 } OBJ;
 
+#endif
+
+#ifdef SERIAL
+typedef struct{
+	double x, y, z;
+}double3;
+
+typedef struct{
+	unsigned char x, y, z, w;
+}uchar4;
 #endif

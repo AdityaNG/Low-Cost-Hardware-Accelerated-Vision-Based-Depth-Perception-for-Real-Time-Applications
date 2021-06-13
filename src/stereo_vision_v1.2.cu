@@ -260,10 +260,10 @@ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, in
 			    i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
 			    j_lb = constrain(object.y, 0, img_left.rows-1), 
 			    j_ub = constrain(object.y + object.h, 0, img_left.rows-1);
-			double X=0, Y=0, Z=0;
+			double X = 0, Y = 0, Z = 0;
 			
 			for(int i = i_lb; i < i_ub; i++) {
-				for(int j = j_lb; j < j_ub; j++) {   
+				for(int j = j_lb; j < j_ub; ++j) {   
 					X += points[j*out_width + i].x;  
 					Y += points[j*out_width + i].y;     
 					Z += points[j*out_width + i].z;  
@@ -298,8 +298,8 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 	const Size imsize = left.size();
 	const int32_t dims[3] = {imsize.width, imsize.height, imsize.width};
 	Mat leftdpf = Mat::zeros(imsize, CV_32F);
-	Mat rightdpf = Mat::zeros(imsize, CV_32F);	
-	
+	Mat rightdpf = Mat::zeros(imsize, CV_32F);
+
 	static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
 	static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
 	static ElasGPU elas(param);
@@ -307,7 +307,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 	elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
 	static Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
 
-	leftdpf.convertTo(dmap, CV_8UC1, 4.0);  
+	leftdpf.convertTo(dmap, CV_8UC1, 4.0); 
 	return dmap;
 }
 
@@ -595,9 +595,8 @@ void imageLoop(){
 	size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
 	printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
-	//thread skipThread;
 
-	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; iFrame++){            
+	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){            
 		start_timer(t_start);        
 		strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
 		strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
@@ -637,7 +636,7 @@ void imageLoop(){
 	}
 }
 
-int main(int argc, const char** argv){  
+int main(int argc, const char** argv) {
 	ios_base::sync_with_stdio(false);
 	static struct poptOption options[] = { 
 	  { "kitti_path", 'k', POPT_ARG_STRING, &kitti_path, 0, "Path to KITTI Dataset", "STR" },

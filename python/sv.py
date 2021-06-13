@@ -6,7 +6,7 @@ from numpy.ctypeslib import ndpointer
 
 class stereo_vision:
 
-    def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
+    def __init__(self, so_lib_path='build/bin/stereo_vision.so', width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=False, graphics=False, display=False, scale=1, pc_extrapolation=1):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
