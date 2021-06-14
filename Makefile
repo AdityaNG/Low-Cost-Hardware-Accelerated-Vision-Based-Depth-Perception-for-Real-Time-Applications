@@ -27,7 +27,7 @@ ifeq ($(serial), 1)
 	OBJS := ${OBJ}/stereo_vision.o ${ELAS_OBJS} ${OBJ}/graphing.o ${OBJS}
 	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
 	LIBS := ${LIBS} -lpthread -fopenmp
-	SHARED_FLAGS := ${FLAGS} -shared -fPIC -pie
+	SHARED_FLAGS := ${FLAGS} -shared -fPIC
 else
 	EXECUTABLE := ${BIN}/stereo_vision
 	ROOT := ${ROOTPARALLEL}
