@@ -1,4 +1,3 @@
-COMPILER := nvcc
 BUILD := build
 ROOTSERIAL := ${BUILD}/serial
 ROOTPARALLEL := ${BUILD}/parallel
@@ -15,12 +14,28 @@ LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
 $(shell mkdir -p ${BUILD} ${BIN} ${ROOTPARALLEL}/${OBJ} ${ROOTPARALLEL}/${SHARED_OBJ} ${ROOTSERIAL}/${OBJ} ${ROOTSERIAL}/${SHARED_OBJ})
 
 ifeq ($(serial), 1)
+	CHECK := $(shell g++ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
+	ifeq (,${CHECK})
+    	COMPILER := g++
+$(info C++ compiler found: g++)
+$(info )
+
+	else # Check for clang if g++ is unavailable
+    	CHECK2 := $(shell clang --version >/dev/null 2>&1 || (echo "Failed to search for clang with error: $$?"))
+		ifeq (,${CHECK2})
+$(info C++ compiler found: clang)
+$(info )
+		COMPILER := clang
+		LIBS := -lstdc++ ${LIBS}
+		else
+$(error No C++ compilers found.)
+		endif
+	endif
 	EXECUTABLE := ${BIN}/stereo_vision_serial
 	ROOT := ${ROOTSERIAL}
 	OBJ := $(ROOT)/$(OBJ)
 	SHARED_OBJ := $(ROOT)/$(SHARED_OBJ)
 	OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o
-	COMPILER := g++
 	ELAS_DIR := ${SRC}/elas_openmp
 	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
 	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS))
@@ -29,6 +44,14 @@ ifeq ($(serial), 1)
 	LIBS := ${LIBS} -lpthread -fopenmp
 	SHARED_FLAGS := ${FLAGS} -shared -fPIC
 else
+	CHECK := $(shell nvcc --version >/dev/null 2>&1 || (echo "Failed to search for nvcc with error: $$?"))
+		ifeq (,${CHECK})
+$(info CUDA/C++ compiler found: nvcc)
+$(info )
+		COMPILER := nvcc
+		else
+$(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compiling the serial version)
+		endif
 	EXECUTABLE := ${BIN}/stereo_vision
 	ROOT := ${ROOTPARALLEL}
 	OBJ := $(ROOT)/$(OBJ)
@@ -47,51 +70,51 @@ else
 endif
 
 stereo_vision: ${OBJS}
-	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} && echo && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
 
 shared_library: FLAGS := ${SHARED_FLAGS}
 shared_library: ${SHARED_OBJS}
-	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo "Compiled the Shared Library Successfully!!"
+	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo && echo "Compiled the Shared Library Successfully!!"
 
 debug: FLAGS := ${DEBUGFLAGS}
 debug: ${OBJS}
-	${COMPILER} ${FLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
 
 %/bayesian.o: ${SRC}/bayesian/bayesian.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/descriptor.o: ${ELAS_DIR}/descriptor.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/elas.o: ${ELAS_DIR}/elas.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/filter.o: ${ELAS_DIR}/filter.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/matrix.o: ${ELAS_DIR}/matrix.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/triangle.o: ${ELAS_DIR}/triangle.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/elas_gpu.o: ${ELAS_DIR}/elas_gpu.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/detector.o: ${SRC}/yolo/detector.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/graphing_gpu.o: ${SRC}/graphing/graphing.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/graphing.o: ${SRC}/graphing/graphing.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/stereo_vision_v1.2.o: ${SRC}/stereo_vision_v1.2.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/stereo_vision.o: ${SRC}/stereo_vision.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+	${COMPILER} ${FLAGS} -c $^ -o $@
 
 clean:
 	rm -rf ${BUILD}

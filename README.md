@@ -18,8 +18,8 @@ Depth estimation and 3D object detection are important for autonomous systems to
 # Getting Started 
 
 To quickly get the project running on your machine you can : 
-- install the python library  OR
-- compile from source
+- Install the python library  OR
+- Compile from source
 
 ## Python Library [ coming soon ]
 
@@ -36,7 +36,7 @@ python3 -m TODO
 # Dependencies
 
 - [Cuda Toolkit](https://developer.nvidia.com/cuda-downloads)
-- A C++ compiler (*e.g.*, [G++](http://gcc.gnu.org/))
+- A C++ compiler (*e.g.*, [G++](http://gcc.gnu.org/) or [Clang](https://clang.llvm.org/))
 - [LIBELAS](http://www.cvlibs.net/software/libelas/) 
 - [OpenCV](https://github.com/opencv/opencv)
 - [Kitti Dataset](https://meet.google.com/linkredirect?authuser=0&dest=http%3A%2F%2Fwww.cvlibs.net%2Fdatasets%2Fkitti%2F)
