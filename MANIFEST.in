@@ -1,3 +1,2 @@
-include build/bin/stereo_vision.so
-include bin/stereo_vision.so
+include bin/*
 include data/*

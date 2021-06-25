@@ -14,7 +14,7 @@ setup(
     packages=['stereo_vision'],
     package_dir={'stereo_vision': 'stereo_vision'},
     include_package_data=True,
-    package_data={'stereo_vision': glob.glob("build/bin/*.so") + glob.glob("data/*")},
+    package_data={'stereo_vision': glob.glob("bin/*") + glob.glob("data/*")},
     #scripts=['bin/vivp'],
     license='LICENSE.txt',
     url='https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices',
