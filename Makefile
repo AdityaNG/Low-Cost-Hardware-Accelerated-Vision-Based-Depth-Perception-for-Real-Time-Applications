@@ -70,15 +70,21 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 endif
 
 stereo_vision: ${OBJS}
-	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} && echo && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} 
+	@echo
+	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
 
 shared_library: FLAGS := ${SHARED_FLAGS}
 shared_library: ${SHARED_OBJS}
-	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} && echo && echo "Compiled the Shared Library Successfully!!"
+	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} 
+	@echo
+	@echo "Compiled the Shared Library Successfully!!"
 
 debug: FLAGS := ${DEBUGFLAGS}
 debug: ${OBJS}
-	${COMPILER} ${FLAGS} -o ${EXECUTABLE} $^ ${LIBS} && echo && echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
+	${COMPILER} ${FLAGS} -o ${EXECUTABLE} $^ ${LIBS} 
+	@echo
+	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
 
 %/bayesian.o: ${SRC}/bayesian/bayesian.cpp
 	${COMPILER} ${FLAGS} -c $^ -o $@
