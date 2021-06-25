@@ -1,4 +1,3 @@
-#include <omp.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -6,6 +5,7 @@
 #include <time.h>
 #include <math.h>
 #include <popt.h>
+#include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
@@ -14,15 +14,13 @@
 #include <thread> 
 #include <fstream>
 #include <future>
-#include <filesystem> 
+#include <filesystem>
 
-#include "yolo/yolo.hpp"
-#include "elas/elas.h"
-#include "graphing/graphing.h"
-#include "bayesian/bayesian.h"
-#define SERIAL
-#include "common.h"
-
+#include "../../common_includes/yolo/yolo.hpp"
+#include "../elas_cuda_openmp/elas.h"
+#include "../elas_cuda_openmp/elas_gpu.h"
+#include "../graphing_parallel/graphing.h"
+#include "../../common_includes/bayesian/bayesian.h"
 
 using namespace cv;
 using namespace std;
@@ -34,19 +32,12 @@ using namespace std;
 #define end_timer(start, var)\
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();\
   time_taken *= 1e-9;\
-  var = time_taken;     
+  var = time_taken;      
 
-
-
-void print_OBJ(OBJ o) {
-  cout <<"Name : "<< o.name <<endl;
-  cout <<"\t x : "<< o.x << '\n';
-  cout <<"\t y : "<< o.y << '\n';
-  cout <<"\t h : "<< o.h << '\n';
-  cout <<"\t w : "<< o.w << '\n';
-  cout <<"\t c : "<< o.c << '\n';
-  cout <<"--------"<<endl;
-}
+#define checkCudaError e = cudaGetLastError();\
+  if (e!=cudaSuccess) {\
+    printf("Cuda error : %s\n", cudaGetErrorString(e));\
+  }                                       
 
 //////////////////////////////////////// Globals ///////////////////////////////////////////////////////
 vector<OBJ> obj_list, pred_list;
@@ -83,21 +74,33 @@ bool graphicsThreadExit = false; // The graphics thread toggles this when it exi
 
 // Graphics
 extern int Oindex;
+
+// Cuda globals
+double *d_XT, *d_XR, *d_Q;
+uchar *d_dmap; // Disparity map needs to be pushed to GPU
 uchar4 *color = NULL;
 double3 *points; // Holds the coordinates of each pixel in 3D space
+double3 *d_points;
+cudaError_t e;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Init(){	
+void cudaInit(){
+	cudaMalloc((void **)&d_XT, sizeof(double) * 3);
+	cudaMalloc((void **)&d_XR, sizeof(double) * 9);
+	cudaMalloc((void **)&d_Q, sizeof(double) * 16);
+	cudaMalloc((void **)&d_dmap, sizeof(uchar) * point_cloud_width * point_cloud_height);
+	cudaMalloc((void **)&d_points, sizeof(double3) * point_cloud_width * point_cloud_height);
 	points = (double3*)malloc(sizeof(double3) * point_cloud_width * point_cloud_height);
-	
-	if (debug == 1) {
-		//XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
-		XR = Mat_<double>(3,1) << M_PI/3, 0, 0; //M_PI
-		XT = Mat_<double>(3,1) << -4, -1.0, 1.7;
+	if (debug == 1) { 
+		XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
+		XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
 		cout << "Rotation matrix: " << XR << endl;
 		cout << "Translation matrix: " << XT << endl;
 	}
-	printf("Init done\n");
+	cudaMemcpy(d_XT, XT.data, sizeof(double) * 3, cudaMemcpyHostToDevice); 
+	cudaMemcpy(d_XR, XR.data, sizeof(double) * 9, cudaMemcpyHostToDevice);  
+	cudaMemcpy(d_Q, Q.data, sizeof(double) * 16, cudaMemcpyHostToDevice);
+	printf("CUDA Init done\n");
 }
 
 extern "C"{
@@ -106,6 +109,11 @@ extern "C"{
 		if(graphicsBeingUsed) pthread_join(graphicsThread, NULL);
 		printf("\ngraphicsThread joined\n");
 		free(points);
+		cudaFree(d_XR);
+		cudaFree(d_XT);
+		cudaFree(d_Q);
+		cudaFree(d_points);
+		cudaFree(d_dmap);
 		printf("All memory freed\n\nProgram exitted successfully!\n\n");
 		exit(0);
 	}
@@ -166,21 +174,30 @@ Mat composeTranslationCamToRobot(float x, float y, float z) {
 	return (Mat_<double>(3,1) << x, y, z);
 }
 
-string YOLO_to_KITTI_labels(string y) {
-  // '', 'Van', '', '', 'Person_sitting', '', '', '' or 'DontCare'
-  if (y == "car") {
-    return "Car";
-  } else if (y == "truck") {
-    return "Truck";
-  } else if (y == "person") {
-    return "Pedestrian";
-  } else if (y == "bicycle") {
-    return "Cyclist";
-  } else if (y == "train") {
-    return "Tram";
-  }
+// Projecting the disparity map onto 3D space
+__global__ void projectParallel(const uchar *dmap, double3 *points, int rows, int cols, const double *d_XT, const double *d_XR, const double *d_Q){
+	// Calculating the coordinates of the pixel
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  return "Misc";
+	// To prevent trying to access data outside the image
+	if (x >= cols || y >= rows) return;
+    
+	int pixelPosition = y * cols + x;
+	uchar d = dmap[pixelPosition];
+
+	double pos[4];
+	for(int j = 0; j<4; j++) pos[j] = d_Q[4*j + 0]*x + d_Q[4*j + 1]*y + d_Q[4*j + 2]*d + d_Q[4*j + 3];
+    
+  double X = pos[0] / pos[3];
+  double Y = pos[1] / pos[3];
+  double Z = pos[2] / pos[3];
+
+  double point[3];
+  for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
+  points[pixelPosition] = make_double3(point[0], point[1], point[2]);
+  
+  //points[pixelPosition] = make_double3(X, Y, Z);
 }
 
 /*
@@ -214,43 +231,28 @@ string YOLO_to_KITTI_labels(string y) {
  *  returns: void
  *
  */
-void publishPointCloud(Mat& img_left, Mat& dmap, char* OUT_img_topic=NULL) {    
+ void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) { 
 	start_timer(pc_start); 
-	int pointCloudCol;
-	Mat V = Mat(4, 1, CV_64FC1);
-	Mat pos = Mat(4, 1, CV_64FC1);
+	Mat img_left, dmap;
+	resize(img_left_old, img_left, Size(point_cloud_width, point_cloud_height));
+	resize(dmap_old, dmap, Size(point_cloud_width, point_cloud_height));
+  
+	cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * point_cloud_width * point_cloud_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
+	//checkCudaError;
+	cudaDeviceSynchronize();
+	//checkCudaError;
 
-
-	if (draw_points) {
-    	#pragma omp parallel for
-		for (int j = 0; j < img_left.rows; j++) {
-			for (int i = 0; i < img_left.cols; ++i) {
-				int d = dmap.at<uchar>(j,i);
-				// V is the vector to be multiplied to Q to get
-				// the 3D homogenous coordinates of the image point
-				V.at<double>(0,0) = (double)(i);
-				V.at<double>(1,0) = (double)(j);
-				V.at<double>(2,0) = (double)d;
-				V.at<double>(3,0) = 1.;
-
-				pos = Q * V; // 3D homogeneous coordinate
-				double X = pos.at<double>(0,0) / pos.at<double>(3,0);
-				double Y = pos.at<double>(1,0) / pos.at<double>(3,0);
-				double Z = pos.at<double>(2,0) / pos.at<double>(3,0);
-				Mat point3d_cam = Mat(3, 1, CV_64FC1);
-				point3d_cam.at<double>(0,0) = X;
-				point3d_cam.at<double>(1,0) = Y;
-				point3d_cam.at<double>(2,0) = Z;
-				// transform 3D point from camera frame to robot frame
-				//Mat point3d_robot = XR * point3d_cam + XT;
-				//points.push_back(Point3d(point3d_robot));
-			  	//ch.values.push_back(*reinterpret_cast<float*>(&rgb));
-				points[j*out_width + i].x = X;
-				points[j*out_width + i].y = Y;
-				points[j*out_width + i].z = Z;
-    		}
-  		}
-  	}
+	static const dim3 blockSize(32, 32, 1);
+	static const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
+	projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, point_cloud_height, point_cloud_width, d_XT, d_XR, d_Q);
+	//checkCudaError;
+  
+	cudaDeviceSynchronize();
+	//checkCudaError; // Uncomment for error checking
+	cudaMemcpy(points, d_points, sizeof(double3) * point_cloud_width * point_cloud_height, cudaMemcpyDeviceToHost);
+	//checkCudaError; // Uncomment for error checking
+	cudaDeviceSynchronize();
+	//checkCudaError; // Uncomment for error checking
 
 	if(objectTracking){
 		for(auto& object : obj_list) {
@@ -300,12 +302,12 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 
 	static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
 	static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
-	static Elas elas(param);
+	static ElasGPU elas(param);
 
 	elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
 	static Mat dmap = Mat(out_img_size, CV_8UC1, Scalar(0));
 
-	leftdpf.convertTo(dmap, CV_8UC1, 4.0);	
+	leftdpf.convertTo(dmap, CV_8UC1, 4.0); 
 	return dmap;
 }
 
@@ -507,7 +509,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	}
 	else printf("\n** Display disabled\n");
 	findRectificationMap(calib_file, out_img_size); 
-	Init();
+	cudaInit();
 	if(graphics){
 		printf("\n** 3D plotting enabled\n");
 		int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
@@ -692,7 +694,7 @@ int main(int argc, const char** argv) {
 	     << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
 
 	findRectificationMap(calib_file, out_img_size); 
-	Init();
+	cudaInit();
 	int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
 	if(ret){
 		fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));

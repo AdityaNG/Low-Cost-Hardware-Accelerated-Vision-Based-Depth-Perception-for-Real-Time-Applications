@@ -1,20 +1,32 @@
-BUILD := build
-ROOTSERIAL := ${BUILD}/serial
-ROOTPARALLEL := ${BUILD}/parallel
 SRC := src
-OBJ := obj
-SHARED_OBJ := shared
-BIN := ${BUILD}/bin
-SHARED_LIBRARY := ${BIN}/stereo_vision.so
-ELAS_DIR := ${SRC}/elas_cuda_openmp
-FLAGS := -O3 -std=c++17 -w
-DEBUGFLAGS := -g -std=c++17 
-LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`  
+BUILD := build
 
-$(shell mkdir -p ${BUILD} ${BIN} ${ROOTPARALLEL}/${OBJ} ${ROOTPARALLEL}/${SHARED_OBJ} ${ROOTSERIAL}/${OBJ} ${ROOTSERIAL}/${SHARED_OBJ})
+OBJ := ${BUILD}/obj
+SHARED_OBJ := ${BUILD}/shared
+BIN := ${BUILD}/bin
+
+
+SRC_COMMON := ${SRC}/common_includes
+SRC_SERIAL := ${SRC}/serial_includes
+SRC_PARALLEL := ${SRC}/parallel_includes
+
+LIBS := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
+FLAGS := -O3 -std=c++17 -w
+DEBUGFLAGS := -g -std=c++17   
+
+SUBDIRECTORIES := $(sort $(dir $(wildcard $(SRC)/*/*/)))
+DIRECTORIES := $(patsubst $(SRC)/%, $(SHARED_OBJ)/%, $(SUBDIRECTORIES)) $(patsubst $(SRC)/%, $(OBJ)/%, $(SUBDIRECTORIES)) ${BIN}
+
+$(shell mkdir -p ${DIRECTORIES})
 
 ifeq ($(serial), 1)
 	CHECK := $(shell g++ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
+	SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
+	SRCS_SERIAL := $(wildcard $(SRC_SERIAL)/*/*.cpp)
+
+	OBJS := $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_SERIAL))  
+	SHARED_OBJS := $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_SERIAL)) 
+
 	ifeq (,${CHECK})
     	COMPILER := g++
 $(info C++ compiler found: g++)
@@ -32,18 +44,18 @@ $(error No C++ compilers found.)
 		endif
 	endif
 	EXECUTABLE := ${BIN}/stereo_vision_serial
-	ROOT := ${ROOTSERIAL}
-	OBJ := $(ROOT)/$(OBJ)
-	SHARED_OBJ := $(ROOT)/$(SHARED_OBJ)
-	OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o
-	ELAS_DIR := ${SRC}/elas_openmp
-	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
-	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS))
-	OBJS := ${OBJ}/stereo_vision.o ${ELAS_OBJS} ${OBJ}/graphing.o ${OBJS}
-	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
+	SHARED_LIBRARY := ${BIN}/stereo_vision_serial.so
+	
 	LIBS := ${LIBS} -lpthread -fopenmp
 	SHARED_FLAGS := ${FLAGS} -shared -fPIC
 else
+	SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
+	SRCS_PARALLEL := $(wildcard $(SRC_PARALLEL)/*/*.cpp) 
+	SRCS_PARALLEL_CU := $(wildcard $(SRC_PARALLEL)/*/*.cu)
+
+	OBJS := $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_PARALLEL)) $(patsubst $(SRC)/%.cu, $(OBJ)/%.cu.o, $(SRCS_PARALLEL_CU)) 
+	SHARED_OBJS := $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_PARALLEL)) $(patsubst $(SRC)/%.cu, $(SHARED_OBJ)/%.cu.o, $(SRCS_PARALLEL_CU)) 
+
 	CHECK := $(shell nvcc --version >/dev/null 2>&1 || (echo "Failed to search for nvcc with error: $$?"))
 		ifeq (,${CHECK})
 $(info CUDA/C++ compiler found: nvcc)
@@ -52,19 +64,15 @@ $(info )
 		else
 $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compiling the serial version)
 		endif
-	EXECUTABLE := ${BIN}/stereo_vision
-	ROOT := ${ROOTPARALLEL}
-	OBJ := $(ROOT)/$(OBJ)
-	SHARED_OBJ := $(ROOT)/$(SHARED_OBJ)
-	OBJS := ${OBJ}/bayesian.o ${OBJ}/detector.o
+	EXECUTABLE := ${BIN}/stereo_vision_parallel
+	SHARED_LIBRARY := ${BIN}/stereo_vision_parallel.so
+	
+	
 	ifeq ($(old), 1)
 		FLAGS := -gencode arch=compute_50,code=sm_50 -Wno-deprecated-gpu-targets ${FLAGS}
 		DEBUGFLAGS := -gencode arch=compute_50,code=sm_50 ${DEBUGFLAGS}
 	endif
-	ELAS := $(wildcard $(ELAS_DIR)/*.cpp)
-	ELAS_OBJS := $(patsubst $(ELAS_DIR)/%.cpp, $(OBJ)/%.o, $(ELAS)) $(OBJ)/elas_gpu.o ${OBJS}  
-	OBJS := ${OBJ}/stereo_vision_v1.2.o ${ELAS_OBJS} ${OBJ}/graphing_gpu.o
-	SHARED_OBJS = $(patsubst $(OBJ)/%.o, $(SHARED_OBJ)/%.o, $(OBJS))
+	  
 	LIBS := ${LIBS} -Xcompiler="-pthread -fopenmp"
 	SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie"
 endif
@@ -78,7 +86,7 @@ shared_library: FLAGS := ${SHARED_FLAGS}
 shared_library: ${SHARED_OBJS}
 	${COMPILER} ${FLAGS} -o ${SHARED_LIBRARY} $^ ${LIBS} 
 	@echo
-	@echo "Compiled the Shared Library Successfully!!"
+	@echo "Compiled the Shared Library Successfully!! You can find it at: ${SHARED_LIBRARY}"
 
 debug: FLAGS := ${DEBUGFLAGS}
 debug: ${OBJS}
@@ -86,41 +94,17 @@ debug: ${OBJS}
 	@echo
 	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1 -p 1 -f 1"
 
-%/bayesian.o: ${SRC}/bayesian/bayesian.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+${OBJ}/%.cu.o: ${SRC}/%.cu
+	${COMPILER} ${FLAGS} -c $^ -o $@ 
 
-%/descriptor.o: ${ELAS_DIR}/descriptor.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+${OBJ}/%.cpp.o: ${SRC}/%.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ 
 
-%/elas.o: ${ELAS_DIR}/elas.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+${SHARED_OBJ}/%.cu.o: ${SRC}/%.cu
+	${COMPILER} ${FLAGS} -c $^ -o $@ 
 
-%/filter.o: ${ELAS_DIR}/filter.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/matrix.o: ${ELAS_DIR}/matrix.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/triangle.o: ${ELAS_DIR}/triangle.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/elas_gpu.o: ${ELAS_DIR}/elas_gpu.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/detector.o: ${SRC}/yolo/detector.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
-
-%/graphing_gpu.o: ${SRC}/graphing/graphing.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/graphing.o: ${SRC}/graphing/graphing.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/stereo_vision_v1.2.o: ${SRC}/stereo_vision_v1.2.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
-
-%/stereo_vision.o: ${SRC}/stereo_vision.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
+${SHARED_OBJ}/%.cpp.o: ${SRC}/%.cpp
+	${COMPILER} ${FLAGS} -c $^ -o $@ 
 
 clean:
 	rm -rf ${BUILD}
