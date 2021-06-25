@@ -108,7 +108,7 @@ debug: ${OBJS}
 	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/detector.o: ${SRC}/yolo/detector.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 %/graphing_gpu.o: ${SRC}/graphing/graphing.cu
 	${COMPILER} ${FLAGS} -c $^ -o $@
@@ -120,7 +120,7 @@ debug: ${OBJS}
 	${COMPILER} ${FLAGS} -c $^ -o $@
 
 %/stereo_vision.o: ${SRC}/stereo_vision.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 clean:
 	rm -rf ${BUILD}
