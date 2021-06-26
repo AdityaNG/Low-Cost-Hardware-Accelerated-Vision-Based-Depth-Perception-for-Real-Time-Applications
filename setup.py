@@ -3,6 +3,58 @@ from distutils.core import setup, Extension
 import subprocess
 import glob
 from os import path
+import os
+from os.path import join as pjoin
+import numpy
+
+def find_in_path(name, path):
+    "Find a file in a search path"
+    #adapted fom http://code.activestate.com/recipes/52224-find-a-file-given-a-search-path/
+    for dir in path.split(os.pathsep):
+        binpath = pjoin(dir, name)
+        if os.path.exists(binpath):
+            return os.path.abspath(binpath)
+    return None
+
+
+def locate_cuda():
+    """Locate the CUDA environment on the system
+    Returns a dict with keys 'home', 'nvcc', 'include', and 'lib64'
+    and values giving the absolute path to each directory.
+    Starts by looking for the CUDAHOME env variable. If not found, everything
+    is based on finding 'nvcc' in the PATH.
+    """
+
+    # first check if the CUDAHOME env variable is in use
+    if 'CUDAHOME' in os.environ:
+        home = os.environ['CUDAHOME']
+        nvcc = pjoin(home, 'bin', 'nvcc')
+    else:
+        # otherwise, search the PATH for NVCC
+        nvcc = find_in_path('nvcc', os.environ['PATH'])
+        if nvcc is None:
+            raise EnvironmentError('The nvcc binary could not be '
+                'located in your $PATH. Either add it to your path, or set $CUDAHOME')
+        home = os.path.dirname(os.path.dirname(nvcc))
+
+    cudaconfig = {'home':home, 'nvcc':nvcc,
+                  'include': pjoin(home, 'include'),
+                  'lib64': pjoin(home, 'lib64')}
+    for k, v in cudaconfig.items():
+        if not os.path.exists(v):
+            raise EnvironmentError('The CUDA %s path could not be located in %s' % (k, v))
+
+    return cudaconfig
+CUDA = locate_cuda()
+
+
+# Obtain the numpy include directory.  This logic works across numpy versions.
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
+
+
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
@@ -16,6 +68,23 @@ stereo_vision_serial_module = Extension('stereo_vision_serial',
                     extra_compile_args=['-O3', '-std=c++17', '-w'],
                     sources = glob.glob("src/common_includes/*/*.cpp") + glob.glob("src/serial_includes/*/*.cpp")
                     )
+
+stereo_vision_parallel_module = Extension('stereo_vision_serial',
+                    
+                    library_dirs = [CUDA['lib64']],
+                    libraries = ['cudart'],
+                    runtime_library_dirs = [CUDA['lib64']],
+                    extra_compile_args={'gcc': ['-O3', '-std=c++17', '-w'],
+                                        'nvcc': ['-O3', '-std=c++17', '-w'] + ['--ptxas-options=-v', '-c', '--compiler-options', "'-fPIC'"]},
+                    include_dirs = [numpy_include, CUDA['include'], 'src'] + OPENCV_INCLUDE_PATH,
+                    extra_link_args= ['-lpopt', '-lglut', '-lGLU', '-lGL', '-lm', '-lpthread', '-fopenmp' ] + OPENCV_LINKER_ARGS,
+                    sources = glob.glob("src/common_includes/*/*.cpp") + glob.glob("src/parallel_includes/*/*.cpp") + glob.glob("src/parallel_includes/*/*.cu")
+                    )
+
+if find_in_path('swig', os.environ['PATH']):
+    subprocess.check_call('swig -python -c++ -o src/common_includes/bayesian/bayesian.cpp', shell=True)
+else:
+    raise EnvironmentError('the swig executable was not found in your PATH')
 
 setup(
     name="stereo_vision",
