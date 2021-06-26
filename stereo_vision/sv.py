@@ -55,7 +55,7 @@ def points_2_top_view(points, x_range, y_range, z_range, scale):
 
 class stereo_vision:
 
-    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision.so'), width=1242, height=375, 
+    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_serial.so'), width=1242, height=375, 
     #def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=True, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
@@ -98,6 +98,9 @@ def main():
     parser.add_argument('-k', '--kitti', type=str, default='~/KITTI', help='Path to KITTI directory of test images')
     parser.add_argument('-s', '--scale', type=int, default=1, help='By what factor to scale down the image by')
     parser.add_argument('-p', '--pointcloud_interpolation', default=False, action='store_true', help='TODO')
+    
+    parser.add_argument('-prl', '--parallel', default=False, action='store_true', help='Run parallel')
+    
     parser.add_argument('-c', '--camera_calibration', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/kitti_2011_09_26.yml'), help='')
     parser.add_argument('-o', '--object_track', default=False, action='store_true', help='Enables Object Tracking with YOLO')
     parser.add_argument('-ycfg', '--yolo_cfg', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.cfg'), help='YOLO CFG file')
@@ -111,6 +114,10 @@ def main():
     kittiPath = args.kitti # sys.argv[1]
     scale_factor = args.scale #int(sys.argv[2])
     pc_extrapolation = args.pointcloud_interpolation# int(sys.argv[3])
+    
+    so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_serial.so')
+    if args.parallel:
+        so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_parallel.so')
 
     CAMERA_CALIBRATION_YAML = os.path.join(os.getcwd(), args.camera_calibration)
     
@@ -125,9 +132,9 @@ def main():
 
     if args.camera_to_use == -1:
         if OBJ_TRACK:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
         else:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
     
     
         for iFrame in range(465):
@@ -158,7 +165,7 @@ def main():
 
         h, w, d = left.shape
 
-        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML)
+        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
         
         while True:
             camL.grab()

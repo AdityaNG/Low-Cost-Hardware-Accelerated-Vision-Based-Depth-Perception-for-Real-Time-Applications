@@ -5,7 +5,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include "graphing.h"
 #define SERIAL
-#include "../common.h"
+#include "../../common_includes/common.h"
 
 #define SIZE 1
 
