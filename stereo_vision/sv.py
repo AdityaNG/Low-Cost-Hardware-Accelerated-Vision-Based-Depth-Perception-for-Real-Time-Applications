@@ -3,6 +3,7 @@ import os
 import cv2
 from numpy.ctypeslib import ndpointer
 import numpy as np
+import glob
 
 def normalize_depth(val, min_v, max_v):
     """ 
@@ -53,9 +54,15 @@ def points_2_top_view(points, x_range, y_range, z_range, scale):
     
     return img
 
+site_packages_dir = "/".join(__file__.split("/")[:-2])
+search_q = os.path.join("/".join(__file__.split("/")[:-2]),'stereo_vision*.so')
+so_files = glob.glob(search_q)
+
+DEFAULT_STEREO_VISION_SO_PATH = so_files[0]
+
 class stereo_vision:
 
-    def __init__(self, so_lib_path=os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_serial.so'), width=1242, height=375, 
+    def __init__(self, so_lib_path=DEFAULT_STEREO_VISION_SO_PATH, width=1242, height=375, 
     #def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=True, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
@@ -115,7 +122,7 @@ def main():
     scale_factor = args.scale #int(sys.argv[2])
     pc_extrapolation = args.pointcloud_interpolation# int(sys.argv[3])
     
-    so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_serial.so')
+    so_file_path = DEFAULT_STEREO_VISION_SO_PATH
     if args.parallel:
         so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_parallel.so')
 

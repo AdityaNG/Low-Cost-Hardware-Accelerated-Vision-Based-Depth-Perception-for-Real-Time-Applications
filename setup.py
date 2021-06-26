@@ -1,10 +1,21 @@
 #import setuptools
 from distutils.core import setup, Extension
+import subprocess
 import glob
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
+
+OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
+OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
+stereo_vision_serial_module = Extension('stereo_vision_serial',
+                    include_dirs = ['/usr/local/include'] + OPENCV_INCLUDE_PATH,
+                    library_dirs = ['/usr/local/lib'],
+                    extra_link_args= ['-lpopt', '-lglut', '-lGLU', '-lGL', '-lm', '-lpthread', '-fopenmp' ] + OPENCV_LINKER_ARGS,
+                    extra_compile_args=['-O3', '-std=c++17', '-w'],
+                    sources = glob.glob("src/common_includes/*/*.cpp") + glob.glob("src/serial_includes/*/*.cpp")
+                    )
 
 setup(
     name="stereo_vision",
@@ -22,6 +33,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires='>=3.6',
+    ext_modules = [stereo_vision_serial_module]
 )
 
 """
