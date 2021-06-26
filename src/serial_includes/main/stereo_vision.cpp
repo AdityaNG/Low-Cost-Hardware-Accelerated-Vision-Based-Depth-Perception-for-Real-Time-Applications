@@ -554,13 +554,14 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
-		sky_mask = remove_sky(YOLOL_Color);
+		//sky_mask = remove_sky(YOLOL_Color);
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
-	Mat sky_removed = cv::Mat::zeros(dmapOLD.size(), CV_8UC1);
-	dmapOLD.copyTo(sky_removed, sky_mask);
-	publishPointCloud(left_img_OLD, sky_removed);
+	//Mat sky_removed = cv::Mat::zeros(dmapOLD.size(), CV_8UC1);
+	//dmapOLD.copyTo(sky_removed, sky_mask);
+	//publishPointCloud(left_img_OLD, sky_removed);
+	publishPointCloud(left_img_OLD, dmapOLD);
 
     end_timer(t_start, t_t);
     
@@ -572,7 +573,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	//imwrite("Disparity.png", dmapOLD);	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
-		imshow("Sky Removed", sky_removed);
+		//imshow("Sky Removed", sky_removed);
 		
     	waitKey(1);
     }

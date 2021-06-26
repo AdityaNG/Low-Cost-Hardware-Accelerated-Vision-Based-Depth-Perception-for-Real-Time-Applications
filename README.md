@@ -15,22 +15,16 @@ Depth estimation and 3D object detection are important for autonomous systems to
     <img src="imgs/single_loop.gif">
 </p>
 
-# Getting Started 
-
-To quickly get the project running on your machine you can : 
-- Install the python library  OR
-- Compile from source
-
-## Python Library [ coming soon ]
+# Quick Start
 
 Install with pip
 ```bash
-python3 -m pip install TODO
+python3 -m pip install git+https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
 ```
 
-Run the sample program
+Run the demo
 ```bash
-python3 -m TODO
+python3 -m stereo_vision --demo
 ```
 
 # Dependencies
@@ -51,7 +45,7 @@ Install the dependencies:
 
 ```bash
 $ sudo apt install libpopt-dev freeglut3-dev       # popt.h and OpenGL
-$ python3 -m pip install -r Requirements.txt
+$ python3 -m pip install -r requirements.txt
 ```
 
 Clone the repository:
