@@ -30,6 +30,18 @@ def unzip_file(src_path, unzip_path):
 
     return True
 
+def clone_repo(repo_link, dest_path):
+    """Clones the repo"""
+    import subprocess
+    if not os.path.isdir(dest_path):
+        print("Cloning...")
+        subprocess.run(['git', 'clone', repo_link, dest_path], )
+    print("Pulling...")
+    subprocess.run(['git', 'checkout', '--', '.'], cwd=dest_path)
+    subprocess.run(['git', 'pull'], cwd=dest_path)
+    
+
+
 def download_file(url: str, dest_path: str, show_progress_bars: bool = True):
     file_size = 0
     req = requests.get(url, stream=True)
@@ -128,6 +140,8 @@ DEFAULT_STEREO_VISION_SO_PATH = so_files[0]
 KITTI_ZIP_PATH = os.path.join("/".join(__file__.split("/")[:-1]), 'data', 'kitti2015.zip')
 KITTI_FOLDER_PATH = os.path.join("/".join(__file__.split("/")[:-1]), 'data', 'kitti2015')
 
+SMOL_KITTI_FOLDER_PATH = os.path.join("/".join(__file__.split("/")[:-1]), 'data', 'kitti_smol')
+
 class stereo_vision:
 
     def __init__(self, so_lib_path=DEFAULT_STEREO_VISION_SO_PATH, width=1242, height=375, 
@@ -176,7 +190,8 @@ def main():
     
     parser.add_argument('-prl', '--parallel', default=False, action='store_true', help='Run parallel')
 
-    parser.add_argument('-d', '--demo', default=False, action='store_true', help='Run the demo with the KITTI 2015 dataset')
+    parser.add_argument('-d', '--demo', default=False, action='store_true', help='Run the demo with the set dataset')
+    parser.add_argument('-dst', '--dataset', choices=['kitti2015', 'kitti_smol'], default='kitti_smol', help='Choose the dataset')
     
     parser.add_argument('-c', '--camera_calibration', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/kitti_2011_09_26.yml'), help='')
     parser.add_argument('-o', '--object_track', default=False, action='store_true', help='Enables Object Tracking with YOLO')
@@ -208,25 +223,45 @@ def main():
         YOLO_CLASSES = os.path.join(os.getcwd(), args.yolo_classes)
 
     if args.demo:
-        print("Downlading KITTI 2015 to ", KITTI_ZIP_PATH)
-        download_file('https://s3.eu-central-1.amazonaws.com/avg-kitti/data_scene_flow.zip', KITTI_ZIP_PATH)
-        unzip_file(KITTI_ZIP_PATH, KITTI_FOLDER_PATH)
-        
-        s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
-        #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
+        if args.dataset == 'kitti2015':
+            print("Downlading KITTI 2015 to ", KITTI_ZIP_PATH)
+            download_file('https://s3.eu-central-1.amazonaws.com/avg-kitti/data_scene_flow.zip', KITTI_ZIP_PATH)
+            unzip_file(KITTI_ZIP_PATH, KITTI_FOLDER_PATH)
+            
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
+            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
 
-        image_files = sorted(os.listdir(os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_2')))
-        for i in image_files:
-            leftName = os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_2', i)
-            rightName = os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_3', i)
-            #print(leftName, rightName)
-            left = cv2.imread(leftName)
-            right = cv2.imread(rightName)
-            left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
-            right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
-            s.generatePointCloud(left, right)
+            image_files = sorted(os.listdir(os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_2')))
+            while True:
+                for i in image_files:
+                    leftName = os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_2', i)
+                    rightName = os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_3', i)
+                    #print(leftName, rightName)
+                    left = cv2.imread(leftName)
+                    right = cv2.imread(rightName)
+                    left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
+                    right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
+                    s.generatePointCloud(left, right)
+        elif args.dataset == 'kitti_smol':
+            print("Downlading KITTI Smol to ", SMOL_KITTI_FOLDER_PATH)
 
-    if args.camera_to_use == -1:
+            clone_repo('https://github.com/AdityaNG/Mini_Stereo_Dataset.git', SMOL_KITTI_FOLDER_PATH)
+            
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
+            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
+
+            image_files = sorted(os.listdir(os.path.join(SMOL_KITTI_FOLDER_PATH, 'smol_kitti', 'image_02')))
+            while True:
+                for i in image_files:
+                    leftName = os.path.join(SMOL_KITTI_FOLDER_PATH, 'smol_kitti', 'image_02', i)
+                    rightName = os.path.join(SMOL_KITTI_FOLDER_PATH, 'smol_kitti', 'image_03', i)
+                    left = cv2.imread(leftName)
+                    right = cv2.imread(rightName)
+                    left = cv2.resize(left, (left.shape[1]//scale_factor, left.shape[0]//scale_factor))
+                    right = cv2.resize(right, (right.shape[1]//scale_factor, right.shape[0]//scale_factor))
+                    s.generatePointCloud(left, right)
+
+    elif args.camera_to_use == -1:
         if OBJ_TRACK:
             s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
         else:

@@ -504,7 +504,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 		printf("\n** Display enabled\n");
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
 		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
-		namedWindow("Sky Removed", cv::WINDOW_NORMAL);// Needed to allow resizing of the image shown
+		//namedWindow("Sky Removed", cv::WINDOW_NORMAL);// Needed to allow resizing of the image shown
 	}
 	else printf("\n** Display disabled\n");
 	findRectificationMap(calib_file, out_img_size); 
