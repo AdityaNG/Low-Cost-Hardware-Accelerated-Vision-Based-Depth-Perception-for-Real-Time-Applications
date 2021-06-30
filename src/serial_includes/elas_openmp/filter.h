@@ -22,7 +22,8 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #ifndef __FILTER_H__
 #define __FILTER_H__
 
-#include <emmintrin.h>
+//#include <emmintrin.h>
+#include <mmintrin.h>
 #include <pmmintrin.h>
 
 // define fixed-width datatypes for Visual Studio projects
