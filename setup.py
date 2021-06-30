@@ -13,16 +13,19 @@ UNAME = subprocess.run(['uname', '-m'], stdout=subprocess.PIPE).stdout.decode('u
 OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
 OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
 
+COMMON_INCLUDES = glob.glob("src/common_includes/*/*.cpp")
+
 if 'armv7l' in UNAME: # Raspberry Pi
     OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv4'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
     OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv4'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
+    COMMON_INCLUDES = list(filter(lambda i: 'detector' not in i, COMMON_INCLUDES))
 
 stereo_vision_serial_module = Extension('stereo_vision_serial',
                     include_dirs = ['/usr/local/include'] + OPENCV_INCLUDE_PATH,
                     library_dirs = ['/usr/local/lib'],
                     extra_link_args= ['-lpopt', '-lglut', '-lGLU', '-lGL', '-lm', '-lpthread', '-fopenmp' ] + OPENCV_LINKER_ARGS,
                     extra_compile_args=['-O3', '-std=c++17', '-w'],
-                    sources = glob.glob("src/common_includes/*/*.cpp") + glob.glob("src/serial_includes/*/*.cpp")
+                    sources = COMMON_INCLUDES  + glob.glob("src/serial_includes/*/*.cpp")
                     )
 
 setup(
