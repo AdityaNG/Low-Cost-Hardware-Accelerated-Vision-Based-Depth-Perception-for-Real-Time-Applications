@@ -17,7 +17,7 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
 Street, Fifth Floor, Boston, MA 02110-1301, USA
- */
+*/
 
 #include "elas.h"
 
@@ -160,7 +160,7 @@ vector<triangle> tri_1, tri_2;
 void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height) {
 
 	// for all valid support points do
-	#pragma omp for
+	#pragma omp parallel for
 	for (int32_t u_can=0; u_can<D_can_width; u_can++) {
 		for (int32_t v_can=0; v_can<D_can_height; v_can++) {
 			int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
@@ -200,7 +200,7 @@ void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32
 	}
 
 	// for all valid support points do
-	#pragma omp for
+	#pragma omp parallel for
 	for (int32_t u_can=0; u_can<D_can_width; u_can++) {
 		for (int32_t v_can=0; v_can<D_can_height; v_can++) {
 			int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
@@ -404,7 +404,7 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 	#pragma omp parallel default(none) num_threads(2) private(u_can, v_can, u, d, v, d2) shared(partial_p_support,lr_threshold, D_can, D_can_width, D_can_height, D_candidate_stepsize, I1_desc, I2_desc)
 	{
 		int tid = omp_get_thread_num();
-	#pragma omp for
+	#pragma omp parallel for
 	for (v_can=1; v_can<D_can_height; v_can++) {
 		v = v_can*D_candidate_stepsize;
 		for (u_can=1; u_can<D_can_width; u_can++) {
@@ -444,7 +444,7 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 
 
 
-	#pragma omp for
+	#pragma omp parallel for
 	for (int32_t v_can=1; v_can<D_can_height; v_can++)
 		for (int32_t u_can=1; u_can<D_can_width; u_can++)
 			if (*(D_can+getAddressOffsetImage(u_can,v_can,D_can_width))>=0)

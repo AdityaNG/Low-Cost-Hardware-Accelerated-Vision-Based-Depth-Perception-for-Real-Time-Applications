@@ -64,7 +64,7 @@ double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
 pthread_t graphicsThread;        // This is the openGL thread that plots the points in 3D)
 bool graphicsBeingUsed = true;   // To know if graphics is used or not
-bool objectTracking = true;      // To know if object tracking is being done
+bool objectTracking = false;     // To know if object tracking is being done
       
 int debug = 0;                   // Applies different roation and translation to the points
 int frame_skip = 1;              // Skip by frame_skip frames
@@ -107,14 +107,13 @@ extern "C"{
 	void clean(){
 		destroyAllWindows(); // Destroying the openCV imshow windows
 		if(graphicsBeingUsed) pthread_join(graphicsThread, NULL);
-		printf("\ngraphicsThread joined\n");
 		free(points);
 		cudaFree(d_XR);
 		cudaFree(d_XT);
 		cudaFree(d_Q);
 		cudaFree(d_points);
 		cudaFree(d_dmap);
-		printf("All memory freed\n\nProgram exitted successfully!\n\n");
+		printf("\n\nProgram exitted successfully!\n\n");
 		exit(0);
 	}
 }
@@ -196,8 +195,6 @@ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, in
   double point[3];
   for(int j = 0; j<3; j++) point[j] = d_XR[3*j + 0]*X + d_XR[3*j + 1]*Y + d_XR[3*j + 2]*Z + d_XT[j];
   points[pixelPosition] = make_double3(point[0], point[1], point[2]);
-  
-  //points[pixelPosition] = make_double3(X, Y, Z);
 }
 
 /*
@@ -238,21 +235,21 @@ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, in
 	resize(dmap_old, dmap, Size(point_cloud_width, point_cloud_height));
   
 	cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * point_cloud_width * point_cloud_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
-	//checkCudaError;
+	//checkCudaError; // Uncomment to enable error checking
 	cudaDeviceSynchronize();
-	//checkCudaError;
+	//checkCudaError; // Uncomment to enable error checking
 
 	static const dim3 blockSize(32, 32, 1);
 	static const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
 	projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, point_cloud_height, point_cloud_width, d_XT, d_XR, d_Q);
-	//checkCudaError;
+	//checkCudaError; // Uncomment to enable error checking
   
 	cudaDeviceSynchronize();
-	//checkCudaError; // Uncomment for error checking
+	//checkCudaError; // Uncomment to enable error checking
 	cudaMemcpy(points, d_points, sizeof(double3) * point_cloud_width * point_cloud_height, cudaMemcpyDeviceToHost);
-	//checkCudaError; // Uncomment for error checking
+	//checkCudaError; // Uncomment to enable error checking
 	cudaDeviceSynchronize();
-	//checkCudaError; // Uncomment for error checking
+	//checkCudaError; // Uncomment to enable error checking
 
 	if(objectTracking){
 		for(auto& object : obj_list) {
@@ -546,7 +543,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     
     if(objectTracking){
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
-
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
@@ -567,10 +563,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     
     if(graphicsThreadExit) clean(); 
     
-    if(display){
-    	//flip(left_img, img_left_color_flip,1);
-    	//imwrite("Detections.png", YOLOL_Color);
-    	//imwrite("Disparity.png", dmapOLD);	
+    if(display){	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
 		imshow("Sky Removed", sky_removed);
@@ -578,7 +571,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	waitKey(1);
     }
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
-    //for(int i = 0; i < out_width * out_height; i++) fprintf(stderr, "%f, %f, %f\n", points[i].x, points[i].y, points[i].z);
     return points;
   }
 }
@@ -645,8 +637,8 @@ int main(int argc, const char** argv) {
 	  { "frame_skip", 'f', POPT_ARG_INT, &frame_skip, 0, "Set frame_skip to skip disparity generation for f frames (Not yet implemented)", "NUM" },
 	  { "debug", 'd', POPT_ARG_INT, &debug, 0, "Set d=1 for cam to robot frame calibration", "NUM" },
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
-	  { "input_image_width", 'w', POPT_ARG_INT, &frame_skip, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
-	  { "input_image_height", 'h', POPT_ARG_INT, &frame_skip, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
+	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -659,14 +651,13 @@ int main(int argc, const char** argv) {
 	int c; 
 	while((c = poptGetNextOpt(poptCONT)) >= 0);
 	if (c < -1) { // An error occurred during option processing 
-	    fprintf(stderr, "stereo_vision: %s -- \'%s\'\n",
-	            poptStrerror(c), poptBadOption(poptCONT, POPT_BADOPTION_NOALIAS));
+	    fprintf(stderr, "stereo_vision: %s -- \'%s\'\n", poptStrerror(c), poptBadOption(poptCONT, POPT_BADOPTION_NOALIAS));
 	    poptPrintUsage(poptCONT, stderr, 0);
 	    return 1;
 	}	
 	if(objectTracking){
 		printf("** Object Tracking enabled\n");
-		initYOLO("src/yolo/yolov4-tiny.cfg", "src/yolo/yolov4-tiny.weights", "src/yolo/classes.txt");
+		initYOLO("./data/yolov4-tiny.cfg", "./data/yolov4-tiny.weights", "./data/classes.txt");
 	} 
 	else printf("** Object tracking disabled\n"); 	
 	printf("KITTI Path: %s \n", kitti_path);
@@ -703,11 +694,12 @@ int main(int argc, const char** argv) {
 
 	#ifdef SHOW_VIDEO
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-		namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
+		moveWindow("Detections", 0, 0);
+		moveWindow("Disparity", 0, (int)(out_height*1.2));
 	#endif
 
 	imageLoop();
-	printf("imageLoop exitted...\n");
 	clean();
 	return 0;
 }

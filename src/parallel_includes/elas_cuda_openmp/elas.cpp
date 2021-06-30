@@ -451,7 +451,7 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 	#pragma omp parallel default(none) num_threads(2) private(u_can, v_can, u, d, v, d2) shared(partial_p_support,lr_threshold, D_can, D_can_width, D_can_height, D_candidate_stepsize, I1_desc, I2_desc)
 	{
 		int tid = omp_get_thread_num();
-	#pragma omp for
+	#pragma omp parallel for
 	for (v_can=1; v_can<D_can_height; v_can++) {
 		v = v_can*D_candidate_stepsize;
 		for (u_can=1; u_can<D_can_width; u_can++) {
@@ -485,7 +485,7 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
   removeRedundantSupportPoints(D_can,D_can_width,D_can_height,5,1,false);
   
   // move support points from image representation into a vector representation
-  #pragma omp for
+  #pragma omp parallel for
 	for (int32_t v_can=1; v_can<D_can_height; v_can++)
 		for (int32_t u_can=1; u_can<D_can_width; u_can++)
 			if (*(D_can+getAddressOffsetImage(u_can,v_can,D_can_width))>=0)

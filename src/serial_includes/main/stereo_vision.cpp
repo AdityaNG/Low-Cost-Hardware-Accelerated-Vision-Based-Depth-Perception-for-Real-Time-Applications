@@ -74,7 +74,7 @@ double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
 pthread_t graphicsThread;        // This is the openGL thread that plots the points in 3D)
 bool graphicsBeingUsed = true;   // To know if graphics is used or not
-bool objectTracking = true;      // To know if object tracking is being done
+bool objectTracking = false;     // To know if object tracking is being done
       
 int debug = 0;                   // Applies different roation and translation to the points
 int frame_skip = 1;              // Skip by frame_skip frames
@@ -105,9 +105,8 @@ extern "C"{
 	void clean(){
 		destroyAllWindows(); // Destroying the openCV imshow windows
 		if(graphicsBeingUsed) pthread_join(graphicsThread, NULL);
-		printf("\ngraphicsThread joined\n");
 		free(points);
-		printf("All memory freed\n\nProgram exitted successfully!\n\n");
+		printf("\n\nProgram exitted successfully!\n\n");
 		exit(0);
 	}
 }
@@ -645,8 +644,8 @@ int main(int argc, const char** argv) {
 	  { "frame_skip", 'f', POPT_ARG_INT, &frame_skip, 0, "Set frame_skip to skip disparity generation for f frames (Not yet implemented)", "NUM" },
 	  { "debug", 'd', POPT_ARG_INT, &debug, 0, "Set d=1 for cam to robot frame calibration", "NUM" },
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
-	  { "input_image_width", 'w', POPT_ARG_INT, &frame_skip, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
-	  { "input_image_height", 'h', POPT_ARG_INT, &frame_skip, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
+	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -703,11 +702,12 @@ int main(int argc, const char** argv) {
 
 	#ifdef SHOW_VIDEO
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-		namedWindow("Disparity", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
+		moveWindow("Detections", 0, 0);
+		moveWindow("Disparity", 0, (int)(out_height*1.2));
 	#endif
 
 	imageLoop();
-	printf("imageLoop exitted...\n");
 	clean();
 	return 0;
 }

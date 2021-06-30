@@ -68,31 +68,24 @@ void display_history() {
 // CLL
 void append_old_objs(std::vector<OBJ> obj_list) {
     int top = OLD_OBJS_TOP % BAYESIAN_HISTORY;
-    int iCount=0;
+    int iCount = 0;
 
     //#pragma omp parallel for
-    for (int jCount=0; jCount<MAX_BAYESIAN_OBJECTS; jCount++) {
-        OLD_BAYES_OBJS[jCount].used[top] = 0;
-    }
+    for (int jCount = 0; jCount < MAX_BAYESIAN_OBJECTS; ++jCount) OLD_BAYES_OBJS[jCount].used[top] = 0;
 
     for (OBJ object : obj_list) {
         int id = iCount;
-        if (!QUEUE_IS_EMPTY)
-            id = match_object(object.x, object.y);
+        if (!QUEUE_IS_EMPTY) id = match_object(object.x, object.y);
         
         OLD_BAYES_OBJS[id].used[top] = 1;
         OLD_BAYES_OBJS[id].x[top] = object.x;
         OLD_BAYES_OBJS[id].y[top] = object.y;
 
-        iCount++;
-        if (iCount>MAX_BAYESIAN_OBJECTS)
-            break;
+        ++iCount;
+        if (iCount > MAX_BAYESIAN_OBJECTS) break;
     }
-    if (QUEUE_IS_EMPTY)
-        QUEUE_IS_EMPTY = 0;
-    
-    if (top == BAYESIAN_HISTORY-1)
-        QUEUE_IS_FULL = 1;
+    if (QUEUE_IS_EMPTY) QUEUE_IS_EMPTY = 0;
+    if (top == BAYESIAN_HISTORY-1) QUEUE_IS_FULL = 1;
     OLD_OBJS_TOP = top+1;
 }
 
@@ -145,7 +138,7 @@ std::vector<OBJ> get_predicted_boxes() {
     error_list.clear();
     int recent = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
     std::vector<OBJ> plist;
-    for (int iCount=0; iCount<MAX_BAYESIAN_OBJECTS; iCount++) {
+    for (int iCount = 0; iCount < MAX_BAYESIAN_OBJECTS; ++iCount) {
         if (OLD_BAYES_OBJS[iCount].used[recent] == 1) {
             OBJ temp;
             temp.name = "P";//format("P_%02d", iCount).c_str();
@@ -161,19 +154,14 @@ std::vector<OBJ> get_predicted_boxes() {
     }
     auto n = error_list.size(); 
     float average = 0.0f;
-    if ( n != 0) {
-        average = std::accumulate( error_list.begin(), error_list.end(), 0.0) / n; 
-    }
-    if (average>MAX_ERR)
-        MAX_ERR = average;
+    if ( n != 0) average = std::accumulate( error_list.begin(), error_list.end(), 0.0) / n; 
+    if (average>MAX_ERR) MAX_ERR = average;
     
     mean_errors.push_back(abs(average));
 
     n = mean_errors.size(); 
     average = 0.0f;
-    if ( n != 0) {
-        average = std::accumulate( mean_errors.begin(), mean_errors.end(), 0.0) / n; 
-    }
+    if ( n != 0) average = std::accumulate(mean_errors.begin(), mean_errors.end(), 0.0) / n; 
     printf(" (bay_err=%f) (max_err=%f) ", average, MAX_ERR);
     
     // TODO : calculate mean error
