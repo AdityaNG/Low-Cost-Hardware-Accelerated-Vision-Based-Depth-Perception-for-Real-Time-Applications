@@ -209,7 +209,9 @@ def main():
     
     so_file_path = DEFAULT_STEREO_VISION_SO_PATH
     if args.parallel:
-        so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_parallel.so')
+        #so_file_path = os.path.join("/".join(__file__.split("/")[:-1]) , 'bin/stereo_vision_parallel.so')
+        so_file_path = so_files[-1] # Has to be changed
+        print(so_file_path)
 
     CAMERA_CALIBRATION_YAML = os.path.join(os.getcwd(), args.camera_calibration)
     
@@ -286,8 +288,7 @@ def main():
             (camR.open(args.camera_to_use +2))):
             print(
             "Cannot open pair of system cameras connected \
-                starting at camera #:",
-                args.camera_to_use)
+                starting at camera #:", args.camera_to_use)
             exit()
         camL.grab()
         camR.grab()

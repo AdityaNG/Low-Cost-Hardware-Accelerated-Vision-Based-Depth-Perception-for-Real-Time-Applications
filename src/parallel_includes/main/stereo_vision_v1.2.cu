@@ -5,7 +5,6 @@
 #include <time.h>
 #include <math.h>
 #include <popt.h>
-#include <opencv4/opencv2/core/hal/interface.h>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
@@ -32,7 +31,7 @@ using namespace std;
 #define end_timer(start, var)\
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();\
   time_taken *= 1e-9;\
-  var = time_taken;      
+  var = time_taken;     
 
 #define checkCudaError e = cudaGetLastError();\
   if (e!=cudaSuccess) {\
@@ -91,7 +90,8 @@ void cudaInit(){
 	cudaMalloc((void **)&d_dmap, sizeof(uchar) * point_cloud_width * point_cloud_height);
 	cudaMalloc((void **)&d_points, sizeof(double3) * point_cloud_width * point_cloud_height);
 	points = (double3*)malloc(sizeof(double3) * point_cloud_width * point_cloud_height);
-	if (debug == 1) { 
+	
+	if (debug == 1) {
 		XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
 		XT = Mat_<double>(3,1) << 0.0, 0.0, 0.28;
 		cout << "Rotation matrix: " << XR << endl;
@@ -228,19 +228,19 @@ __global__ void projectParallel(const uchar *dmap, double3 *points, int rows, in
  *  returns: void
  *
  */
- void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) { 
+void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) {
 	start_timer(pc_start); 
 	Mat img_left, dmap;
 	resize(img_left_old, img_left, Size(point_cloud_width, point_cloud_height));
 	resize(dmap_old, dmap, Size(point_cloud_width, point_cloud_height));
-  
+
 	cudaMemcpy(d_dmap, dmap.data, sizeof(uchar) * point_cloud_width * point_cloud_height, cudaMemcpyHostToDevice);  // Causes invalid argument error sometimes (only while using as a shared library)
 	//checkCudaError; // Uncomment to enable error checking
 	cudaDeviceSynchronize();
 	//checkCudaError; // Uncomment to enable error checking
 
 	static const dim3 blockSize(32, 32, 1);
-	static const dim3 gridSize((out_width / blockSize.x) + 1, (out_height / blockSize.y) + 1, 1);
+	static const dim3 gridSize((point_cloud_width / blockSize.x) + 1, (point_cloud_height / blockSize.y) + 1, 1);
 	projectParallel <<<gridSize, blockSize, 0>>> (d_dmap, d_points, point_cloud_height, point_cloud_width, d_XT, d_XR, d_Q);
 	//checkCudaError; // Uncomment to enable error checking
   
@@ -502,7 +502,6 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 		printf("\n** Display enabled\n");
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
 		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
-		namedWindow("Sky Removed", cv::WINDOW_NORMAL);// Needed to allow resizing of the image shown
 	}
 	else printf("\n** Display disabled\n");
 	findRectificationMap(calib_file, out_img_size); 
@@ -526,7 +525,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
                               bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
-			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES=""){ 
+			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false){ 
     static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
 		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
 
@@ -539,8 +538,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
 
-	Mat sky_mask;// = cv::Mat::ones(YOLOL_Color.size(), CV_8UC1);
-    
     if(objectTracking){
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
     	imgCallback_video();
@@ -551,13 +548,14 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
-		sky_mask = remove_sky(YOLOL_Color);
-    	imgCallback_video();
+		imgCallback_video();
+		if(removeSky) {
+			Mat sky_mask = remove_sky(YOLOL_Color);
+			dmapOLD.copyTo(dmapOLD, sky_mask);
+		}
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
-	Mat sky_removed = cv::Mat::zeros(dmapOLD.size(), CV_8UC1);
-	dmapOLD.copyTo(sky_removed, sky_mask);
-	publishPointCloud(left_img_OLD, sky_removed);
+	publishPointCloud(left_img_OLD, dmapOLD);
 
     end_timer(t_start, t_t);
     
@@ -566,8 +564,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     if(display){	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
-		imshow("Sky Removed", sky_removed);
-		
     	waitKey(1);
     }
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
@@ -638,7 +634,8 @@ int main(int argc, const char** argv) {
 	  { "debug", 'd', POPT_ARG_INT, &debug, 0, "Set d=1 for cam to robot frame calibration", "NUM" },
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
 	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
-	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		
+	  { "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -651,7 +648,8 @@ int main(int argc, const char** argv) {
 	int c; 
 	while((c = poptGetNextOpt(poptCONT)) >= 0);
 	if (c < -1) { // An error occurred during option processing 
-	    fprintf(stderr, "stereo_vision: %s -- \'%s\'\n", poptStrerror(c), poptBadOption(poptCONT, POPT_BADOPTION_NOALIAS));
+	    fprintf(stderr, "stereo_vision: %s -- \'%s\'\n",
+                poptStrerror(c), poptBadOption(poptCONT, POPT_BADOPTION_NOALIAS));
 	    poptPrintUsage(poptCONT, stderr, 0);
 	    return 1;
 	}	

@@ -21,7 +21,7 @@ $(shell mkdir -p ${DIRECTORIES})
 ifneq (,$(findstring clean, $(MAKECMDGOALS))) # Prevent searching for compilers if the make target clean
 else
 	ifeq ($(serial), 1)
-		CHECK := $(shell g+ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
+		CHECK := $(shell g++ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
 		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
 		SRCS_SERIAL := $(wildcard $(SRC_SERIAL)/*/*.cpp)
 
