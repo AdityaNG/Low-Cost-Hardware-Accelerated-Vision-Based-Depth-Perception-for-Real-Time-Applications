@@ -99,16 +99,16 @@ debug: ${OBJS}
 	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1"
 
 ${OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 ${OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 ${SHARED_OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 ${SHARED_OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} -c $^ -o $@ ${LIBS}
 
 clean:
 	rm -rf ${BUILD}

@@ -25,7 +25,7 @@
 using namespace cv;
 using namespace std;
 
-#define SHOW_VIDEO      // To show the yolo and disparity output as well
+//#define SHOW_VIDEO      // To show the yolo and disparity output as well
 
 #define start_timer(start) auto start = chrono::high_resolution_clock::now();  
 
@@ -53,7 +53,8 @@ Size calib_img_size;
 
 int scale_factor = 1; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
-int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
+//int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
+int input_image_width = 1226, input_image_height = 370; // Default image size in the Kitti dataset
 int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
 
 const char* kitti_path;
@@ -327,8 +328,13 @@ void imgCallback_video() {
 	Mat left_img = left_img_OLD; Mat right_img = right_img_OLD, img_left, img_right;
 	if (left_img.empty() || right_img.empty()) return;
 
-	cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
-	cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
+	//cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
+	//cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
+
+	//left_img = img_left;
+	//right_img = img_right
+	img_left = left_img;
+	img_right = right_img;
 
 	//remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
   
@@ -592,24 +598,40 @@ unsigned fileCounter(string path){
 void imageLoop(){
 	unsigned iImage = 0;
 	char left_img_topic[128], right_img_topic[128];    
-	size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
-	printf("Max files = %lu\n", max_files);
+	char disp_img_topic[128];    
+	//size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
+	//printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
 
-	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){            
+	//for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){
+
+	for(unsigned iFrame = 0; (iFrame <= 193) && !graphicsThreadExit; iFrame++ ){
+	for (unsigned jFrame = 10; jFrame <=11; jFrame++) {
 		start_timer(t_start);        
-		strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
-		strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		//strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		//strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		
+		//strcpy(left_img_topic , format("%s/data_scene_flow/training/image_2/%06u_%02u.png", kitti_path, iFrame, jFrame).c_str());    
+		//strcpy(right_img_topic , format("%s/data_scene_flow/training/image_3/%06u_%02u.png", kitti_path, iFrame, jFrame).c_str());    
+		
+		strcpy(left_img_topic , format("%s/kitti2012/training/image_0/%06u_%02u.png", kitti_path, iFrame, jFrame).c_str());    
+		strcpy(right_img_topic , format("%s/kitti2012/training/image_1/%06u_%02u.png", kitti_path, iFrame, jFrame).c_str());    
+		strcpy(disp_img_topic , format("%s/data_stereo_flow_out/data/%06u_%02u.png", kitti_path, iFrame, jFrame).c_str());    
+
+		printf("%s\n", left_img_topic);
+		printf("%s\n", disp_img_topic);
 
 		left_img = imread(left_img_topic, IMREAD_UNCHANGED);
 		right_img = imread(right_img_topic, IMREAD_UNCHANGED);
 
-		resize(left_img, left_img_OLD, out_img_size);
+		//resize(left_img, left_img_OLD, out_img_size);
+		left_img_OLD = left_img;
 
 		YOLOL_Color = left_img_OLD.clone();	
 		if(objectTracking){
 			auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
-			resize(right_img, right_img_OLD, out_img_size);   
+			//resize(right_img, right_img_OLD, out_img_size);   
+			right_img_OLD = right_img;
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
 			color = (uchar4*)rgba.ptr<unsigned char>(0);
@@ -619,13 +641,22 @@ void imageLoop(){
 			obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
 		}	
 		else{
-			resize(right_img, right_img_OLD, out_img_size);   
+			//resize(right_img, right_img_OLD, out_img_size);   
+			right_img_OLD = right_img;
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
 			color = (uchar4*)rgba.ptr<unsigned char>(0);
 		}	
-		publishPointCloud(left_img, dmapOLD);    
-		end_timer(t_start, t_t);	
+		//publishPointCloud(left_img, dmapOLD);    
+		end_timer(t_start, t_t);
+
+		vector<int> compression_params;
+		compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION); //The compression level of PNG format pictures  
+         	compression_params.push_back(0);
+
+		Mat image_grayscale = dmapOLD.clone();
+		//image_grayscale.convertTo(image_grayscale, CV_16U, 256.0);
+		imwrite(disp_img_topic, image_grayscale, compression_params);
 		#ifdef SHOW_VIDEO
 			//flip(left_img, img_left_color_flip,1);
 			imshow("Detections", YOLOL_Color);
@@ -633,6 +664,7 @@ void imageLoop(){
 			waitKey(video_mode);
 		#endif        
 		printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
+	}
 	}
 }
 
@@ -646,7 +678,8 @@ int main(int argc, const char** argv) {
 	  { "debug", 'd', POPT_ARG_INT, &debug, 0, "Set d=1 for cam to robot frame calibration", "NUM" },
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
 	  { "input_image_width", 'w', POPT_ARG_INT, &frame_skip, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
-	  { "input_image_height", 'h', POPT_ARG_INT, &frame_skip, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		{ "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "input_image_height", 'h', POPT_ARG_INT, &frame_skip, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },
+	  { "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -670,7 +703,7 @@ int main(int argc, const char** argv) {
 	} 
 	else printf("** Object tracking disabled\n"); 	
 	printf("KITTI Path: %s \n", kitti_path);
-
+	printf("scale_factor %d \n", scale_factor);
 	calib_width = input_image_width;
 	calib_height = input_image_height;
 	out_width = input_image_width/scale_factor;
