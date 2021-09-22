@@ -38,6 +38,16 @@ python3 -m stereo_vision --demo
 - OpenGL
 - Python 3 interpreter with all the packages in `requirements.txt` installed
 
+# Stereo Calibration
+
+A calibrated pair of cameras is required for stereo rectification and calibration files should be stored in a `.yml` file. 
+[github.com/sourishg/stereo-calibration](https://github.com/sourishg/stereo-calibration) contains all the tools and instructions to calibrate stereo cameras.
+
+The above should produce the camera intrinsic matrices `K1` and `K2` along with the distortion matrices `D1` and `D2`.
+The extrinsic parameters of the stereo pair is calculated during runtime.
+
+The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
+matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
 
 # Compiling and running
 
@@ -60,29 +70,6 @@ Compile using the make utility:
 $ make stereo_vision -j$(($(nproc) * 2)) -s        # binary
 $ make shared_library -j$(($(nproc) * 2)) -s       # shared object file
 ```
-
-# Stereo Calibration
-
-A calibrated pair of cameras is required for stereo rectification and calibration files should be stored in a `.yml` file. 
-[github.com/sourishg/stereo-calibration](https://github.com/sourishg/stereo-calibration) contains all the tools and instructions to calibrate stereo cameras.
-
-The above should produce the camera intrinsic matrices `K1` and `K2` along with the distortion matrices `D1` and `D2`.
-The extrinsic parameters of the stereo pair is calculated during runtime.
-
-The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
-matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
-
-# Throughput Testing
-
-```bash
-./test.sh                       # will run tests and save to results.csv
-python3 plot.py < results.csv   # Plot the results
-```
-
-<p align="center">
-    <img src="imgs/result_20_jul_2022.png">
-</p>
-
 # TODO 
 
 Things that we are currently working on
