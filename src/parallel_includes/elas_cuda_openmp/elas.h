@@ -47,7 +47,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #endif
 
 #ifdef PROFILE
-#include "../../common_includes/timer/timer.h"
+#include "../../common_includes/elas/timer.h"
 #endif
 
 class Elas {

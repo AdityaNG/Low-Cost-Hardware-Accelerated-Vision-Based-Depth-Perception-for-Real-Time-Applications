@@ -23,9 +23,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <algorithm>
 #include <math.h>
 #include <omp.h>
-#include "descriptor.h"
-#include "triangle.h"
-#include "matrix.h"
+#include "../../common_includes/elas/descriptor.h"
+#include "../../common_includes/elas/triangle.h"
+#include "../../common_includes/elas/matrix.h"
 
 using namespace std;
 
@@ -95,30 +95,22 @@ vector<triangle> tri_1, tri_2;
 				tri_1 = computeDelaunayTriangulation(p_support,0);
 				computeDisparityPlanes(p_support,tri_1,0);
 				createGrid(p_support,disparity_grid_1,grid_dims,0);
-				//computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
 			}
 #pragma omp section
 			{
 				tri_2 = computeDelaunayTriangulation(p_support,1);
 				computeDisparityPlanes(p_support,tri_2,1);
 				createGrid(p_support,disparity_grid_2,grid_dims,1);
-				//computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
 			}
-
 		}
 	}
 
 #ifdef PROFILE
 	timer.start("Matching");
 #endif
+  computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
+  computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
 
-#pragma omp sections
-	{
-	#pragma omp section
-		computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
-	#pragma omp section
-		computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
-	}
 
 #ifdef PROFILE
 	timer.start("L/R Consistency Check");

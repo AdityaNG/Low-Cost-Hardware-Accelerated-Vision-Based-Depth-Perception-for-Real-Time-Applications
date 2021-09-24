@@ -12,9 +12,9 @@
 #include <functional>  
 
 #include "elas.h"
-#include "matrix.h"
-#include "triangle.h"
-#include "descriptor.h"
+#include "../../common_includes/elas/matrix.h"
+#include "../../common_includes/elas/triangle.h"
+#include "../../common_includes/elas/descriptor.h"
 
 
 /**

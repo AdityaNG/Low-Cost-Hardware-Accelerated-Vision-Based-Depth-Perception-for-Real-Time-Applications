@@ -16,16 +16,15 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110-1301, USA 
+Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
 #include "elas.h"
-
 #include <algorithm>
 #include <math.h>
-#include "descriptor.h"
-#include "triangle.h"
-#include "matrix.h"
+#include "../../common_includes/elas/descriptor.h"
+#include "../../common_includes/elas/triangle.h"
+#include "../../common_includes/elas/matrix.h"
 
 using namespace std;
 
