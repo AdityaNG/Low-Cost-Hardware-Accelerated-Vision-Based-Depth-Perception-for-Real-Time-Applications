@@ -1,7 +1,7 @@
 # Depth Perception from Stereoscopic Vision on Edge Devices
 
 <p align="center">
-    <img src="imgs/fsds.gif">
+    <img src="outputs/fsds.gif">
 </p>
 
 A library to simplify disparity calculation and 3D depth map generation from a stereo pair
@@ -12,7 +12,7 @@ A library to simplify disparity calculation and 3D depth map generation from a s
 Depth estimation and 3D object detection are important for autonomous systems to be able to estimate their own state and gain greater context of their external environment. The project is an implementation of the software side of a perception stack.
 
 <p align="center">
-    <img src="imgs/single_loop.gif">
+    <img src="outputs/single_loop.gif">
 </p>
 
 # Quick Start
