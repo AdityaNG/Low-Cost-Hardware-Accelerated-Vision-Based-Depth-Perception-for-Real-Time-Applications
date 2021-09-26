@@ -17,9 +17,9 @@
 #include <iostream>
 #include <filesystem>
 
-#include "../elas_cuda_openmp/elas.h"
-#include "../elas_cuda_openmp/elas_gpu.h"
-#include "../graphing_parallel/graphing.h"
+#include "../elas/elas.h"
+#include "../elas/elas_gpu.h"
+#include "../graphing/graphing.h"
 #include "../../common_includes/yolo/yolo.hpp"
 #include "../../common_includes/image.h"
 #include "../../common_includes/bayesian/bayesian.h"
@@ -27,7 +27,7 @@
 using namespace cv;
 using namespace std;
 
-// #define SHOW_VIDEO      // To show the yolo and disparity output as well
+// #define SHOW_VIDEO      // To show the yolo and disparity output
 
 #define start_timer(start) auto start = chrono::high_resolution_clock::now();  
 
@@ -626,14 +626,12 @@ void imageLoop(){
 		}	
 		publishPointCloud(left_img, dmapOLD);    
 		end_timer(t_start, t_t);	
-		if (draw_points) {
-			#ifdef SHOW_VIDEO
-				//flip(left_img, img_left_color_flip,1);
-				imshow("Detections", YOLOL_Color);
-				imshow("Disparity", dmapOLD);
-				waitKey(video_mode);
-			#endif        
-		}
+		#ifdef SHOW_VIDEO
+			//flip(left_img, img_left_color_flip,1);
+			imshow("Detections", YOLOL_Color);
+			imshow("Disparity", dmapOLD);
+			waitKey(video_mode);
+		#endif        
 		printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
 		FPS += 1/t_t;
 	}
@@ -641,17 +639,17 @@ void imageLoop(){
 	printf("AVG_FPS=%f\n", FPS);
 }
 
-// compute disparities of pgm image input pair file_1, file_2
+// Compute disparities of pgm image input pair file_1, file_2
 void runProfiling (const char* file_1,const char* file_2) {
 
   cout << "Processing: " << file_1 << ", " << file_2 << endl;
 
-  // load images
+  // Load images
   image<uchar> *I1,*I2;
   I1 = loadPGM(file_1);
   I2 = loadPGM(file_2);
 
-  // check for correct size
+  // Check for correct size
   if (I1->width()<=0 || I1->height() <=0 || I2->width()<=0 || I2->height() <=0 ||
       I1->width()!=I2->width() || I1->height()!=I2->height()) {
     cout << "ERROR: Images must be of same size, but" << endl;
@@ -662,29 +660,29 @@ void runProfiling (const char* file_1,const char* file_2) {
     return;    
   }
 
-  // get image width and height
+  // Get image width and height
   int32_t width  = I1->width();
   int32_t height = I1->height();
 
-  // allocate memory for disparity images
+  // Allocate memory for disparity images
   const int32_t dims[3] = {width,height,width}; // bytes per line = width
   float* D1_data = (float*)malloc(width*height*sizeof(float));
   float* D2_data = (float*)malloc(width*height*sizeof(float));
 
-  // process
-  Elas::parameters param;
+  // Process
+  ElasGPU::parameters param;
   param.postprocess_only_left = false;
-  Elas elas(param);
+  ElasGPU elas(param);
   elas.process(I1->data,I2->data,D1_data,D2_data,dims);
 
-  // find maximum disparity for scaling output disparity images to [0..255]
+  // Find maximum disparity for scaling output disparity images to [0..255]
   float disp_max = 0;
   for (int32_t i=0; i<width*height; i++) {
     if (D1_data[i]>disp_max) disp_max = D1_data[i];
     if (D2_data[i]>disp_max) disp_max = D2_data[i];
   }
 
-  // copy float to uchar
+  // Copy float to uchar
   image<uchar> *D1 = new image<uchar>(width,height);
   image<uchar> *D2 = new image<uchar>(width,height);
   for (int32_t i=0; i<width*height; i++) {
@@ -692,19 +690,21 @@ void runProfiling (const char* file_1,const char* file_2) {
     D2->data[i] = (uint8_t)max(255.0*D2_data[i]/disp_max,0.0);
   }
 
-  // save disparity images
-  char output_1[1024];
-  char output_2[1024];
-  strncpy(output_1,file_1,strlen(file_1)-4);
-  strncpy(output_2,file_2,strlen(file_2)-4);
-  output_1[strlen(file_1)-4] = '\0';
-  output_2[strlen(file_2)-4] = '\0';
+  // Save disparity images
+  size_t file_1_name_len = strlen(file_1) - 4;
+  size_t file_2_name_len = strlen(file_2) - 4;
+  char *output_1 = (char*) malloc((file_1_name_len + 10) * sizeof(char));
+  char *output_2 = (char*) malloc((file_2_name_len + 10) * sizeof(char));
+  strncpy(output_1,file_1,file_1_name_len);
+  strncpy(output_2,file_2,file_2_name_len);
+  output_1[file_1_name_len] = '\0';
+  output_2[file_2_name_len] = '\0';
   strcat(output_1,"_disp.pgm");
   strcat(output_2,"_disp.pgm");
   savePGM(D1,output_1);
   savePGM(D2,output_2);
 
-  // free memory
+  // Free memory
   delete I1;
   delete I2;
   delete D1;

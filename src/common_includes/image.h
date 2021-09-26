@@ -28,7 +28,6 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <climits>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 
 // use imRef to access image data.
 #define imRef(im, x, y) (im->access[y][x])

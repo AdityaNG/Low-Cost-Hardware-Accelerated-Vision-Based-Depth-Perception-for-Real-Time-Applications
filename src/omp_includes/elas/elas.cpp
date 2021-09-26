@@ -23,9 +23,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include <math.h>
 #include <omp.h>
-#include "descriptor.h"
-#include "triangle.h"
-#include "matrix.h"
+#include "../../common_includes/elas/descriptor.h"
+#include "../../common_includes/elas/triangle.h"
+#include "../../common_includes/elas/matrix.h"
 
 using namespace std;
 
