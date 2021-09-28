@@ -31,7 +31,7 @@ using namespace std;
 
 bool subsampling = false;
 
-void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t* dims){
+void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t* dims) {
 
 	// get width, height and bytes per line
 	width  = dims[0];
@@ -754,7 +754,7 @@ inline void Elas::updatePosteriorMinimum(__m128i* I2_block_addr,const int32_t &d
 
 inline void Elas::findMatch(int32_t &u,int32_t &v,float &plane_a,float &plane_b,float &plane_c,
                             int32_t* disparity_grid,int32_t *grid_dims,uint8_t* I1_desc,uint8_t* I2_desc,
-                            int32_t *P,int32_t &plane_radius,bool &valid,bool &right_image,float* D){
+                            int32_t *P,int32_t &plane_radius,bool &valid,bool &right_image,float* D) {
   
   // get image width and height
   const int32_t disp_num    = grid_dims[0]-1;
@@ -950,7 +950,7 @@ void Elas::computeDisparity(vector<support_pt> p_support,vector<triangle> tri,in
     // first part (triangle corner A->B)
     if ((int32_t)(A_u)!=(int32_t)(B_u)) {
       // Starting at A_u loop till the B_u or the end of the image
-      for (int32_t u=max((int32_t)A_u,0); u<min((int32_t)B_u,width); u++){
+      for (int32_t u=max((int32_t)A_u,0); u<min((int32_t)B_u,width); u++) {
         // If we are sub-sampling skip every two
         if (!param.subsampling || u%2==0) {
           // Use linear lines, to get the bounds of where we need to check
@@ -969,7 +969,7 @@ void Elas::computeDisparity(vector<support_pt> p_support,vector<triangle> tri,in
 
     // second part (triangle corner B->C)
     if ((int32_t)(B_u)!=(int32_t)(C_u)) {
-      for (int32_t u=max((int32_t)B_u,0); u<min((int32_t)C_u,width); u++){
+      for (int32_t u=max((int32_t)B_u,0); u<min((int32_t)C_u,width); u++) {
         if (!param.subsampling || u%2==0) {
           int32_t v_1 = (uint32_t)(AC_a*(float)u+AC_b);
           int32_t v_2 = (uint32_t)(BC_a*(float)u+BC_b);

@@ -97,7 +97,7 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
           continue;
         u_warp = 16*u_warp;
         val = 0;
-        for(int j=0; j<16; j++){
+        for(int j=0; j<16; j++) {
             //val += abs((int32_t)(*(I1_block_addr+j))-(int32_t)(*(I2_line_addr+j+16*u_warp)));
             val = __sad((int)(*(I1_block_addr+j)),(int)(*(I2_line_addr+j+u_warp)),val);
         }
@@ -115,7 +115,7 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
         continue;
       u_warp = 16*u_warp;
       val = 0;
-      for(int j=0; j<16; j++){
+      for(int j=0; j<16; j++) {
           //val += abs((int32_t)(*(I1_block_addr+j))-(int32_t)(*(I2_line_addr+j+16*u_warp)));
           val = __sad((int)(*(I1_block_addr+j)),(int)(*(I2_line_addr+j+u_warp)),val);
       }
@@ -151,32 +151,32 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   //we need 4 extra on left and top and 3 extra on right and bottom
   __shared__ float D_shared[32+7][32+7];
   //Populate shared memory
-  if(threadIdx.x == blockDim.x-1){
+  if(threadIdx.x == blockDim.x-1) {
       D_shared[ut+1][vt] = D[idx+1];
       D_shared[ut+2][vt] = D[idx+2];
       D_shared[ut+3][vt] = D[idx+3];
       //D_shared[ut+4][vt] = D[idx+4];
   }
-  if(threadIdx.x == 0){
+  if(threadIdx.x == 0) {
       D_shared[ut-4][vt] = D[idx-4];
       D_shared[ut-3][vt] = D[idx-3];
       D_shared[ut-2][vt] = D[idx-2];
       D_shared[ut-1][vt] = D[idx-1];
   }
-  if(threadIdx.y == 0){
+  if(threadIdx.y == 0) {
       D_shared[ut][vt-4] = D[(v0-4)*D_width+u0];
       D_shared[ut][vt-3] = D[(v0-3)*D_width+u0];
       D_shared[ut][vt-2] = D[(v0-2)*D_width+u0];
       D_shared[ut][vt-1] = D[(v0-1)*D_width+u0];
   }
-  if(threadIdx.y == blockDim.y-1){
+  if(threadIdx.y == blockDim.y-1) {
       D_shared[ut][vt+1] = D[(v0+1)*D_width+u0];
       D_shared[ut][vt+2] = D[(v0+2)*D_width+u0];
       D_shared[ut][vt+3] = D[(v0+3)*D_width+u0];
       //D_shared[ut][vt+4] = D[(v0+4)*D_width+u0];
   }
 
-  if(D[idx] < 0){
+  if(D[idx] < 0) {
       // zero input disparity maps to -10 (this makes the bilateral
       // weights of all valid disparities to 0 in this region)
       D_shared[ut][vt] = -10;
@@ -200,7 +200,7 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   float weight_sum = 0;
   float factor_sum = 0;
 
-  for(int32_t i=0; i < 8; i++){
+  for(int32_t i=0; i < 8; i++) {
     weight_sum0 = 4.0f - fabs(D_shared[ut+(i-4)][vt]-val_curr);
     weight_sum0 = max(0.0f, weight_sum0);
     weight_sum += weight_sum0;
@@ -214,32 +214,32 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   
   __syncthreads();
   //Update shared memory
-  if(threadIdx.x == blockDim.x-1){
+  if(threadIdx.x == blockDim.x-1) {
       D_shared[ut+1][vt] = D[idx+1];
       D_shared[ut+2][vt] = D[idx+2];
       D_shared[ut+3][vt] = D[idx+3];
       //D_shared[ut+4][vt] = D[idx+4];
   }
-  if(threadIdx.x == 0){
+  if(threadIdx.x == 0) {
       D_shared[ut-4][vt] = D[idx-4];
       D_shared[ut-3][vt] = D[idx-3];
       D_shared[ut-2][vt] = D[idx-2];
       D_shared[ut-1][vt] = D[idx-1];
   }
-  if(threadIdx.y == 0){
+  if(threadIdx.y == 0) {
       D_shared[ut][vt-4] = D[(v0-4)*D_width+u0];
       D_shared[ut][vt-3] = D[(v0-3)*D_width+u0];
       D_shared[ut][vt-2] = D[(v0-2)*D_width+u0];
       D_shared[ut][vt-1] = D[(v0-1)*D_width+u0];
   }
-  if(threadIdx.y == blockDim.y-1){
+  if(threadIdx.y == blockDim.y-1) {
       D_shared[ut][vt+1] = D[(v0+1)*D_width+u0];
       D_shared[ut][vt+2] = D[(v0+2)*D_width+u0];
       D_shared[ut][vt+3] = D[(v0+3)*D_width+u0];
       //D_shared[ut][vt+4] = D[(v0+4)*D_width+u0];
   }
 
-  if(D[idx] < 0){
+  if(D[idx] < 0) {
       D_shared[ut][vt] = -10;
   }else{
       D_shared[ut][vt] = D[idx];
@@ -255,7 +255,7 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   weight_sum = 0;
   factor_sum = 0;
 
-  for(int32_t i=0; i < 8; i++){
+  for(int32_t i=0; i < 8; i++) {
     weight_sum0 = 4.0f - fabs(D_shared[ut][vt+(i-4)]-val_curr);
     weight_sum0 = max(0.0f, weight_sum0);
     weight_sum += weight_sum0;
@@ -269,7 +269,7 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
 
 }
 
-void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims){
+void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims) {
   // Cuda Init
   //static int flag = 0;
   //if(flag==1) return;
@@ -289,7 +289,7 @@ void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int
   cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
 }
 
-void ElasGPU::cudaDest(){
+void ElasGPU::cudaDest() {
   // Free big memory
   cudaFree(d_u_vals);
   cudaFree(d_v_vals);
@@ -430,7 +430,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
     // first part (triangle corner A->B)
     if ((int32_t)(A_u)!=(int32_t)(B_u)) {
       // Starting at A_u loop till the B_u or the end of the image
-      for (int32_t u=max((int32_t)A_u,0); u<min((int32_t)B_u,width); u++){
+      for (int32_t u=max((int32_t)A_u,0); u<min((int32_t)B_u,width); u++) {
         // If we are sub-sampling skip every two
         if (!param.subsampling || u%2==0) {
           // Use linear lines, to get the bounds of where we need to check
@@ -449,7 +449,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
 
     // second part (triangle corner B->C)
     if ((int32_t)(B_u)!=(int32_t)(C_u)) {
-      for (int32_t u=max((int32_t)B_u,0); u<min((int32_t)C_u,width); u++){
+      for (int32_t u=max((int32_t)B_u,0); u<min((int32_t)C_u,width); u++) {
         if (!param.subsampling || u%2==0) {
           int32_t v_1 = (uint32_t)(AC_a*(float)u+AC_b);
           int32_t v_2 = (uint32_t)(BC_a*(float)u+BC_b);
@@ -748,7 +748,7 @@ void ElasGPU::adaptiveMean (float* D) {
         float weight_sum2 = 0;
         float factor_sum2 = 0;
 
-        for(int32_t i=0; i < 8; i++){
+        for(int32_t i=0; i < 8; i++) {
             weight_sum0 = 4.0f - std::fabs(val[i]-val_curr);
             weight_sum0 = std::fmax(0.0f, weight_sum0);
             weight_sum2 += weight_sum0;
@@ -780,7 +780,7 @@ void ElasGPU::adaptiveMean (float* D) {
         float weight_sum2 = 0.0f;
         float factor_sum2 = 0.0f;
 
-        for(int32_t i=0; i < 8; i++){
+        for(int32_t i=0; i < 8; i++) {
             weight_sum0 = 4.0f - std::fabs(val[i]-val_curr);
             weight_sum0 = std::fmax(0.0f, weight_sum0);
             weight_sum2 += weight_sum0;

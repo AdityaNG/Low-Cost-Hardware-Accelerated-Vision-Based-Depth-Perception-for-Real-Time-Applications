@@ -18,9 +18,9 @@ const auto NUM_COLORS = sizeof(colors)/sizeof(colors[0]);
 std::vector<std::string> class_names;
 
 
-void print(std::vector<OBJ> &objects){
+void print(std::vector<OBJ> &objects) {
     std::cout << "\n{\n";
-    for (auto& object : objects){
+    for (auto& object : objects) {
         std::cout << '[' << object.name << '(' << object.x << ',' << object.y << ',' << object.w << ',' << object.h << ',' << object.c << ")]\n";
     }
     std::cout << "\n}\n";
@@ -43,18 +43,18 @@ std::vector<OBJ> processYOLO(Mat frame) {
     std::vector<cv::Rect> boxes[NUM_CLASSES];
     std::vector<float> scores[NUM_CLASSES];
 
-    for (auto& output : detections){
+    for (auto& output : detections) {
         const auto num_boxes = output.rows;
-        for (int i = 0; i < num_boxes; i++){
+        for (int i = 0; i < num_boxes; i++) {
             auto x = output.at<float>(i, 0) * frame.cols;
             auto y = output.at<float>(i, 1) * frame.rows;
             auto width = output.at<float>(i, 2) * frame.cols;
             auto height = output.at<float>(i, 3) * frame.rows;
             cv::Rect rect(x - width/2, y - height/2, width, height);
 
-            for (int c = 0; c < NUM_CLASSES; c++){
+            for (int c = 0; c < NUM_CLASSES; c++) {
                 auto confidence = *output.ptr<float>(i, 5 + c);
-                if (confidence >= CONFIDENCE_THRESHOLD){
+                if (confidence >= CONFIDENCE_THRESHOLD) {
                     boxes[c].push_back(rect);
                     scores[c].push_back(confidence);
                 }
@@ -64,8 +64,8 @@ std::vector<OBJ> processYOLO(Mat frame) {
 
     for (int c = 0; c < NUM_CLASSES; c++) cv::dnn::NMSBoxes(boxes[c], scores[c], 0.0, NMS_THRESHOLD, indices[c]);
         
-    for (int c= 0; c < NUM_CLASSES; c++){
-        for (size_t i = 0; i < indices[c].size(); ++i){
+    for (int c= 0; c < NUM_CLASSES; c++) {
+        for (size_t i = 0; i < indices[c].size(); ++i) {
             const auto color = colors[c % NUM_COLORS];
 
             auto idx = indices[c][i];
@@ -114,7 +114,7 @@ std::vector<OBJ> processYOLO(Mat frame) {
 
 void initYOLO(const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES) {
     std::ifstream class_file(YOLO_CLASSES);
-    if (!class_file){
+    if (!class_file) {
             std::cerr << "failed to open classes.txt\n";
             exit(-1);
     }

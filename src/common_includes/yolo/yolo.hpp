@@ -11,7 +11,7 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-#include "../common.h"
+#include "../structs.h"
 
 using namespace cv;
 

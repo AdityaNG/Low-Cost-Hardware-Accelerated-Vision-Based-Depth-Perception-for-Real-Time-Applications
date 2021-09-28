@@ -3,7 +3,8 @@
 
 #include <math.h>
 #include <cmath> 
-#include "../common.h"
+#undef SPECIAL_STRUCTS
+#include "../structs.h"
 #include <vector>
 
 #define MAX_BAYESIAN_OBJECTS 10

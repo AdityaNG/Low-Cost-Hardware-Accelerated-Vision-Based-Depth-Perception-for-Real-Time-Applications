@@ -17,14 +17,14 @@
 #include <iostream>
 #include <filesystem>
 
+#define SPECIAL_STRUCTS
 #include "../elas/elas.h"
-#include "../graphing/graphing.h"
+#include "../../common_includes/graphing.h"
 #include "../../common_includes/yolo/yolo.hpp"
 #include "../../common_includes/image.h"
 #include "../../common_includes/bayesian/bayesian.h"
 
-#define SERIAL
-#include "../../common_includes/common.h"
+#include "../../common_includes/structs.h"
 
 
 using namespace cv;
@@ -85,15 +85,16 @@ int frame_skip = 1;              // Skip by frame_skip frames
 int video_mode = 0;              // Loop among all the images in the given directory
 bool draw_points = true;         // Render the points in 3D
 bool graphicsThreadExit = false; // The graphics thread toggles this when it exits
+Grapher<Double3, Uchar4> *grapher;
 
 // Graphics
-extern int Oindex;
-uchar4 *color = NULL;
-double3 *points; // Holds the coordinates of each pixel in 3D space
+int Oindex = 0;
+Uchar4 *colors = NULL;
+Double3 *points; // Holds the coordinates of each pixel in 3D space
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Init(){	
-	points = (double3*)malloc(sizeof(double3) * point_cloud_width * point_cloud_height);
+void Init() {
+	// points = (Double3*)malloc(sizeof(Double3) * point_cloud_width * point_cloud_height);
 	
 	if (debug == 1) {
 		//XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
@@ -106,7 +107,7 @@ void Init(){
 }
 
 extern "C"{
-	void clean(){
+	void clean() {
 		destroyAllWindows(); // Destroying the openCV imshow windows
 		if(graphicsBeingUsed) pthread_join(graphicsThread, NULL);
 		free(points);
@@ -184,7 +185,7 @@ string YOLO_to_KITTI_labels(string y) {
     return "Tram";
   }
 
-  return "Misc";
+ return "Misc";
 }
 
 /*
@@ -258,7 +259,7 @@ void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) {
   		}
   	}
 
-	if(objectTracking){
+	if(objectTracking) {
 		for(auto& object : obj_list) {
 			int i_lb = constrain(object.x, 0, img_left.cols-1), 
 			    i_ub = constrain(object.x + object.w, 0, img_left.cols-1), 
@@ -273,7 +274,7 @@ void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) {
 					Z += points[j*out_width + i].z;  
 				}
 			} 
-			if(graphicsBeingUsed) appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
+			if(graphicsBeingUsed) grapher->appendOBJECTS(X/((i_ub-i_lb)*(j_ub-j_lb)), Y/((i_ub-i_lb)*(j_ub-j_lb)), Z/((i_ub-i_lb)*(j_ub-j_lb)), object.r, object.g, object.b); 
 		}
 	}
 	end_timer(pc_start, pc_t);
@@ -295,7 +296,7 @@ void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) {
 
 Mat generateDisparityMap(Mat& left, Mat& right) {
 	Oindex = 0;
-	if (left.empty() || right.empty()){
+	if (left.empty() || right.empty()) {
 		printf("Image empty\n");
 		return left;
 	} 
@@ -471,6 +472,10 @@ Mat remove_sky(Mat frame) {
 	return sky_mask;
 }
 
+void *startGraphicsThread(void *grapher) {
+	((Grapher<Double3, Uchar4>*)grapher)->startGraphics();
+}
+
 // This init function is called while using the program as a shared library
 int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, float scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML) { 
@@ -481,7 +486,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	out_width = width;
 	point_cloud_width = out_width * point_cloud_extrapolation;
 	point_cloud_height = out_height * point_cloud_extrapolation;
-	if(trackObjects){
+	if(trackObjects) {
 		objectTracking = true;
 		printf("\n** Object tracking enabled\n");
 		printf("Using YOLO_CFG : %s\n", YOLO_CFG);
@@ -505,7 +510,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
 	     << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
 
-	if(display){
+	if(display) {
 		printf("\n** Display enabled\n");
 		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
 		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
@@ -513,10 +518,17 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	else printf("\n** Display disabled\n");
 	findRectificationMap(calib_file, out_img_size); 
 	Init();
-	if(graphics){
+	if(graphics) {
 		printf("\n** 3D plotting enabled\n");
-		int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
-		if(ret){
+		// auto func = [](void *g) {
+		// 	grapher = (Grapher<Double3, Uchar4>*) g;
+		// 	grapher->startGraphics();
+		// };
+		// std::thread thread_object(func, (void*)new Grapher<Double3, Uchar4>(points, colors));
+		grapher = new Grapher<Double3, Uchar4>();
+		points = grapher->getPointsArray();
+		int ret = pthread_create(&graphicsThread, NULL, startGraphicsThread, grapher);
+		if(ret) {
 			fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
 			exit(-1);
 		}
@@ -528,11 +540,11 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	return 1;
 }
 
-// Returns the double3 points array
+// Returns the Double3 points array
 extern "C"{ // This function is exposed in the shared library along with the main function
-  double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
-                              bool objectTracking=false, bool graphics=false, bool display=false, float scale=1, int pc_extrapolation = 1,
-			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false, bool subsampling = false){ 
+  Double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
+                              bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
+			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false, bool subsampling = false) { 
     static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
 		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
 
@@ -546,10 +558,10 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
 
-    if(objectTracking){
+    if(objectTracking) {
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
     	imgCallback_video();
-    	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);	
+    	colors = (Uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
     	pred_list = get_predicted_boxes(); // Bayesian
     	append_old_objs(obj_list);
@@ -561,7 +573,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
 			Mat sky_mask = remove_sky(YOLOL_Color);
 			dmapOLD.copyTo(dmapOLD, sky_mask);
 		}
-    	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);
+    	colors = (Uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
 	publishPointCloud(left_img_OLD, dmapOLD);
 
@@ -569,7 +581,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     
     if(graphicsThreadExit) clean(); 
     
-    if(display){	
+    if(display) {	
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
     	waitKey(1);
@@ -578,27 +590,26 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     return points;
   }
 
-  uchar4* getColor() { return color; }
+  Uchar4* getColor() { return colors; }
 }
 
-unsigned fileCounter(string path){
+unsigned fileCounter(string path) {
 	auto dirIter = std::filesystem::directory_iterator(path);	
 	unsigned fileCount = std::count_if(begin(dirIter), end(dirIter), [](auto& entry) { return entry.is_regular_file();});
 	return fileCount;
 }
 
-void imageLoop(){
+void imageLoop() {
 	unsigned iImage = 0;
 	char left_img_topic[128], right_img_topic[128];    
 	//size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
-	float FPS = 0;
-	//size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
 	size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
+	float FPS = 0;
 	printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
 
-	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){            
-		//start_timer(t_start);        
+	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame) {            
+		//start_timer(t_start);
 		// strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
 		// strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
 		strcpy(left_img_topic , format("%s/image_02/data/%010u.png", kitti_path, iFrame).c_str());    
@@ -606,17 +617,17 @@ void imageLoop(){
 
 		left_img = imread(left_img_topic, IMREAD_UNCHANGED);
 		right_img = imread(right_img_topic, IMREAD_UNCHANGED);
-		start_timer(t_start);        
-
+		
+		start_timer(t_start);
 		resize(left_img, left_img_OLD, out_img_size);
 
 		YOLOL_Color = left_img_OLD.clone();	
-		if(objectTracking){
+		if(objectTracking) {
 			auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-			color = (uchar4*)rgba.ptr<unsigned char>(0);
+			colors = (Uchar4*)rgba.ptr<unsigned char>(0);
 			obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
 			pred_list = get_predicted_boxes(); // Bayesian
 			append_old_objs(obj_list);
@@ -626,10 +637,10 @@ void imageLoop(){
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-			color = (uchar4*)rgba.ptr<unsigned char>(0);
+			colors = (Uchar4*)rgba.ptr<unsigned char>(0);
 		}	
 		publishPointCloud(left_img, dmapOLD);    
-		end_timer(t_start, t_t);
+		end_timer(t_start, t_t);	
 		#ifdef SHOW_VIDEO
 			//flip(left_img, img_left_color_flip,1);
 			imshow("Detections", YOLOL_Color);
@@ -639,11 +650,8 @@ void imageLoop(){
 		printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
 		FPS += 1/t_t;
 	}
-
 	FPS = FPS/max_files;
 	printf("AVG_FPS=%f\n", FPS);
-
-	exit(0);
 }
 
 // Compute disparities of pgm image input pair file_1, file_2
@@ -761,8 +769,8 @@ int main(int argc, const char** argv) {
 		runProfiling("img/urban4_left.pgm",  "img/urban4_right.pgm");
 		cout << "... done!" << endl;
 	}
-	else {	
-		if(objectTracking){
+	else {
+		if(objectTracking) {
 			printf("** Object Tracking enabled\n");
 			initYOLO("./data/yolov4-tiny.cfg", "./data/yolov4-tiny.weights", "./data/classes.txt");
 		} 
@@ -794,8 +802,17 @@ int main(int argc, const char** argv) {
 		findRectificationMap(calib_file, out_img_size); 
 		Init();
 		if(draw_points) {
-			int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
-			if(ret){
+			// grapher = Grapher(points, colors);
+			// auto func = [](void *g) {
+			// 	grapher = (Grapher<Double3, Uchar4>*) g;
+			// 	grapher->startGraphics();
+			// };
+			// std::thread thread_object(func, (void*)new Grapher<Double3, Uchar4>(points, colors));
+			grapher = new Grapher<Double3, Uchar4>();
+			points = grapher->getPointsArray();
+			colors = grapher->getColorsArray();
+			int ret = pthread_create(&graphicsThread, NULL, startGraphicsThread, grapher);
+			if(ret) {
 				fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
 				exit(-1);
 			}
@@ -807,6 +824,7 @@ int main(int argc, const char** argv) {
 			moveWindow("Detections", 0, 0);
 			moveWindow("Disparity", 0, (int)(out_height*1.2));
 		#endif
+
 		imageLoop();
 		clean();
 	}
