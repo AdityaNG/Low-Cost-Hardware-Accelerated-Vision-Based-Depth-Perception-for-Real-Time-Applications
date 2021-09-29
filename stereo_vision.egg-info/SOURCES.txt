@@ -3,10 +3,10 @@ MANIFEST.in
 README.md
 setup.py
 data/Kitti_Color.yml
-data/classes.txt
+data/yolo/classes.txt
 data/kitti_2011_09_26.yml
-data/yolov4-tiny.cfg
-data/yolov4-tiny.weights
+data/yolo/yolov4-tiny.cfg
+data/yolo/yolov4-tiny.weights
 src/common_includes/bayesian/bayesian.cpp
 src/common_includes/yolo/detector.cpp
 src/serial_includes/elas/descriptor.cpp

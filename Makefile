@@ -11,7 +11,7 @@ SRC_OMP        := ${SRC}/omp_includes
 SRC_PARALLEL   := ${SRC}/parallel_includes
 
 LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
-FLAGS          := -O2 -std=c++17
+FLAGS          := -O2 -std=c++17 -w
 DEBUGFLAGS     := -g -std=c++17  
 
 SUBDIRECTORIES := $(sort $(dir $(wildcard $(SRC)/*/*/)))
@@ -89,6 +89,7 @@ $(error No C++ compilers found.)
 		FLAGS := ${FLAGS} -fopenmp
 		LIBS := ${LIBS} -lpthread
 		SHARED_FLAGS := ${FLAGS} -shared -fPIC
+		DEBUGFLAGS := ${DEBUGFLAGS} -fopenmp
 
 	else
 		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
@@ -116,6 +117,7 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 		
 		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math"
 		FLAGS := ${FLAGS} --compiler-options="-ffast-math" -Xcompiler="-pthread -fopenmp"
+		DEBUGFLAGS := ${DEBUGFLAGS} -Xcompiler="-pthread -fopenmp"
 	endif
 endif
 

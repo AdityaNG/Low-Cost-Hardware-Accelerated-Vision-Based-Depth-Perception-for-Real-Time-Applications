@@ -148,7 +148,7 @@ class stereo_vision:
     #def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=True, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
-                CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml',
+                CAMERA_CALIBRATION_YAML='data/calibration/kitti_2011_09_26.yml',
                 subsampling = False):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
@@ -197,9 +197,9 @@ def main():
     
     parser.add_argument('-c', '--camera_calibration', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/kitti_2011_09_26.yml'), help='')
     parser.add_argument('-o', '--object_track', default=False, action='store_true', help='Enables Object Tracking with YOLO')
-    parser.add_argument('-ycfg', '--yolo_cfg', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.cfg'), help='YOLO CFG file')
-    parser.add_argument('-yw', '--yolo_weights', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolov4-tiny.weights'), help='YOLO Weights file')
-    parser.add_argument('-ycl', '--yolo_classes', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/classes.txt'), help='YOLO Classes to track')
+    parser.add_argument('-ycfg', '--yolo_cfg', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolo/yolov4-tiny.cfg'), help='YOLO CFG file')
+    parser.add_argument('-yw', '--yolo_weights', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolo/yolov4-tiny.weights'), help='YOLO Weights file')
+    parser.add_argument('-ycl', '--yolo_classes', type=str, default=os.path.join("/".join(__file__.split("/")[:-1]) , 'data/yolo/classes.txt'), help='YOLO Classes to track')
     
     parser.add_argument('-ctu', '--camera_to_use', default=-1, type=int, help='Enables camera use')
     parser.add_argument('-sw', '--swap', default=False, action='store_true', help='Swaps cameras')

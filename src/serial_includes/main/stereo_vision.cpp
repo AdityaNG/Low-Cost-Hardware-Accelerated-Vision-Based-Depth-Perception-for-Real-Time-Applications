@@ -23,9 +23,7 @@
 #include "../../common_includes/yolo/yolo.hpp"
 #include "../../common_includes/image.h"
 #include "../../common_includes/bayesian/bayesian.h"
-
 #include "../../common_includes/structs.h"
-
 
 using namespace cv;
 using namespace std;
@@ -38,8 +36,6 @@ using namespace std;
   double time_taken =  chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();\
   time_taken *= 1e-9;\
   var = time_taken;     
-
-
 
 void print_OBJ(OBJ o) {
   cout <<"Name : "<< o.name <<endl;
@@ -71,8 +67,8 @@ int calib_width, calib_height, out_width, out_height, point_cloud_width, point_c
 int profile = 0; // Option for profiling
 
 const char* kitti_path;
-const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
-const char* fsds_calib_file_name = "calibration/fsds.yml";
+const char* calib_file_name = "data/calibration/kitti_2011_09_26.yml";
+const char* fsds_calib_file_name = "data/calibration/fsds.yml";
 
 double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 
@@ -89,12 +85,11 @@ Grapher<Double3, Uchar4> *grapher;
 
 // Graphics
 int Oindex = 0;
-Uchar4 *colors = NULL;
 Double3 *points; // Holds the coordinates of each pixel in 3D space
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Init() {
-	// points = (Double3*)malloc(sizeof(Double3) * point_cloud_width * point_cloud_height);
+	points = (Double3*)malloc(sizeof(Double3) * point_cloud_width * point_cloud_height);
 	
 	if (debug == 1) {
 		//XR = Mat_<double>(3,1) << 1.3 , -3.14, 1.57;
@@ -474,6 +469,7 @@ Mat remove_sky(Mat frame) {
 
 void *startGraphicsThread(void *grapher) {
 	((Grapher<Double3, Uchar4>*)grapher)->startGraphics();
+	return nullptr;
 }
 
 // This init function is called while using the program as a shared library
@@ -520,13 +516,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 	Init();
 	if(graphics) {
 		printf("\n** 3D plotting enabled\n");
-		// auto func = [](void *g) {
-		// 	grapher = (Grapher<Double3, Uchar4>*) g;
-		// 	grapher->startGraphics();
-		// };
-		// std::thread thread_object(func, (void*)new Grapher<Double3, Uchar4>(points, colors));
-		grapher = new Grapher<Double3, Uchar4>();
-		points = grapher->getPointsArray();
+		grapher = new Grapher<Double3, Uchar4>(points);
 		int ret = pthread_create(&graphicsThread, NULL, startGraphicsThread, grapher);
 		if(ret) {
 			fprintf(stderr, "The error value returned by pthread_create() is %d\n", ret);
@@ -557,14 +547,13 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     resize(right_img, right_img_OLD, out_img_size);
     Mat YOLOL_Color;
     cvtColor(left_img_OLD, YOLOL_Color, cv::COLOR_BGRA2BGR);
-
+	// grapher->setColorsArray((Uchar4*)left_img_OLD.ptr<unsigned char>(0)); // This fails
     if(objectTracking) {
     	auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 
     	imgCallback_video();
-    	colors = (Uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
     	pred_list = get_predicted_boxes(); // Bayesian
-    	append_old_objs(obj_list);
+		append_old_objs(obj_list);
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
@@ -573,7 +562,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
 			Mat sky_mask = remove_sky(YOLOL_Color);
 			dmapOLD.copyTo(dmapOLD, sky_mask);
 		}
-    	colors = (Uchar4*)left_img_OLD.ptr<unsigned char>(0);
     }
 	publishPointCloud(left_img_OLD, dmapOLD);
 
@@ -590,7 +578,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     return points;
   }
 
-  Uchar4* getColor() { return colors; }
+  Uchar4* getColor() { return grapher->getColorsArray(); }
 }
 
 unsigned fileCounter(string path) {
@@ -622,12 +610,12 @@ void imageLoop() {
 		resize(left_img, left_img_OLD, out_img_size);
 
 		YOLOL_Color = left_img_OLD.clone();	
+		// grapher->setColorsArray((Uchar4*)left_img_OLD.ptr<unsigned char>(0)); // This fails
 		if(objectTracking) {
 			auto f = std::async(std::launch::async, processYOLO, YOLOL_Color); // Asynchronous call to YOLO 	
-			resize(right_img, right_img_OLD, out_img_size);   
+			resize(right_img, right_img_OLD, out_img_size);
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-			colors = (Uchar4*)rgba.ptr<unsigned char>(0);
 			obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
 			pred_list = get_predicted_boxes(); // Bayesian
 			append_old_objs(obj_list);
@@ -637,9 +625,8 @@ void imageLoop() {
 			resize(right_img, right_img_OLD, out_img_size);   
 			imgCallback_video();	
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
-			colors = (Uchar4*)rgba.ptr<unsigned char>(0);
 		}	
-		publishPointCloud(left_img, dmapOLD);    
+		publishPointCloud(left_img, dmapOLD);
 		end_timer(t_start, t_t);	
 		#ifdef SHOW_VIDEO
 			//flip(left_img, img_left_color_flip,1);
@@ -760,19 +747,19 @@ int main(int argc, const char** argv) {
 	    return 1;
 	}
 	if (profile) {
-		runProfiling("img/cones_left.pgm",   "img/cones_right.pgm");
-		runProfiling("img/aloe_left.pgm",    "img/aloe_right.pgm");
-		runProfiling("img/raindeer_left.pgm","img/raindeer_right.pgm");
-		runProfiling("img/urban1_left.pgm",  "img/urban1_right.pgm");
-		runProfiling("img/urban2_left.pgm",  "img/urban2_right.pgm");
-		runProfiling("img/urban3_left.pgm",  "img/urban3_right.pgm");
-		runProfiling("img/urban4_left.pgm",  "img/urban4_right.pgm");
+		runProfiling("datasets/profile/img/cones_left.pgm",   "datasets/profile/img/cones_right.pgm");
+		runProfiling("datasets/profile/img/aloe_left.pgm",    "datasets/profile/img/aloe_right.pgm");
+		runProfiling("datasets/profile/img/raindeer_left.pgm","datasets/profile/img/raindeer_right.pgm");
+		runProfiling("datasets/profile/img/urban1_left.pgm",  "datasets/profile/img/urban1_right.pgm");
+		runProfiling("datasets/profile/img/urban2_left.pgm",  "datasets/profile/img/urban2_right.pgm");
+		runProfiling("datasets/profile/img/urban3_left.pgm",  "datasets/profile/img/urban3_right.pgm");
+		runProfiling("datasets/profile/img/urban4_left.pgm",  "datasets/profile/img/urban4_right.pgm");
 		cout << "... done!" << endl;
 	}
 	else {
 		if(objectTracking) {
 			printf("** Object Tracking enabled\n");
-			initYOLO("./data/yolov4-tiny.cfg", "./data/yolov4-tiny.weights", "./data/classes.txt");
+			initYOLO("./data/yolo/yolov4-tiny.cfg", "./data/yolo/yolov4-tiny.weights", "./data/yolo/classes.txt");
 		} 
 		else printf("** Object tracking disabled\n"); 	
 		printf("KITTI Path: %s \n", kitti_path);
@@ -802,15 +789,7 @@ int main(int argc, const char** argv) {
 		findRectificationMap(calib_file, out_img_size); 
 		Init();
 		if(draw_points) {
-			// grapher = Grapher(points, colors);
-			// auto func = [](void *g) {
-			// 	grapher = (Grapher<Double3, Uchar4>*) g;
-			// 	grapher->startGraphics();
-			// };
-			// std::thread thread_object(func, (void*)new Grapher<Double3, Uchar4>(points, colors));
-			grapher = new Grapher<Double3, Uchar4>();
-			points = grapher->getPointsArray();
-			colors = grapher->getColorsArray();
+			grapher = new Grapher<Double3, Uchar4>(points);
 			int ret = pthread_create(&graphicsThread, NULL, startGraphicsThread, grapher);
 			if(ret) {
 				fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));

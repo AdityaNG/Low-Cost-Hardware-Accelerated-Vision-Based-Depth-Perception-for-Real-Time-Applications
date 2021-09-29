@@ -30,7 +30,7 @@ class Grapher {
     public:
         inline static P *points = NULL;
         inline static C *colors = NULL;
-        inline static double *POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50);
+        inline static double *POINTS_OBJECTS = (double*) malloc(sizeof(double) * 9 * 50); // TODO: Remove hardcoding
         inline static double rX = 17; // Rotate X
         inline static double rY = 0;  // Rotate Y
         inline static double tX = 0; 
@@ -40,11 +40,14 @@ class Grapher {
 
         Grapher() {
             points = (P*)malloc(sizeof(P) * point_cloud_width * point_cloud_height);
-            colors  = (C*)malloc(sizeof(C) * point_cloud_width * point_cloud_height);
         }
+        Grapher(P *p) { points = p; }
 
         P* getPointsArray() { return points; }
         C* getColorsArray() { return colors; }
+
+        void setPointsArray(P *p) { points = p; }
+        void setColorsArray(C *c) { colors = c; }
 
         void appendOBJECTS(double X, double Y, double Z, double r, double g, double b) {
             POINTS_OBJECTS[Oindex + 0] = X;
@@ -57,7 +60,7 @@ class Grapher {
         }
         
         static void draw_cube(double x, double y, double z, double r, double g, double b) {
-           //printf("(%lf %lf %lf), ", x,y,z);
+            //printf("(%lf %lf %lf), ", x,y,z);
             double verts[8][3];
             for (int i = 0; i < 8; i++) {
                 int s3 = ((1<<0) & i)>>0 ? 1: -1;
@@ -122,16 +125,12 @@ class Grapher {
                 glPointSize(1);
                 glBegin(GL_POINTS);
                 for (int i = 0; i < out_width * out_height; i++) {
-                    if(colors == NULL) {
-                        printf("No color data available!!\n");
-                        glColor3f(1.0, 1.0, 1.0);
-                        if(points == NULL) printf("No points data!!\n");
-                        // break;
-                    }
-                    glColor3f(colors[i].x/255.0, colors[i].y/255.0, colors[i].z/255.0);
+                    if(points == NULL) break;
+                    if(colors == NULL) glColor3f(1.0, 1.0, 1.0);
+                    else glColor3f(colors[i].x/255.0, colors[i].y/255.0, colors[i].z/255.0);
                     glVertex3f(points[i].x, points[i].y, points[i].z);
                 }
-                glEnd();    
+                glEnd();
             }
             // (x, y, z) -> (-y, -z, x)
             int draw_radius = 1;
@@ -168,7 +167,7 @@ class Grapher {
                         
                     }
                 }
-                glEnd();       
+                glEnd();  
             }
             
             
