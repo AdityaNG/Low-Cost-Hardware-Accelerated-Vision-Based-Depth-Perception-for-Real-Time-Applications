@@ -23,17 +23,13 @@
  * On all non-gpu functions there if they are not implemented
  */
 
-extern bool subsampling;
-
 class ElasGPU : public Elas {
 
 public:
 
   // Constructor, input: parameters
   // Pass this to the super constructor
-  ElasGPU(parameters param) : Elas(param) {
-    subsampling = param.subsampling;
-  }
+  ElasGPU(parameters param) : Elas(param) {}
   
   // Destructor
   ~ElasGPU () {
@@ -50,12 +46,13 @@ public:
   int32_t *d_P;
   float *d_D, *D_copy, *D_tmp;
   uint8_t *d_I1, *d_I2;
+  bool memInitDone = false;
 
   void computeDisparity(std::vector<support_pt> p_support,std::vector<triangle> tri,int32_t* disparity_grid,int32_t *grid_dims,
                         uint8_t* I1_desc,uint8_t* I2_desc,bool right_image,float* D);
 
   void adaptiveMean (float* D);
-  void cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims);
+  void memInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims);
   void cudaDest();
 };
 

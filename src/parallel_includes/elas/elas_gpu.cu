@@ -30,8 +30,7 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
   uint32_t idx = blockDim.x*blockIdx.x + threadIdx.x;
 
   // Check that we are in range
-  if(idx >= size_total)
-    return;
+  if(idx >= size_total) return;
 
   // Else get our values from memory
   uint32_t u = u_vals[idx];
@@ -47,8 +46,7 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
   else             d_addr = getAddressOffsetImage_GPU(u,v,width);
   
   // check if u is ok
-  if (u<window_size || u>=width-window_size)
-    return;
+  if (u<window_size || u>=width-window_size) return;
 
   // compute line start address
   int32_t  line_offset = 16*width*max(min(v,height-3),2);
@@ -66,10 +64,8 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
   
   // does this patch have enough texture?
   int32_t sum = 0;
-  for (int32_t i=0; i<16; i++)
-    sum += abs((int32_t)(*(I1_block_addr+i))-128);
-  if (sum<match_texture)
-    return;
+  for (int32_t i=0; i<16; i++) sum += abs((int32_t)(*(I1_block_addr+i))-128);
+  if (sum<match_texture) return;
 
   // compute disparity, min disparity and max disparity of plane prior
   int32_t d_plane     = (int32_t)(plane_a*(float)u+plane_b*(float)v+plane_c);
@@ -89,28 +85,10 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
   int32_t min_d   = -1;
 
   // left image
-    for (int32_t i=0; i<num_grid; i++) {
-      d_curr = d_grid[i];
-      if (d_curr<d_plane_min || d_curr>d_plane_max) { //If the current disparity is out of the planes range
-        u_warp = u-d_curr+2*right_image*d_curr; //uwarp diffe
-        if (u_warp<window_size || u_warp>=width-window_size)
-          continue;
-        u_warp = 16*u_warp;
-        val = 0;
-        for(int j=0; j<16; j++) {
-            //val += abs((int32_t)(*(I1_block_addr+j))-(int32_t)(*(I2_line_addr+j+16*u_warp)));
-            val = __sad((int)(*(I1_block_addr+j)),(int)(*(I2_line_addr+j+u_warp)),val);
-        }
-        
-        if (val<min_val) {
-            min_val = val;
-            min_d   = d_curr;
-        }
-      }
-    }
-    //disparity inside the grid
-    for (d_curr=d_plane_min; d_curr<=d_plane_max; d_curr++) {
-            u_warp = u-d_curr+2*right_image*d_curr;
+  for (int32_t i=0; i<num_grid; i++) {
+    d_curr = d_grid[i];
+    if (d_curr<d_plane_min || d_curr>d_plane_max) { //If the current disparity is out of the planes range
+      u_warp = u-d_curr+2*right_image*d_curr; //uwarp diffe
       if (u_warp<window_size || u_warp>=width-window_size)
         continue;
       u_warp = 16*u_warp;
@@ -119,12 +97,30 @@ __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_to
           //val += abs((int32_t)(*(I1_block_addr+j))-(int32_t)(*(I2_line_addr+j+16*u_warp)));
           val = __sad((int)(*(I1_block_addr+j)),(int)(*(I2_line_addr+j+u_warp)),val);
       }
-      val += valid?*(P+abs(d_curr-d_plane)):0;
+      
       if (val<min_val) {
-        min_val = val;
-        min_d   = d_curr;
+          min_val = val;
+          min_d   = d_curr;
       }
     }
+  }
+  //disparity inside the grid
+  for (d_curr=d_plane_min; d_curr<=d_plane_max; d_curr++) {
+          u_warp = u-d_curr+2*right_image*d_curr;
+    if (u_warp<window_size || u_warp>=width-window_size)
+      continue;
+    u_warp = 16*u_warp;
+    val = 0;
+    for(int j=0; j<16; j++) {
+        //val += abs((int32_t)(*(I1_block_addr+j))-(int32_t)(*(I2_line_addr+j+16*u_warp)));
+        val = __sad((int)(*(I1_block_addr+j)),(int)(*(I2_line_addr+j+u_warp)),val);
+    }
+    val += valid?*(P+abs(d_curr-d_plane)):0;
+    if (val<min_val) {
+      min_val = val;
+      min_d   = d_curr;
+    }
+  }
 
   // set disparity value
   if (min_d>=0) *(D+d_addr) = min_d; // MAP value (min neg-Log probability)
@@ -143,8 +139,7 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   uint32_t vt = threadIdx.y + 4;
   
   //If out of filter range return instantly
-  if(u0 > (D_width - 4) || v0 > (D_height - 4))
-    return;
+  if(u0 > (D_width - 4) || v0 > (D_height - 4)) return;
 
   //Allocate Shared memory array with an appropiate margin for the bitlateral filter
   //Since we are using 8 pixels with the center pixel being 5,
@@ -180,11 +175,11 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
       // zero input disparity maps to -10 (this makes the bilateral
       // weights of all valid disparities to 0 in this region)
       D_shared[ut][vt] = -10;
-  }else{
+  }else {
       D_shared[ut][vt] = D[idx];
   }
   __syncthreads();
-      
+
   // full resolution: 8 pixel bilateral filter width
   // D(x) = sum(I(xi)*f(I(xi)-I(x))*g(xi-x))/W(x)
   // W(x) = sum(f(I(xi)-I(x))*g(xi-x))
@@ -208,42 +203,39 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   }
 
   if (weight_sum>0) {
-      float d = factor_sum/weight_sum;
-      if (d>=0) *(D+idx) = d;
+    float d = factor_sum/weight_sum;
+    if (d>=0) *(D+idx) = d;
   }
   
   __syncthreads();
   //Update shared memory
   if(threadIdx.x == blockDim.x-1) {
-      D_shared[ut+1][vt] = D[idx+1];
-      D_shared[ut+2][vt] = D[idx+2];
-      D_shared[ut+3][vt] = D[idx+3];
-      //D_shared[ut+4][vt] = D[idx+4];
+    D_shared[ut+1][vt] = D[idx+1];
+    D_shared[ut+2][vt] = D[idx+2];
+    D_shared[ut+3][vt] = D[idx+3];
+    //D_shared[ut+4][vt] = D[idx+4];
   }
   if(threadIdx.x == 0) {
-      D_shared[ut-4][vt] = D[idx-4];
-      D_shared[ut-3][vt] = D[idx-3];
-      D_shared[ut-2][vt] = D[idx-2];
-      D_shared[ut-1][vt] = D[idx-1];
+    D_shared[ut-4][vt] = D[idx-4];
+    D_shared[ut-3][vt] = D[idx-3];
+    D_shared[ut-2][vt] = D[idx-2];
+    D_shared[ut-1][vt] = D[idx-1];
   }
   if(threadIdx.y == 0) {
-      D_shared[ut][vt-4] = D[(v0-4)*D_width+u0];
-      D_shared[ut][vt-3] = D[(v0-3)*D_width+u0];
-      D_shared[ut][vt-2] = D[(v0-2)*D_width+u0];
-      D_shared[ut][vt-1] = D[(v0-1)*D_width+u0];
+    D_shared[ut][vt-4] = D[(v0-4)*D_width+u0];
+    D_shared[ut][vt-3] = D[(v0-3)*D_width+u0];
+    D_shared[ut][vt-2] = D[(v0-2)*D_width+u0];
+    D_shared[ut][vt-1] = D[(v0-1)*D_width+u0];
   }
   if(threadIdx.y == blockDim.y-1) {
-      D_shared[ut][vt+1] = D[(v0+1)*D_width+u0];
-      D_shared[ut][vt+2] = D[(v0+2)*D_width+u0];
-      D_shared[ut][vt+3] = D[(v0+3)*D_width+u0];
-      //D_shared[ut][vt+4] = D[(v0+4)*D_width+u0];
+    D_shared[ut][vt+1] = D[(v0+1)*D_width+u0];
+    D_shared[ut][vt+2] = D[(v0+2)*D_width+u0];
+    D_shared[ut][vt+3] = D[(v0+3)*D_width+u0];
+    //D_shared[ut][vt+4] = D[(v0+4)*D_width+u0];
   }
 
-  if(D[idx] < 0) {
-      D_shared[ut][vt] = -10;
-  }else{
-      D_shared[ut][vt] = D[idx];
-  }
+  if(D[idx] < 0) D_shared[ut][vt] = -10;
+  else D_shared[ut][vt] = D[idx];
 
   __syncthreads();
 
@@ -263,30 +255,29 @@ __global__ void adaptiveMeanGPU8 (float* D, int32_t D_width, int32_t D_height) {
   }
 
   if (weight_sum>0) {
-      float d = factor_sum/weight_sum;
-      if (d>=0) *(D+idx) = d;
+    float d = factor_sum/weight_sum;
+    if (d>=0) *(D+idx) = d;
   }
 
 }
 
-void ElasGPU::cudaInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims) {
-  // Cuda Init
-  //static int flag = 0;
-  //if(flag==1) return;
-  D_copy = (float*)malloc(width*height*sizeof(float));
-  D_tmp  = (float*)malloc(width*height*sizeof(float));
-  cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
-  cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
-  cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
-  cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
-  cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
-  cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
-  cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
-  cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
-  cudaMalloc((void**) &d_D, width*height*sizeof(float));
-  cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
+void ElasGPU::memInit(int32_t size_total, int32_t* pixs_u, int32_t* pixs_v, int32_t disp_num, int32_t *grid_dims) {
+	// Cuda Init
+	this->memInitDone = true;
+ 	D_copy = (float*)malloc(width*height*sizeof(float));
+	D_tmp = (float*)malloc(width*height*sizeof(float));
+	cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
+	cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
+	cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
+	cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
+	cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
+	cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
+	cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
+	cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
+	cudaMalloc((void**) &d_D, width*height*sizeof(float));
+	cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
+	cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
+	cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t));
 }
 
 void ElasGPU::cudaDest() {
@@ -320,7 +311,6 @@ void ElasGPU::cudaDest() {
 void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<triangle> tri, int32_t* disparity_grid, int32_t *grid_dims,
                                 uint8_t* I1_desc, uint8_t* I2_desc, bool right_image, float* D) {
 
-  static int flag = 0;
   // number of disparities
   const int32_t disp_num  = grid_dims[0]-1;
   
@@ -501,47 +491,20 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   dim3 DimGrid(grid_size,1,1);
   dim3 DimBlock(block_size,1,1);
 
-  if(flag==0)  cudaInit(size_total, pixs_u, pixs_v, disp_num, grid_dims);
-  flag = 1;
-  // Allocate u,v pointer array
-  //int32_t* d_u_vals, *d_v_vals;
-  //cudaMalloc((void**) &d_u_vals, size_total*sizeof(int32_t));
-  //cudaMalloc((void**) &d_v_vals, size_total*sizeof(int32_t));
+  if(!this->memInitDone)  memInit(size_total, pixs_u, pixs_v, disp_num, grid_dims);
 
   // Copy over pointer array
   cudaMemcpy(d_u_vals, pixs_u, size_total*sizeof(int32_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_v_vals, pixs_v, size_total*sizeof(int32_t), cudaMemcpyHostToDevice);
 
   // Copy over the plane values
-  //float* d_planes_a, *d_planes_b, *d_planes_c;
-  //cudaMalloc((void**) &d_planes_a, size_total*sizeof(float));
-  //cudaMalloc((void**) &d_planes_b, size_total*sizeof(float));
-  //cudaMalloc((void**) &d_planes_c, size_total*sizeof(float));
   cudaMemcpy(d_planes_a, planes_a, size_total*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_planes_b, planes_b, size_total*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_planes_c, planes_c, size_total*sizeof(float), cudaMemcpyHostToDevice);
   
   // Copy over valid
-  //bool* d_valids;
-  //cudaMalloc((void**) &d_valids, size_total*sizeof(bool));
   cudaMemcpy(d_valids, valids, size_total*sizeof(bool), cudaMemcpyHostToDevice);
 
-  // CUDA copy over needed memory information
-  // disparity_grid, I1_desc,I2_desc,P,D
-  //int32_t* d_disparity_grid, *d_grid_dims;
-  //int32_t* d_P;
-  //float* d_D;
-  //uint8_t* d_I1, *d_I2;
-
-  // Allocate on global memory
-  //cudaMalloc((void**) &d_disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t));
-  //cudaMalloc((void**) &d_P, disp_num*sizeof(int32_t));
-  //cudaMalloc((void**) &d_D, width*height*sizeof(float));
-  //cudaMalloc((void**) &d_I1, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  //cudaMalloc((void**) &d_I2, 16*width*height*sizeof(uint8_t)); //Device descriptors
-  //cudaMalloc((void**) &d_grid_dims, 3*sizeof(int32_t)); 
-
-  // Now copy over data
   cudaMemcpy(d_disparity_grid, disparity_grid, grid_dims[0]*grid_dims[1]*grid_dims[2]*sizeof(int32_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_grid_dims, grid_dims, 3*sizeof(int32_t), cudaMemcpyHostToDevice);
   cudaMemcpy(d_P, P, disp_num*sizeof(int32_t), cudaMemcpyHostToDevice);
@@ -563,7 +526,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   // Free local memory
   delete[] P;
 
-  // Delete host code
+  // Release host memory
   delete planes_a;
   delete planes_b;
   delete planes_c;
@@ -576,16 +539,13 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
 void ElasGPU::adaptiveMean (float* D) {
   
   // get disparity image dimensions
-  int32_t D_width          = width;
-  int32_t D_height         = height;
+  int32_t D_width  = width;
+  int32_t D_height = height;
   if (param.subsampling) {
-    D_width          = width/2;
-    D_height         = height/2;
+    D_width  = width/2;
+    D_height = height/2;
   }
   
-  // allocate temporary memory
-  //float* D_copy = (float*)malloc(D_width*D_height*sizeof(float));
-  //float* D_tmp  = (float*)malloc(D_width*D_height*sizeof(float));
   memcpy(D_copy,D,D_width*D_height*sizeof(float));
   
   // zero input disparity maps to -10 (this makes the bilateral
@@ -601,7 +561,7 @@ void ElasGPU::adaptiveMean (float* D) {
   __m128 xconst4 = _mm_set1_ps(4.0f);
   __m128 xval,xweight1,xfactor1;//,xfactor2, xweight2;
   
-  float *val     = (float *)_mm_malloc(8*sizeof(float),16);
+  float *val     = (float*)_mm_malloc(8*sizeof(float),16);
   float *weight  = (float*)_mm_malloc(4*sizeof(float),16);
   float *factor  = (float*)_mm_malloc(4*sizeof(float),16);
   
@@ -729,7 +689,7 @@ void ElasGPU::adaptiveMean (float* D) {
 
 
     // horizontal filter
-    /*for (int32_t v=3; v<D_height-3; v++) {
+    for (int32_t v=3; v<D_height-3; v++) {
 
       // Preload first 7 pixels in row
       for (int32_t u=0; u<7; u++)
@@ -792,13 +752,11 @@ void ElasGPU::adaptiveMean (float* D) {
           if (d>=0) *(D+(v-3)*D_width+u) = d;
         }
       }
-    }*/
+    }
   }
   
   // free memory
   _mm_free(val);
   _mm_free(weight);
   _mm_free(factor);
-  //free(D_copy);
-  //free(D_tmp);
 }
