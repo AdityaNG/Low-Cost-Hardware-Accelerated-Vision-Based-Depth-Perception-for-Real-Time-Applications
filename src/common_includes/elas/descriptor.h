@@ -16,7 +16,7 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110-1301, USA 
+Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
 // NOTE: This descripter is a sparse approximation to the 50-dimensional
@@ -26,44 +26,41 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #ifndef __DESCRIPTOR_H__
 #define __DESCRIPTOR_H__
 
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <iostream>
 
 // Define fixed-width datatypes for Visual Studio projects
 #ifndef _MSC_VER
-  #include <stdint.h>
+#include <stdint.h>
 #else
-  typedef __int8            int8_t;
-  typedef __int16           int16_t;
-  typedef __int32           int32_t;
-  typedef __int64           int64_t;
-  typedef unsigned __int8   uint8_t;
-  typedef unsigned __int16  uint16_t;
-  typedef unsigned __int32  uint32_t;
-  typedef unsigned __int64  uint64_t;
+typedef __int8 int8_t;
+typedef __int16 int16_t;
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+typedef unsigned __int8 uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
 #endif
 
 class Descriptor {
-  
-public:
-  
-  // constructor creates filters
-  Descriptor(uint8_t* I,int32_t width,int32_t height,int32_t bpl,bool half_resolution);
-  
-  // deconstructor releases memory
-  ~Descriptor();
-  
-  // descriptors accessible from outside
-  uint8_t* I_desc;
-  
-private:
+   public:
+    // constructor creates filters
+    Descriptor(uint8_t *I, int32_t width, int32_t height, int32_t bpl, bool half_resolution);
 
-  // build descriptor I_desc from I_du and I_dv
-  void createDescriptor(uint8_t* I_du,uint8_t* I_dv,int32_t width,int32_t height,int32_t bpl,bool half_resolution);
+    // deconstructor releases memory
+    ~Descriptor();
 
+    // descriptors accessible from outside
+    uint8_t *I_desc;
+
+   private:
+    // build descriptor I_desc from I_du and I_dv
+    void createDescriptor(uint8_t *I_du, uint8_t *I_dv, int32_t width, int32_t height, int32_t bpl, bool half_resolution);
 };
 
 #endif

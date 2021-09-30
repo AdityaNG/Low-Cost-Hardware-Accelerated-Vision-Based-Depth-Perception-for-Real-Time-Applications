@@ -16,68 +16,64 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110-1301, USA 
+Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include <iostream>
-#include <iomanip>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <vector>
-#include <string>
+#include <string.h>
 #include <sys/time.h>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
 
 // Define fixed-width datatypes for Visual Studio projects
 #ifndef _MSC_VER
-  #include <stdint.h>
+#include <stdint.h>
 #else
-  typedef __int8            int8_t;
-  typedef __int16           int16_t;
-  typedef __int32           int32_t;
-  typedef __int64           int64_t;
-  typedef unsigned __int8   uint8_t;
-  typedef unsigned __int16  uint16_t;
-  typedef unsigned __int32  uint32_t;
-  typedef unsigned __int64  uint64_t;
+typedef __int8 int8_t;
+typedef __int16 int16_t;
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+typedef unsigned __int8 uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
 #endif
 
 class Timer {
-  
-public:
-  
-  Timer() {}
-  
-  ~Timer() {}
-  
-  void start (std::string title);
-  
-  void stop ();
-  
-  void plotCpp ();
+   public:
+    Timer() {}
 
-  void plot ();
-  
-  void reset ();
-  
-private:
-  
-  std::vector<std::string>  desc;
-  std::vector<timeval>      time;
-  
-  void push_back_time () {
-    timeval curr_time;
-    gettimeofday(&curr_time,0);
-    time.push_back(curr_time);
-  }
+    ~Timer() {}
 
-  float getTimeDifferenceMilliseconds(timeval a,timeval b) {
-    return ((float)(b.tv_sec -a.tv_sec ))*1e+3 +
-            ((float)(b.tv_usec-a.tv_usec))*1e-3;
-  }
+    void start(std::string title);
+
+    void stop();
+
+    void plotCpp();
+
+    void plot();
+
+    void reset();
+
+   private:
+    std::vector<std::string> desc;
+    std::vector<timeval> time;
+
+    void push_back_time() {
+        timeval curr_time;
+        gettimeofday(&curr_time, 0);
+        time.push_back(curr_time);
+    }
+
+    float getTimeDifferenceMilliseconds(timeval a, timeval b) {
+        return ((float)(b.tv_sec - a.tv_sec)) * 1e+3 + ((float)(b.tv_usec - a.tv_usec)) * 1e-3;
+    }
 };
 
-#endif  
+#endif

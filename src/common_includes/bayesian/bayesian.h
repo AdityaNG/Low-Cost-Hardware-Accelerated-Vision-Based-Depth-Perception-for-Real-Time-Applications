@@ -1,26 +1,26 @@
 #ifndef BAYESIAN_OBJ
-#define BAYESIAN_OBJ 
+#define BAYESIAN_OBJ
 
 #include <math.h>
-#include <cmath> 
+#include <cmath>
 #undef SPECIAL_STRUCTS
-#include "../structs.h"
 #include <vector>
+#include "../structs.h"
 
 #define MAX_BAYESIAN_OBJECTS 10
 #define BAYESIAN_HISTORY 5
 #define BAYESIAN_DISTANCE_THRESH 100
 
-typedef struct bayesian{
+typedef struct bayesian {
     int predX = 0, predY = 0;
     int used[BAYESIAN_HISTORY];
     int x[BAYESIAN_HISTORY];
     int y[BAYESIAN_HISTORY];
-    //int dist;
+    // int dist;
 } bayesian_t;
 
 void append_old_objs(std::vector<OBJ> obj_list);
 void display_history();
-void predict(int id, int* x, int* y);
+void predict(int id, int *x, int *y);
 std::vector<OBJ> get_predicted_boxes();
 #endif
