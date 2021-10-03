@@ -22,13 +22,18 @@
  * Note where we extend the Elas class so we are calling
  * On all non-gpu functions there if they are not implemented
  */
+
+extern bool subsampling;
+
 class ElasGPU : public Elas {
 
 public:
 
   // Constructor, input: parameters
   // Pass this to the super constructor
-  ElasGPU(parameters param) : Elas(param) {}
+  ElasGPU(parameters param) : Elas(param) {
+    subsampling = param.subsampling;
+  }
   
   // Destructor
   ~ElasGPU () {

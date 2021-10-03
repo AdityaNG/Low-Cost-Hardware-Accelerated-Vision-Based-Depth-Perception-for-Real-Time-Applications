@@ -27,6 +27,7 @@ else
 
 		OBJS := $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_SERIAL))  
 		SHARED_OBJS := $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_SERIAL)) 
+		FLAGS := ${FLAGS} -ffast-math
 
 		ifeq (,${CHECK})
 			COMPILER := g++
@@ -47,7 +48,8 @@ $(error No C++ compilers found.)
 		EXECUTABLE := ${BIN}/stereo_vision_serial
 		SHARED_LIBRARY := ${BIN}/stereo_vision_serial.so
 		
-		LIBS := ${LIBS} -lpthread -fopenmp
+		FLAGS := ${FLAGS} -fopenmp
+		LIBS := ${LIBS} -lpthread
 		SHARED_FLAGS := ${FLAGS} -shared -fPIC
 	else
 		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
@@ -73,8 +75,8 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 			DEBUGFLAGS := -gencode arch=compute_50,code=sm_50 ${DEBUGFLAGS}
 		endif
 		
-		LIBS := ${LIBS} -Xcompiler="-pthread -fopenmp"
-		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie"
+		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math"
+		FLAGS := ${FLAGS} --compiler-options="-ffast-math" -Xcompiler="-pthread -fopenmp"
 	endif
 endif
 

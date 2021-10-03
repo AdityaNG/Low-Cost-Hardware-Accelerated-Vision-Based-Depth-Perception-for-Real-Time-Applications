@@ -50,6 +50,7 @@ FileStorage calib_file;
 Size out_img_size;
 Size calib_img_size;
 
+int subsample = false; // Allows for evaluating only every second pixel, which is often sufficient in robotics applications, since depth accuracy matters more than a large image domain.
 int scale_factor = 1; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
@@ -298,7 +299,7 @@ Mat generateDisparityMap(Mat& left, Mat& right) {
 	Mat rightdpf = Mat::zeros(imsize, CV_32F);
 
 	static Elas::parameters param(Elas::MIDDLEBURY);//param(Elas::ROBOTICS);
-	static int res = printf("Post Process only left = %d\n", param.postprocess_only_left = true);//false;
+	static int res = printf("Post Process only left = %d, Subsampling = %d\n", param.postprocess_only_left = true, param.subsampling = subsample);//false;
 	static ElasGPU elas(param);
 
 	elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
@@ -544,7 +545,6 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
     	pred_list = get_predicted_boxes(); // Bayesian
-    	append_old_objs(obj_list);
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
@@ -628,14 +628,15 @@ int main(int argc, const char** argv) {
 	ios_base::sync_with_stdio(false);
 	static struct poptOption options[] = { 
 	  { "kitti_path", 'k', POPT_ARG_STRING, &kitti_path, 0, "Path to KITTI Dataset", "STR" },
+	  { "subsampling", 's', POPT_ARG_INT, &subsample, 0, "Set s=1 for evaluating only every second pixel", "NUM" },
 	  { "video_mode", 'v', POPT_ARG_INT, &video_mode, 0, "Set v=1 Kitti video mode", "NUM" },
 	  { "draw_points", 'p', POPT_ARG_SHORT, &draw_points, 0, "Set p=1 to plot out points", "NUM" },
-	  { "frame_skip", 'f', POPT_ARG_INT, &frame_skip, 0, "Set frame_skip to skip disparity generation for f frames (Not yet implemented)", "NUM" },
+	//   { "frame_skip", 'f', POPT_ARG_INT, &frame_skip, 0, "Set frame_skip to skip disparity generation for f frames (Not yet implemented)", "NUM" },
 	  { "debug", 'd', POPT_ARG_INT, &debug, 0, "Set d=1 for cam to robot frame calibration", "NUM" },
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
 	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
 	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		
-	  { "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "scale_factor", 'f', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }

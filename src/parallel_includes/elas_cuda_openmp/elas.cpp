@@ -29,6 +29,8 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 using namespace std;
 
+bool subsampling = false;
+
 void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t* dims){
   
   // get width, height and bytes per line

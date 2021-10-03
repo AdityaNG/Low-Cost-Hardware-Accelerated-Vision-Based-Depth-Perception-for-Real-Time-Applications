@@ -76,14 +76,9 @@ matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration fi
 
 Things that we are currently working on
 
- - Rename the project  
- - README Update
  - Code clean up
- - Documentation
- - python wrapper
- - python library on pip
- - calibration functionality
- - Start using "issues" on github
+ - Extensive Documentation
+ - Calibration functionality
  - Add CONTRIBUTING.md
  - Add "Good Starter" Issues
  - Understand and change LICENSE
