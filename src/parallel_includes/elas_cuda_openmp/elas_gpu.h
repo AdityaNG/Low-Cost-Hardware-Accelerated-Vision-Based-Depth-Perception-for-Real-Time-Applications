@@ -4,17 +4,17 @@
 // Enable profiling
 //#define PROFILE
 
-#include <algorithm>
 #include <math.h>
-#include <vector>
 #include <cuda.h>
+#include <vector>
 #include <stdint.h>
+#include <algorithm>
 #include <functional>  
 
 #include "elas.h"
-#include "descriptor.h"
-#include "triangle.h"
 #include "matrix.h"
+#include "triangle.h"
+#include "descriptor.h"
 
 
 /**

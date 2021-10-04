@@ -19,13 +19,14 @@ libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
 Street, Fifth Floor, Boston, MA 02110-1301, USA 
 */
 
-#include "elas.h"
 #include <omp.h>
-#include <algorithm>
 #include <math.h>
-#include "descriptor.h"
-#include "triangle.h"
+#include <algorithm>
+
+#include "elas.h"
 #include "matrix.h"
+#include "triangle.h"
+#include "descriptor.h"
 
 using namespace std;
 

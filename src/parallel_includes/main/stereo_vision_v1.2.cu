@@ -1,24 +1,26 @@
-#include <stdio.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <math.h>
 #include <popt.h>
-#include <opencv4/opencv2/highgui.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/calib3d.hpp>
-#include <iostream>
+#include <opencv4/opencv2/highgui.hpp>
+
 #include <vector>
 #include <thread> 
-#include <fstream>
 #include <future>
+#include <fstream>
+#include <iostream>
 #include <filesystem>
 
-#include "../../common_includes/yolo/yolo.hpp"
 #include "../elas_cuda_openmp/elas.h"
 #include "../elas_cuda_openmp/elas_gpu.h"
 #include "../graphing_parallel/graphing.h"
+#include "../../common_includes/yolo/yolo.hpp"
 #include "../../common_includes/bayesian/bayesian.h"
 
 using namespace cv;
