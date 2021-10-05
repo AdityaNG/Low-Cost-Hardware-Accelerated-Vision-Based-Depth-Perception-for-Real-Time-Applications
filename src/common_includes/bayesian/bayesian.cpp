@@ -164,6 +164,5 @@ std::vector<OBJ> get_predicted_boxes() {
     if ( n != 0) average = std::accumulate(mean_errors.begin(), mean_errors.end(), 0.0) / n; 
     printf(" (bay_err=%f) (max_err=%f) ", average, MAX_ERR);
     
-    // TODO : calculate mean error
     return plist;
 }

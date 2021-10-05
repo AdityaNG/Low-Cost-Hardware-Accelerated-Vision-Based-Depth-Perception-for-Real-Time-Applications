@@ -63,7 +63,7 @@ FileStorage calib_file;
 Size out_img_size;
 Size calib_img_size;
 
-int subsample = false; // Allows for evaluating only every second pixel, which is often sufficient in robotics applications, since depth accuracy matters more than a large image domain.
+bool subsample = false; // Allows for evaluating only every second pixel, which is often sufficient in robotics applications, since depth accuracy matters more than a large image domain.
 int scale_factor = 1; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
@@ -532,11 +532,12 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
                               bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
-			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false){ 
+			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false, bool subsampling = false){ 
     static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
 		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
 
-    start_timer(t_start);        
+	subsample = subsampling;
+    start_timer(t_start);
     Mat left_img(Size(width, height), CV_8UC4, left);
     Mat right_img(Size(width, height), CV_8UC4, right);
 

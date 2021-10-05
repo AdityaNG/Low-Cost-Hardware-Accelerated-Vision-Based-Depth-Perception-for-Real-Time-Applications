@@ -185,8 +185,9 @@ def main():
 
     parser = argparse.ArgumentParser(description='stereo_vision CLI for disparity calculation and 3D depth map generation from a stereo pair')
     parser.add_argument('-k', '--kitti', type=str, default='~/KITTI', help='Path to KITTI directory of test images')
-    parser.add_argument('-s', '--scale', type=int, default=1, help='By what factor to scale down the image by')
-    parser.add_argument('-p', '--pointcloud_interpolation', default=False, action='store_true', help='TODO')
+    parser.add_argument('-s', '--subsampling', type=int, default=0, help='Set s=1 for evaluating only every second pixel')
+    parser.add_argument('-f', '--scale', type=int, default=1, help='By what factor to scale down the image by')
+    parser.add_argument('-p', '--pointcloud_interpolation', default=False, action='store_true', help='Interpolates the point cloud to the desired scale')
     
     parser.add_argument('-prl', '--parallel', default=False, action='store_true', help='Run parallel')
 
@@ -206,6 +207,7 @@ def main():
     kittiPath = args.kitti # sys.argv[1]
     scale_factor = args.scale #int(sys.argv[2])
     pc_extrapolation = args.pointcloud_interpolation# int(sys.argv[3])
+    subsampling = args.subsampling
     
     so_file_path = DEFAULT_STEREO_VISION_SO_PATH
     if args.parallel:
@@ -230,8 +232,8 @@ def main():
             download_file('https://s3.eu-central-1.amazonaws.com/avg-kitti/data_scene_flow.zip', KITTI_ZIP_PATH)
             unzip_file(KITTI_ZIP_PATH, KITTI_FOLDER_PATH)
             
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
-            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path, subsampling = subsampling)
+            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path, subsampling = subsampling)
 
             image_files = sorted(os.listdir(os.path.join(KITTI_FOLDER_PATH, 'testing', 'image_2')))
             while True:
@@ -249,8 +251,8 @@ def main():
 
             clone_repo('https://github.com/AdityaNG/Mini_Stereo_Dataset.git', SMOL_KITTI_FOLDER_PATH)
             
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
-            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path = so_file_path, subsampling = subsampling)
+            #s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=True, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path, subsampling = subsampling)
 
             image_files = sorted(os.listdir(os.path.join(SMOL_KITTI_FOLDER_PATH, 'smol_kitti', 'image_02')))
             while True:
@@ -265,9 +267,9 @@ def main():
 
     elif args.camera_to_use == -1:
         if OBJ_TRACK:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=OBJ_TRACK, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, YOLO_CFG=YOLO_CFG, YOLO_WEIGHTS=YOLO_WEIGHTS, YOLO_CLASSES=YOLO_CLASSES, so_lib_path=so_file_path, subsampling = subsampling)
         else:
-            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
+            s = stereo_vision(width=1242//scale_factor, height=375//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path, subsampling = subsampling)
     
     
         for iFrame in range(465):
@@ -297,7 +299,7 @@ def main():
 
         h, w, d = left.shape
 
-        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path)
+        s = stereo_vision(width=w//scale_factor, height=h//scale_factor, objectTracking=False, display=True, graphics=True, scale=scale_factor, pc_extrapolation=pc_extrapolation, CAMERA_CALIBRATION_YAML = CAMERA_CALIBRATION_YAML, so_lib_path=so_file_path, subsampling = subsampling)
         
         while True:
             camL.grab()
