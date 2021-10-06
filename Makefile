@@ -7,10 +7,11 @@ BIN            := ${BUILD}/bin
 
 SRC_COMMON     := ${SRC}/common_includes
 SRC_SERIAL     := ${SRC}/serial_includes
+SRC_OMP        := ${SRC}/omp_includes
 SRC_PARALLEL   := ${SRC}/parallel_includes
 
 LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
-FLAGS          := -O3 -std=c++17
+FLAGS          := -O2 -std=c++17
 DEBUGFLAGS     := -g -std=c++17  
 
 SUBDIRECTORIES := $(sort $(dir $(wildcard $(SRC)/*/*/)))
@@ -48,9 +49,41 @@ $(error No C++ compilers found.)
 		EXECUTABLE := ${BIN}/stereo_vision_serial
 		SHARED_LIBRARY := ${BIN}/stereo_vision_serial.so
 		
+		LIBS := ${LIBS} -lpthread
+		SHARED_FLAGS := ${FLAGS} -shared -fPIC
+	
+	else ifeq ($(omp), 1)
+		CHECK := $(shell g++ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
+		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
+		SRCS_OMP := $(wildcard $(SRC_OMP)/*/*.cpp)
+
+		OBJS := $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(OBJ)/%.cpp.o, $(SRCS_OMP))  
+		SHARED_OBJS := $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_COMMON))  $(patsubst $(SRC)/%.cpp, $(SHARED_OBJ)/%.cpp.o, $(SRCS_OMP)) 
+		FLAGS := ${FLAGS} -ffast-math
+
+		ifeq (,${CHECK})
+			COMPILER := g++
+$(info C++ compiler found: g++)
+$(info )
+
+		else # Check for clang if g++ is unavailable
+			CHECK2 := $(shell clang --version >/dev/null 2>&1 || (echo "Failed to search for clang with error: $$?"))
+			ifeq (,${CHECK2})
+$(info C++ compiler found: clang)
+$(info )
+			COMPILER := clang
+			LIBS := -lstdc++ ${LIBS}
+			else
+$(error No C++ compilers found.)
+			endif
+		endif
+		EXECUTABLE := ${BIN}/stereo_vision_omp
+		SHARED_LIBRARY := ${BIN}/stereo_vision_omp.so
+		
 		FLAGS := ${FLAGS} -fopenmp
 		LIBS := ${LIBS} -lpthread
 		SHARED_FLAGS := ${FLAGS} -shared -fPIC
+
 	else
 		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 
 		SRCS_PARALLEL := $(wildcard $(SRC_PARALLEL)/*/*.cpp) 

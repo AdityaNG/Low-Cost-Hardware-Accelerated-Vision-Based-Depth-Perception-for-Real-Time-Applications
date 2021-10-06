@@ -1,4 +1,3 @@
-#include <omp.h>
 #include <time.h>
 #include <math.h>
 #include <popt.h>
@@ -18,7 +17,7 @@
 #include <iostream>
 #include <filesystem>
 
-#include "../elas_openmp/elas.h"
+#include "../elas_serial/elas.h"
 #include "../graphing_serial/graphing.h"
 #include "../../common_includes/yolo/yolo.hpp"
 #include "../../common_includes/bayesian/bayesian.h"
