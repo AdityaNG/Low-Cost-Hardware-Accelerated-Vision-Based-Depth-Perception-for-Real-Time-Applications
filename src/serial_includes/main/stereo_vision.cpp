@@ -576,6 +576,8 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
     return points;
   }
+
+  uchar4* getColor() { return color; }
 }
 
 unsigned fileCounter(string path){

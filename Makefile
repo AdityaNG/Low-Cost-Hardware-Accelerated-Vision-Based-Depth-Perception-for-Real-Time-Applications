@@ -108,7 +108,7 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 			DEBUGFLAGS := -gencode arch=compute_50,code=sm_50 ${DEBUGFLAGS}
 		endif
 		
-		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math"
+		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math" -Xcompiler="-pthread -fopenmp"
 		FLAGS := ${FLAGS} --compiler-options="-ffast-math" -Xcompiler="-pthread -fopenmp"
 	endif
 endif
