@@ -30,7 +30,7 @@
 using namespace cv;
 using namespace std;
 
-#define SHOW_VIDEO      // To show the yolo and disparity output as well
+// #define SHOW_VIDEO      // To show the yolo and disparity output as well
 
 #define start_timer(start) auto start = chrono::high_resolution_clock::now();  
 
@@ -577,6 +577,8 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
     return points;
   }
+
+  uchar4* getColor() { return color; }
 }
 
 unsigned fileCounter(string path){
@@ -693,10 +695,12 @@ int main(int argc, const char** argv) {
 
 	findRectificationMap(calib_file, out_img_size); 
 	Init();
-	int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
-	if(ret){
-		fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
-		exit(-1);
+	if(draw_points) {
+		int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
+		if(ret){
+			fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
+			exit(-1);
+		}
 	}
 
 	#ifdef SHOW_VIDEO

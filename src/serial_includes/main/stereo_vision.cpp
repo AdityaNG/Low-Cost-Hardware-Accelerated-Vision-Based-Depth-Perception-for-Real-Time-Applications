@@ -29,7 +29,7 @@
 using namespace cv;
 using namespace std;
 
-#define SHOW_VIDEO      // To show the yolo and disparity output as well
+// #define SHOW_VIDEO      // To show the yolo and disparity output as well
 
 #define start_timer(start) auto start = chrono::high_resolution_clock::now();  
 
@@ -227,7 +227,6 @@ void publishPointCloud(const Mat& img_left_old, Mat& dmap_old) {
 
 
 	if (draw_points) {
-    	#pragma omp parallel for
 		for (int j = 0; j < img_left.rows; j++) {
 			for (int i = 0; i < img_left.cols; ++i) {
 				int d = dmap.at<uchar>(j,i);
@@ -694,10 +693,12 @@ int main(int argc, const char** argv) {
 
 	findRectificationMap(calib_file, out_img_size); 
 	Init();
-	int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
-	if(ret){
-		fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
-		exit(-1);
+	if(draw_points) {
+		int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
+		if(ret){
+			fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
+			exit(-1);
+		}
 	}
 
 	#ifdef SHOW_VIDEO
