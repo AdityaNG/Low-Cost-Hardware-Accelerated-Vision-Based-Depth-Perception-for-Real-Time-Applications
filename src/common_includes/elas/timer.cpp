@@ -20,6 +20,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
 #include "timer.h"
+#define YELLOW "\033[93m"
+#define RESET "\033[0m"
+#define GREEN "\033[92m"
 
 void Timer::start(std::string title) {
     desc.push_back(title);
@@ -53,14 +56,18 @@ void Timer::plotCpp() {
 void Timer::plot() {
     stop();
     float total_time = 0;
-    printf("\n");
+    printf("\n%s%25s%s\n", YELLOW, "Pre Processing:", RESET);
     for (int32_t i = 0; i < desc.size(); i++) {
         float curr_time = getTimeDifferenceMilliseconds(time[i], time[i + 1]);
         total_time += curr_time;
         printf("%30s %.2lf ms\n", desc[i].c_str(), curr_time);
+        if (desc[i] == "Descriptor")
+            printf("%s%25s%s\n", YELLOW, "Disparity Calculation:", RESET);
+        else if (desc[i] == "Matching")
+            printf("%s%25s%s\n", YELLOW, "Post Processing:", RESET);
     }
     printf("========================================\n");
-    printf("                    Total time %.2lf ms\n", total_time);
+    printf("                    %sTotal time %.2lf ms%s\n", GREEN, total_time, RESET);
     reset();
 }
 
