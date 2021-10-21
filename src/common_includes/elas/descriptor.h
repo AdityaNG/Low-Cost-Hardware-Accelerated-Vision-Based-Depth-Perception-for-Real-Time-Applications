@@ -50,6 +50,7 @@ typedef unsigned __int64 uint64_t;
 class Descriptor {
    public:
     // constructor creates filters
+    Descriptor() {}
     Descriptor(uint8_t *I, int32_t width, int32_t height, int32_t bpl, bool half_resolution);
 
     // deconstructor releases memory

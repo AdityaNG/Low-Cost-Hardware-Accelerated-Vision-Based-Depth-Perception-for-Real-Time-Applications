@@ -60,17 +60,26 @@ void Elas::process(uint8_t *I1_, uint8_t *I2_, float *D1, float *D2, const int32
 #ifdef PROFILE
     timer.start("Descriptor");
 #endif
-    Descriptor desc1(I1, width, height, bpl, param.subsampling);
-    Descriptor desc2(I2, width, height, bpl, param.subsampling);
+    Descriptor *desc1 = nullptr, *desc2 = nullptr;
+#pragma omp parallel num_threads(2)
+    {
+#pragma omp sections
+        {
+#pragma omp section
+            desc1 = new Descriptor(I1, width, height, bpl, param.subsampling);
+#pragma omp section
+            desc2 = new Descriptor(I2, width, height, bpl, param.subsampling);
+        }
+    }
 
 #ifdef PROFILE
     timer.start("Support Matches");
 #endif
 
-    vector<support_pt> p_support = computeSupportMatches(desc1.I_desc, desc2.I_desc);
+    vector<support_pt> p_support = computeSupportMatches(desc1->I_desc, desc2->I_desc);
 
 #ifdef PROFILE
-    timer.start("Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}");
+    timer.start("Parallel Region {Delaunay Triangulation, Disparity Planes, Grid}");
 #endif
 
     vector<triangle> tri_1, tri_2;
@@ -83,14 +92,12 @@ void Elas::process(uint8_t *I1_, uint8_t *I2_, float *D1, float *D2, const int32
                 tri_1 = computeDelaunayTriangulation(p_support, 0);
                 computeDisparityPlanes(p_support, tri_1, 0);
                 createGrid(p_support, disparity_grid_1, grid_dims, 0);
-                // computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
             }
 #pragma omp section
             {
                 tri_2 = computeDelaunayTriangulation(p_support, 1);
                 computeDisparityPlanes(p_support, tri_2, 1);
                 createGrid(p_support, disparity_grid_2, grid_dims, 1);
-                // computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
             }
         }
     }
@@ -102,9 +109,9 @@ void Elas::process(uint8_t *I1_, uint8_t *I2_, float *D1, float *D2, const int32
 #pragma omp sections
     {
 #pragma omp section
-        computeDisparity(p_support, tri_1, disparity_grid_1, grid_dims, desc1.I_desc, desc2.I_desc, 0, D1);
+        computeDisparity(p_support, tri_1, disparity_grid_1, grid_dims, desc1->I_desc, desc2->I_desc, 0, D1);
 #pragma omp section
-        computeDisparity(p_support, tri_2, disparity_grid_2, grid_dims, desc1.I_desc, desc2.I_desc, 1, D2);
+        computeDisparity(p_support, tri_2, disparity_grid_2, grid_dims, desc1->I_desc, desc2->I_desc, 1, D2);
     }
 
 #ifdef PROFILE
@@ -130,7 +137,7 @@ void Elas::process(uint8_t *I1_, uint8_t *I2_, float *D1, float *D2, const int32
 #ifdef PROFILE
         timer.start("Adaptive Mean");
 #endif
-        adaptiveMean(D1);
+        adaptiveMean(D1);   
         if (!param.postprocess_only_left)
             adaptiveMean(D2);
     }
