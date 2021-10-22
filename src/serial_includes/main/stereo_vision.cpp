@@ -307,6 +307,7 @@ Mat generateDisparityMap(Mat &left, Mat &right) {
     static Elas::parameters param(Elas::MIDDLEBURY);  // param(Elas::ROBOTICS);
     static int res =
         printf("Post Process only left = %d, Subsampling = %d\n", param.postprocess_only_left = true, param.subsampling = subsample);  // false;
+    param.filter_adaptive_mean = true;
     static Elas elas(param);
 
     elas.process(left.data, right.data, leftdpf.ptr<float>(0), rightdpf.ptr<float>(0), dims);
