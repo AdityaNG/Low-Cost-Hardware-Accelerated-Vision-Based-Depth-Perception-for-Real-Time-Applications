@@ -580,14 +580,17 @@ unsigned fileCounter(string path){
 void imageLoop(){
 	unsigned iImage = 0;
 	char left_img_topic[128], right_img_topic[128];    
-	size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
+	//size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
+	size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
 	printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
 
 	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){            
 		start_timer(t_start);        
-		strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
-		strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		//strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		//strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		strcpy(left_img_topic , format("%s/image_02/data/%010u.png", kitti_path, iFrame).c_str());    
+		strcpy(right_img_topic, format("%s/image_03/data/%010u.png", kitti_path, iFrame).c_str());    
 
 		left_img = imread(left_img_topic, IMREAD_UNCHANGED);
 		right_img = imread(right_img_topic, IMREAD_UNCHANGED);
