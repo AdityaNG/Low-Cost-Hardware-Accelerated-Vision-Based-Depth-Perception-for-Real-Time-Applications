@@ -331,10 +331,14 @@ void imgCallback_video() {
 	cvtColor(left_img, img_left, COLOR_BGRA2GRAY);
 	cvtColor(right_img, img_right, COLOR_BGRA2GRAY);
 
+	// TODO : Use remap
 	//remap(tmpL, img_left, lmapx, lmapy, cv::INTER_LINEAR); remap(tmpR, img_right, rmapx, rmapy, cv::INTER_LINEAR);
+	Mat img_left_remap, img_right_remap;
+	remap(img_left, img_left_remap, lmapx, lmapy, cv::INTER_LINEAR); remap(img_right, img_right_remap, rmapx, rmapy, cv::INTER_LINEAR);
   
 	start_timer(dmap_start);   
-	dmapOLD = generateDisparityMap(img_left, img_right);  
+	//dmapOLD = generateDisparityMap(img_left, img_right);  
+	dmapOLD = generateDisparityMap(img_left_remap, img_right_remap);  
 	end_timer(dmap_start, dmap_t);
 }
 
@@ -566,6 +570,9 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     if(graphicsThreadExit) clean(); 
     
     if(display){	
+		imshow("left_img", left_img);
+		imshow("right_img", right_img);
+
     	imshow("Detections", YOLOL_Color);
     	imshow("Disparity", dmapOLD);
     	waitKey(1);
@@ -673,15 +680,25 @@ int main(int argc, const char** argv) {
 	calib_img_size = Size(calib_width, calib_height);
 	out_img_size = Size(out_width, out_height);
 
-	calib_file = FileStorage(calib_file_name, FileStorage::READ);
-	calib_file["K1"] >> K1;
-	calib_file["K2"] >> K2;
-	calib_file["D1"] >> D1;
-	calib_file["D2"] >> D2;
-	calib_file["R"]  >> R;
-	calib_file["T"]  >> T;
-	calib_file["XR"] >> XR;
-	calib_file["XT"] >> XT;
+	try{
+		calib_file = FileStorage(calib_file_name, FileStorage::READ);
+		calib_file["K1"] >> K1;
+		calib_file["K2"] >> K2;
+		calib_file["D1"] >> D1;
+		calib_file["D2"] >> D2;
+		calib_file["R"]  >> R;
+		calib_file["T"]  >> T;
+		calib_file["XR"] >> XR;
+		calib_file["XT"] >> XT;
+	}
+	//catch(cv::Exception ex)
+	catch(const std::exception& ex)
+	{
+		printf("%s\n", ex.what());
+		std::cerr << ex.what();
+		std::cerr.flush();
+		return 1;
+	}
 
 	cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
 	     << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';

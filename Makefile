@@ -10,6 +10,9 @@ SRC_SERIAL     := ${SRC}/serial_includes
 SRC_PARALLEL   := ${SRC}/parallel_includes
 
 LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
+#LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` `pkg-config --cflags --libs opencv4`
+#LIBS           := -c -I/usr/local/include/opencv4/opencv2 -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
+#LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
 FLAGS          := -O3 -std=c++17
 DEBUGFLAGS     := -g -std=c++17  
 
@@ -99,16 +102,16 @@ debug: ${OBJS}
 	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1"
 
 ${OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} ${SHARED_FLAGS} -c $^ -o $@
 
 ${OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} ${SHARED_FLAGS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} ${SHARED_FLAGS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} ${SHARED_FLAGS} -c $^ -o $@
 
 clean:
 	rm -rf ${BUILD}
