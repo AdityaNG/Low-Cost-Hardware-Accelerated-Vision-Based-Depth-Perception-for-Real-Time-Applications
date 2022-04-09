@@ -21,6 +21,8 @@
 #include "../graphing_parallel/graphing.h"
 #include "../../common_includes/bayesian/bayesian.h"
 
+// ./build/bin/stereo_vision_parallel -k /mnt/HDD/home/aditya/kitti/kitti_data/2011_09_26/2011_09_26_drive_0002_sync/ -v=1
+
 using namespace cv;
 using namespace std;
 
@@ -50,7 +52,7 @@ FileStorage calib_file;
 Size out_img_size;
 Size calib_img_size;
 
-int scale_factor = 1; // Modify to change the image resize factor
+float scale_factor = 1.0; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
 int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
@@ -350,19 +352,19 @@ void findRectificationMap(FileStorage& calib_file, Size finalSize) {
 	Rect validRoi[2];
 	cout << "Starting rectification" << endl;
 
-	K1.at<double>(0, 0) /= scale_factor; 
-	K1.at<double>(0, 1) /= scale_factor;
-	K1.at<double>(0, 2) /= scale_factor; 
-	K1.at<double>(1, 0) /= scale_factor;
-	K1.at<double>(1, 1) /= scale_factor;
-	K1.at<double>(1, 2) /= scale_factor; 
+	K1.at<double>(0, 0) *= scale_factor; 
+	K1.at<double>(0, 1) *= scale_factor;
+	K1.at<double>(0, 2) *= scale_factor; 
+	K1.at<double>(1, 0) *= scale_factor;
+	K1.at<double>(1, 1) *= scale_factor;
+	K1.at<double>(1, 2) *= scale_factor; 
 
-	K2.at<double>(0, 0) /= scale_factor; 
-	K2.at<double>(0, 1) /= scale_factor;
-	K2.at<double>(0, 2) /= scale_factor; 
-	K2.at<double>(1, 0) /= scale_factor;
-	K2.at<double>(1, 1) /= scale_factor;
-	K2.at<double>(1, 2) /= scale_factor; 
+	K2.at<double>(0, 0) *= scale_factor; 
+	K2.at<double>(0, 1) *= scale_factor;
+	K2.at<double>(0, 2) *= scale_factor; 
+	K2.at<double>(1, 0) *= scale_factor;
+	K2.at<double>(1, 1) *= scale_factor;
+	K2.at<double>(1, 2) *= scale_factor; 
 
 	cout << "Scaled K1: " << K1 << '\n';
 	cout << "Scaled K2: " << K2 << '\n';
@@ -465,7 +467,7 @@ Mat remove_sky(Mat frame) {
 }
 
 // This init function is called while using the program as a shared library
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, float scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML){ 
 	scale_factor = scale;
 	point_cloud_extrapolation = pc_extrapolation;
@@ -524,7 +526,7 @@ int externalInit(int width, int height, bool kittiCalibration, bool graphics, bo
 // Returns the double3 points array
 extern "C"{ // This function is exposed in the shared library along with the main function
   double3* generatePointCloud(uchar *left, uchar *right, char* CAMERA_CALIBRATION_YAML, int width, int height, bool kittiCalibration=true, 
-                              bool objectTracking=false, bool graphics=false, bool display=false, int scale=1, int pc_extrapolation = 1,
+                              bool objectTracking=false, bool graphics=false, bool display=false, float scale=1.0, int pc_extrapolation = 1,
 			      const char *YOLO_CFG="src/yolo/yolov4-tiny.cfg", const char* YOLO_WEIGHTS="", const char* YOLO_CLASSES="", bool removeSky = false){ 
     static int init = externalInit(width, height, kittiCalibration, graphics, display, objectTracking, scale,
 		    point_cloud_extrapolation, YOLO_CFG, YOLO_WEIGHTS, YOLO_CLASSES, CAMERA_CALIBRATION_YAML);
@@ -638,7 +640,7 @@ int main(int argc, const char** argv) {
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
 	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
 	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		
-	  { "scale_factor", 's', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "scale_factor", 's', POPT_ARG_FLOAT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -665,10 +667,12 @@ int main(int argc, const char** argv) {
 
 	calib_width = input_image_width;
 	calib_height = input_image_height;
-	out_width = input_image_width/scale_factor;
-	out_height = input_image_height/scale_factor;
-	point_cloud_width = out_width * point_cloud_extrapolation;
-	point_cloud_height = out_height * point_cloud_extrapolation;	
+	out_width = input_image_width *scale_factor;
+	out_height = input_image_height *scale_factor;
+	//point_cloud_width = out_width * point_cloud_extrapolation;
+	//point_cloud_height = out_height * point_cloud_extrapolation;	
+	point_cloud_width = out_width;
+	point_cloud_height = out_height;	
 	calib_img_size = Size(calib_width, calib_height);
 	out_img_size = Size(out_width, out_height);
 

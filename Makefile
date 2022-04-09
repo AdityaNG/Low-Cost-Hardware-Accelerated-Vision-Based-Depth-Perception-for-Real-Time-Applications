@@ -13,7 +13,8 @@ LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs openc
 #LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv` `pkg-config --cflags --libs opencv4`
 #LIBS           := -c -I/usr/local/include/opencv4/opencv2 -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
 #LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
-FLAGS          := -O3 -std=c++17
+#FLAGS          := -O3 -std=c++17
+FLAGS          := -O2 -std=c++17
 DEBUGFLAGS     := -g -std=c++17  
 
 SUBDIRECTORIES := $(sort $(dir $(wildcard $(SRC)/*/*/)))
