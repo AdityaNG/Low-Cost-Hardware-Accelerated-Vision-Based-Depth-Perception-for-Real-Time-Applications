@@ -471,7 +471,7 @@ Mat remove_sky(Mat frame) {
 }
 
 // This init function is called while using the program as a shared library
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, float scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML) { 
 	scale_factor = scale;
 	point_cloud_extrapolation = pc_extrapolation;
@@ -589,6 +589,7 @@ void imageLoop(){
 	char left_img_topic[128], right_img_topic[128];    
 	//size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
 	float FPS = 0;
+	//size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
 	size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
 	printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
@@ -600,9 +601,9 @@ void imageLoop(){
 		strcpy(left_img_topic , format("%s/image_02/data/%010u.png", kitti_path, iFrame).c_str());    
 		strcpy(right_img_topic, format("%s/image_03/data/%010u.png", kitti_path, iFrame).c_str());    
 
-		start_timer(t_start);        
 		left_img = imread(left_img_topic, IMREAD_UNCHANGED);
 		right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+		start_timer(t_start);        
 
 		resize(left_img, left_img_OLD, out_img_size);
 

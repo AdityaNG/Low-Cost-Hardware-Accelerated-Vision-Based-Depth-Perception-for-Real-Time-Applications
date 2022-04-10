@@ -113,6 +113,11 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 	endif
 endif
 
+all:
+	make stereo_vision serial=1 -j12
+	make stereo_vision omp=1 -j12
+	make stereo_vision -j12
+
 stereo_vision: ${OBJS}
 	@echo
 	${COMPILER} ${FLAGS} -o ${EXECUTABLE} ${OBJS} ${LIBS} 
