@@ -10,7 +10,7 @@ SRC_SERIAL     := ${SRC}/serial_includes
 SRC_PARALLEL   := ${SRC}/parallel_includes
 
 LIBS           := -lpopt -lglut -lGLU -lGL -lm `pkg-config --cflags --libs opencv`
-FLAGS          := -O3 -std=c++17
+FLAGS          := -O2 -std=c++17
 DEBUGFLAGS     := -g -std=c++17  
 
 SUBDIRECTORIES := $(sort $(dir $(wildcard $(SRC)/*/*/)))
@@ -101,16 +101,16 @@ debug: ${OBJS}
 	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1"
 
 ${OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 clean:
 	rm -rf ${BUILD}

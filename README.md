@@ -72,6 +72,8 @@ The extrinsic parameters of the stereo pair is calculated during runtime.
 The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
 matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
 
+# Throughput Test Results
+
 # TODO 
 
 Things that we are currently working on
