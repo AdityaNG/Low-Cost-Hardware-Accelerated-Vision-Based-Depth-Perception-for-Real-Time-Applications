@@ -148,7 +148,8 @@ class stereo_vision:
     #def __init__(self, so_lib_path='bin/stereo_vision.so', width=1242, height=375, 
                 defaultCalibFile=True, objectTracking=True, graphics=False, display=False, scale=1, pc_extrapolation=1,
                 YOLO_CFG='src/yolo/yolov4-tiny.cfg', YOLO_WEIGHTS='src/yolo/yolov4-tiny.weights', YOLO_CLASSES='src/yolo/classes.txt',
-                CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml'):
+                CAMERA_CALIBRATION_YAML='calibration/kitti_2011_09_26.yml',
+                subsampling = False):
         self.sv = ctypes.CDLL(so_lib_path)
         self.width = width
         self.height = height

@@ -21,6 +21,7 @@
 #include "../elas_cuda_openmp/elas_gpu.h"
 #include "../graphing_parallel/graphing.h"
 #include "../../common_includes/yolo/yolo.hpp"
+#include "../../common_includes/image.h"
 #include "../../common_includes/bayesian/bayesian.h"
 
 using namespace cv;
@@ -57,6 +58,7 @@ int scale_factor = 1; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
 int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
+int profile = 0; // Option for profiling
 
 const char* kitti_path;
 const char* calib_file_name = "calibration/kitti_2011_09_26.yml";
@@ -629,6 +631,78 @@ void imageLoop(){
 	}
 }
 
+// compute disparities of pgm image input pair file_1, file_2
+void runProfiling (const char* file_1,const char* file_2) {
+
+  cout << "Processing: " << file_1 << ", " << file_2 << endl;
+
+  // load images
+  image<uchar> *I1,*I2;
+  I1 = loadPGM(file_1);
+  I2 = loadPGM(file_2);
+
+  // check for correct size
+  if (I1->width()<=0 || I1->height() <=0 || I2->width()<=0 || I2->height() <=0 ||
+      I1->width()!=I2->width() || I1->height()!=I2->height()) {
+    cout << "ERROR: Images must be of same size, but" << endl;
+    cout << "       I1: " << I1->width() <<  " x " << I1->height() << 
+                 ", I2: " << I2->width() <<  " x " << I2->height() << endl;
+    delete I1;
+    delete I2;
+    return;    
+  }
+
+  // get image width and height
+  int32_t width  = I1->width();
+  int32_t height = I1->height();
+
+  // allocate memory for disparity images
+  const int32_t dims[3] = {width,height,width}; // bytes per line = width
+  float* D1_data = (float*)malloc(width*height*sizeof(float));
+  float* D2_data = (float*)malloc(width*height*sizeof(float));
+
+  // process
+  Elas::parameters param;
+  param.postprocess_only_left = false;
+  Elas elas(param);
+  elas.process(I1->data,I2->data,D1_data,D2_data,dims);
+
+  // find maximum disparity for scaling output disparity images to [0..255]
+  float disp_max = 0;
+  for (int32_t i=0; i<width*height; i++) {
+    if (D1_data[i]>disp_max) disp_max = D1_data[i];
+    if (D2_data[i]>disp_max) disp_max = D2_data[i];
+  }
+
+  // copy float to uchar
+  image<uchar> *D1 = new image<uchar>(width,height);
+  image<uchar> *D2 = new image<uchar>(width,height);
+  for (int32_t i=0; i<width*height; i++) {
+    D1->data[i] = (uint8_t)max(255.0*D1_data[i]/disp_max,0.0);
+    D2->data[i] = (uint8_t)max(255.0*D2_data[i]/disp_max,0.0);
+  }
+
+  // save disparity images
+  char output_1[1024];
+  char output_2[1024];
+  strncpy(output_1,file_1,strlen(file_1)-4);
+  strncpy(output_2,file_2,strlen(file_2)-4);
+  output_1[strlen(file_1)-4] = '\0';
+  output_2[strlen(file_2)-4] = '\0';
+  strcat(output_1,"_disp.pgm");
+  strcat(output_2,"_disp.pgm");
+  savePGM(D1,output_1);
+  savePGM(D2,output_2);
+
+  // free memory
+  delete I1;
+  delete I2;
+  delete D1;
+  delete D2;
+  free(D1_data);
+  free(D2_data);
+}
+
 int main(int argc, const char** argv) {
 	ios_base::sync_with_stdio(false);
 	static struct poptOption options[] = { 
@@ -643,7 +717,8 @@ int main(int argc, const char** argv) {
 	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		
 	  { "scale_factor", 'f', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
-	  POPT_AUTOHELP
+	  { "profile", 'P', POPT_ARG_INT, &profile, 0, "Profile", "NUM" },
+      POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
 	};	
 	poptContext poptCONT = poptGetContext("main", argc, argv, options, POPT_CONTEXT_KEEP_FIRST);	
@@ -658,54 +733,66 @@ int main(int argc, const char** argv) {
                 poptStrerror(c), poptBadOption(poptCONT, POPT_BADOPTION_NOALIAS));
 	    poptPrintUsage(poptCONT, stderr, 0);
 	    return 1;
-	}	
-	if(objectTracking){
-		printf("** Object Tracking enabled\n");
-		initYOLO("./data/yolov4-tiny.cfg", "./data/yolov4-tiny.weights", "./data/classes.txt");
-	} 
-	else printf("** Object tracking disabled\n"); 	
-	printf("KITTI Path: %s \n", kitti_path);
-
-	calib_width = input_image_width;
-	calib_height = input_image_height;
-	out_width = input_image_width/scale_factor;
-	out_height = input_image_height/scale_factor;
-	point_cloud_width = out_width * point_cloud_extrapolation;
-	point_cloud_height = out_height * point_cloud_extrapolation;	
-	calib_img_size = Size(calib_width, calib_height);
-	out_img_size = Size(out_width, out_height);
-
-	calib_file = FileStorage(calib_file_name, FileStorage::READ);
-	calib_file["K1"] >> K1;
-	calib_file["K2"] >> K2;
-	calib_file["D1"] >> D1;
-	calib_file["D2"] >> D2;
-	calib_file["R"]  >> R;
-	calib_file["T"]  >> T;
-	calib_file["XR"] >> XR;
-	calib_file["XT"] >> XT;
-
-	cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
-	     << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
-
-	findRectificationMap(calib_file, out_img_size); 
-	cudaInit();
-	if(draw_points) {
-		int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
-		if(ret){
-			fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
-			exit(-1);
-		}
 	}
+	if (profile) {
+		runProfiling("img/cones_left.pgm",   "img/cones_right.pgm");
+		runProfiling("img/aloe_left.pgm",    "img/aloe_right.pgm");
+		runProfiling("img/raindeer_left.pgm","img/raindeer_right.pgm");
+		runProfiling("img/urban1_left.pgm",  "img/urban1_right.pgm");
+		runProfiling("img/urban2_left.pgm",  "img/urban2_right.pgm");
+		runProfiling("img/urban3_left.pgm",  "img/urban3_right.pgm");
+		runProfiling("img/urban4_left.pgm",  "img/urban4_right.pgm");
+		cout << "... done!" << endl;
+	}
+	else {	
+		if(objectTracking){
+			printf("** Object Tracking enabled\n");
+			initYOLO("./data/yolov4-tiny.cfg", "./data/yolov4-tiny.weights", "./data/classes.txt");
+		} 
+		else printf("** Object tracking disabled\n"); 	
+		printf("KITTI Path: %s \n", kitti_path);
 
-	#ifdef SHOW_VIDEO
-		namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
-		namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
-		moveWindow("Detections", 0, 0);
-		moveWindow("Disparity", 0, (int)(out_height*1.2));
-	#endif
+		calib_width = input_image_width;
+		calib_height = input_image_height;
+		out_width = input_image_width/scale_factor;
+		out_height = input_image_height/scale_factor;
+		point_cloud_width = out_width * point_cloud_extrapolation;
+		point_cloud_height = out_height * point_cloud_extrapolation;	
+		calib_img_size = Size(calib_width, calib_height);
+		out_img_size = Size(out_width, out_height);
 
-	imageLoop();
-	clean();
+		calib_file = FileStorage(calib_file_name, FileStorage::READ);
+		calib_file["K1"] >> K1;
+		calib_file["K2"] >> K2;
+		calib_file["D1"] >> D1;
+		calib_file["D2"] >> D2;
+		calib_file["R"]  >> R;
+		calib_file["T"]  >> T;
+		calib_file["XR"] >> XR;
+		calib_file["XT"] >> XT;
+
+		cout << " K1 : " << K1 << "\n D1 : " << D1 << "\n R1 : " << R1 << "\n P1 : " << P1  
+			 << "\n K2 : " << K2 << "\n D2 : " << D2 << "\n R2 : " << R2 << "\n P2 : " << P2 << '\n';
+
+		findRectificationMap(calib_file, out_img_size); 
+		cudaInit();
+		if(draw_points) {
+			int ret = pthread_create(&graphicsThread, NULL, startGraphics, NULL);
+			if(ret){
+				fprintf(stderr, "Graphics thread could not be launched.\npthread_create : %s\n", strerror(ret));
+				exit(-1);
+			}
+		}
+
+		#ifdef SHOW_VIDEO
+			namedWindow("Detections", cv::WINDOW_NORMAL); // Needed to allow resizing of the image shown
+			namedWindow("Disparity", cv::WINDOW_NORMAL);  // Needed to allow resizing of the image shown
+			moveWindow("Detections", 0, 0);
+			moveWindow("Disparity", 0, (int)(out_height*1.2));
+		#endif
+
+		imageLoop();
+		clean();
+	}
 	return 0;
 }
