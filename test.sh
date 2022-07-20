@@ -7,7 +7,8 @@
 # CPU
 #OMP_NUM_THREADS=12 ./build/bin/stereo_vision_serial -k $(pwd)/kitti_mini/ -v=1 -s=0 -p=0 -f=1
 
-make all
+#make all
+./profileBuild.sh
 
 echo "SCALE_FACTOR,SUBSAMPLING_MODE,VIDEO_MODE" > tmp.txt
 
