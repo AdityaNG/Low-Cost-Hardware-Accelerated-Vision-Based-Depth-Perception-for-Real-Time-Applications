@@ -65,7 +65,7 @@ Size out_img_size;
 Size calib_img_size;
 
 bool subsample = false; // Allows for evaluating only every second pixel, which is often sufficient in robotics applications, since depth accuracy matters more than a large image domain.
-int scale_factor = 1; // Modify to change the image resize factor
+float scale_factor = 1; // Modify to change the image resize factor
 int point_cloud_extrapolation = 1; // Modify to change the point cloud extrapolation
 int input_image_width = 1242, input_image_height = 375; // Default image size in the Kitti dataset
 int calib_width, calib_height, out_width, out_height, point_cloud_width, point_cloud_height;
@@ -474,7 +474,7 @@ Mat remove_sky(Mat frame) {
 }
 
 // This init function is called while using the program as a shared library
-int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, int scale, int pc_extrapolation,
+int externalInit(int width, int height, bool kittiCalibration, bool graphics, bool display, bool trackObjects, float scale, int pc_extrapolation,
 		const char *YOLO_CFG, const char* YOLO_WEIGHTS, const char* YOLO_CLASSES, char* CAMERA_CALIBRATION_YAML){ 
 	scale_factor = scale;
 	point_cloud_extrapolation = pc_extrapolation;
@@ -592,17 +592,23 @@ unsigned fileCounter(string path){
 void imageLoop(){
 	unsigned iImage = 0;
 	char left_img_topic[128], right_img_topic[128];    
-	size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
+	//size_t max_files = fileCounter(format("%s/video/testing/image_02/%04u/", kitti_path, iImage)); 
+	float FPS = 0;
+	size_t max_files = fileCounter(format("%s/image_02/data/", kitti_path)); 
 	printf("Max files = %lu\n", max_files);
 	Mat left_img, right_img, YOLOL_Color, img_left_color_flip, rgba;
 
 	for(unsigned iFrame = 0; (iFrame < max_files) && !graphicsThreadExit; ++iFrame){            
-		start_timer(t_start);        
-		strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
-		strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		
+		// strcpy(left_img_topic , format("%s/video/testing/image_02/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		// strcpy(right_img_topic, format("%s/video/testing/image_03/%04u/%06u.png", kitti_path, iImage, iFrame).c_str());    
+		strcpy(left_img_topic , format("%s/image_02/data/%010u.png", kitti_path, iFrame).c_str());    
+		strcpy(right_img_topic, format("%s/image_03/data/%010u.png", kitti_path, iFrame).c_str());    
+
 
 		left_img = imread(left_img_topic, IMREAD_UNCHANGED);
 		right_img = imread(right_img_topic, IMREAD_UNCHANGED);
+		start_timer(t_start);        
 
 		resize(left_img, left_img_OLD, out_img_size);
 
@@ -626,14 +632,21 @@ void imageLoop(){
 		}	
 		publishPointCloud(left_img, dmapOLD);    
 		end_timer(t_start, t_t);	
+		if (draw_points) {
 		#ifdef SHOW_VIDEO
 			//flip(left_img, img_left_color_flip,1);
 			imshow("Detections", YOLOL_Color);
 			imshow("Disparity", dmapOLD);
 			waitKey(video_mode);
 		#endif        
+		}
 		printf("(FPS=%f) (%d, %d) (t_t=%f, dmap_t=%f, pc_t=%f)\n", 1/t_t, dmapOLD.rows, dmapOLD.cols, t_t, dmap_t, pc_t);
+		FPS += 1/t_t;
 	}
+	
+	FPS = FPS/max_files;
+	printf("AVG_FPS=%f\n", FPS);
+	exit(0);
 }
 
 // compute disparities of pgm image input pair file_1, file_2
@@ -722,7 +735,7 @@ int main(int argc, const char** argv) {
 	  { "object_tracking", 't', POPT_ARG_SHORT, &objectTracking, 0, "Set t=1 for enabling object tracking", "NUM" },
 	  { "input_image_width", 'w', POPT_ARG_INT, &input_image_width, 0, "Set the input image width (default value is 1242, i.e Kitti image width)", "NUM" },
 	  { "input_image_height", 'h', POPT_ARG_INT, &input_image_height, 0, "Set the input image height (default value is 375, i.e Kitti image height)", "NUM" },		
-	  { "scale_factor", 'f', POPT_ARG_INT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
+	  { "scale_factor", 'f', POPT_ARG_FLOAT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  { "profile", 'P', POPT_ARG_INT, &profile, 0, "Profile", "NUM" },
 	  POPT_AUTOHELP
@@ -801,5 +814,3 @@ int main(int argc, const char** argv) {
 		imageLoop();
 		clean();
 	}
-	return 0;
-}

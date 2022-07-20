@@ -19,7 +19,7 @@ Depth estimation and 3D object detection are important for autonomous systems to
 
 Install with pip
 ```bash
-python3 -m pip install git+https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
+python3 -m pip install git+https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications
 ```
 
 Run the demo
@@ -51,7 +51,7 @@ $ python3 -m pip install -r requirements.txt
 Clone the repository:
 
 ```bash
-$ git clone https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
+$ git clone https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications
 ```
 
 Compile using the make utility:
@@ -71,6 +71,17 @@ The extrinsic parameters of the stereo pair is calculated during runtime.
 
 The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
 matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
+
+# Throughput Testing
+
+```bash
+./test.sh                       # will run tests and save to results.csv
+python3 plot.py < results.csv   # Plot the results
+```
+
+<p align="center">
+    <img src="imgs/result_20_jul_2022.png">
+</p>
 
 # TODO 
 

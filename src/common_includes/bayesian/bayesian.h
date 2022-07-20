@@ -7,7 +7,7 @@
 #include <vector>
 
 #define MAX_BAYESIAN_OBJECTS 10
-#define BAYESIAN_HISTORY 10
+#define BAYESIAN_HISTORY 5
 #define BAYESIAN_DISTANCE_THRESH 100
 
 typedef struct bayesian{

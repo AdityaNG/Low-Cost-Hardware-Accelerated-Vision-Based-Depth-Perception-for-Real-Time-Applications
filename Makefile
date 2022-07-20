@@ -114,10 +114,15 @@ $(error No CUDA/C++ compilers found. Either install cuda-toolkit or try compilin
 			DEBUGFLAGS := -gencode arch=compute_50,code=sm_50 ${DEBUGFLAGS}
 		endif
 		
-		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math" -Xcompiler="-pthread -fopenmp"
+		SHARED_FLAGS := ${FLAGS} -shared --compiler-options="-fPIC -pie -ffast-math"
 		FLAGS := ${FLAGS} --compiler-options="-ffast-math" -Xcompiler="-pthread -fopenmp"
 	endif
 endif
+
+all:
+	make stereo_vision serial=1 -j12
+	make stereo_vision omp=1 -j12
+	make stereo_vision -j12
 
 stereo_vision: ${OBJS}
 	@echo
@@ -140,16 +145,16 @@ debug: ${OBJS}
 	@echo "Compiled Successfully!! Run the program using ./${EXECUTABLE} -k path_to_kitti -v 1"
 
 ${OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cu.o: ${SRC}/%.cu
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 ${SHARED_OBJ}/%.cpp.o: ${SRC}/%.cpp
-	${COMPILER} ${FLAGS} -c $^ -o $@
+	${COMPILER} ${FLAGS} ${LIBS} -c $^ -o $@
 
 clean:
 	rm -rf ${BUILD}
