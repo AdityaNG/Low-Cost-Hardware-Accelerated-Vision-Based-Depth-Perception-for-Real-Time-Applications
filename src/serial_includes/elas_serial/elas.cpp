@@ -141,6 +141,7 @@ void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t*
 
 #ifdef PROFILE
   timer.plot();
+	printf("\n");
 #endif
 
   // release memory

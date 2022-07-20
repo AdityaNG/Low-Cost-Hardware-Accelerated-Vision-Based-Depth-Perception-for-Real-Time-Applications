@@ -24,6 +24,9 @@ else
 	ifeq ($(video), 1)
 		FLAGS := ${FLAGS} -DSHOW_VIDEO
 	endif
+	ifeq ($(profile), 1)
+		FLAGS := ${FLAGS} -DPROFILE
+	endif
 	ifeq ($(serial), 1)
 		CHECK := $(shell g++ --version >/dev/null 2>&1 || (echo "Failed to search for g++ with error: $$"))
 		SRCS_COMMON := $(wildcard $(SRC_COMMON)/*/*.cpp) 

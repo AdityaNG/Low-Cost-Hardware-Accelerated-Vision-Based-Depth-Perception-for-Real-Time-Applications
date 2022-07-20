@@ -1,0 +1,85 @@
+Processing: img/cones_left.pgm, img/cones_right.pgm
+                    Descriptor   21.3 ms
+               Support Matches   62.3 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}   10.4 ms
+                      Matching   77.1 ms
+         L/R Consistency Check   16.1 ms
+         Remove Small Segments   31.5 ms
+             Gap Interpolation    4.6 ms
+                 Adaptive Mean   80.1 ms
+========================================
+                    Total time  303.4 ms
+
+Processing: img/aloe_left.pgm, img/aloe_right.pgm
+                    Descriptor   39.5 ms
+               Support Matches  138.7 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}   20.3 ms
+                      Matching  161.1 ms
+         L/R Consistency Check   31.0 ms
+         Remove Small Segments   60.2 ms
+             Gap Interpolation   10.3 ms
+                 Adaptive Mean  166.4 ms
+========================================
+                    Total time  627.5 ms
+
+Processing: img/raindeer_left.pgm, img/raindeer_right.pgm
+                    Descriptor   41.9 ms
+               Support Matches  129.4 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}   20.0 ms
+                      Matching  166.1 ms
+         L/R Consistency Check   30.5 ms
+         Remove Small Segments   68.0 ms
+             Gap Interpolation   11.1 ms
+                 Adaptive Mean  171.1 ms
+========================================
+                    Total time  638.1 ms
+
+Processing: img/urban1_left.pgm, img/urban1_right.pgm
+                    Descriptor    7.9 ms
+               Support Matches   35.4 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}    5.7 ms
+                      Matching   66.6 ms
+         L/R Consistency Check    8.1 ms
+         Remove Small Segments   31.1 ms
+             Gap Interpolation    4.3 ms
+                 Adaptive Mean   58.8 ms
+========================================
+                    Total time  217.9 ms
+
+Processing: img/urban2_left.pgm, img/urban2_right.pgm
+                    Descriptor    7.8 ms
+               Support Matches   35.9 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}    5.6 ms
+                      Matching   75.7 ms
+         L/R Consistency Check    8.3 ms
+         Remove Small Segments   29.4 ms
+             Gap Interpolation    4.2 ms
+                 Adaptive Mean   59.3 ms
+========================================
+                    Total time  226.3 ms
+
+Processing: img/urban3_left.pgm, img/urban3_right.pgm
+                    Descriptor    7.8 ms
+               Support Matches   31.2 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}    4.8 ms
+                      Matching   72.8 ms
+         L/R Consistency Check    7.8 ms
+         Remove Small Segments   27.2 ms
+             Gap Interpolation    3.8 ms
+                 Adaptive Mean   57.1 ms
+========================================
+                    Total time  212.5 ms
+
+Processing: img/urban4_left.pgm, img/urban4_right.pgm
+                    Descriptor    7.7 ms
+               Support Matches   35.9 ms
+Parallel Region #1 = {Delaunay Triangulation, Disparity Planes, Grid}    5.8 ms
+                      Matching   73.1 ms
+         L/R Consistency Check    7.1 ms
+         Remove Small Segments   28.4 ms
+             Gap Interpolation    4.1 ms
+                 Adaptive Mean   59.7 ms
+========================================
+                    Total time  221.8 ms
+
+... done!

@@ -16,14 +16,13 @@ __device__ uint32_t getAddressOffsetGrid_GPU (const int32_t& x,const int32_t& y,
  */
 __global__ void findMatch_GPU (int32_t* u_vals, int32_t* v_vals, int32_t size_total, float* planes_a, float* planes_b, float* planes_c,
                          int32_t* disparity_grid, int32_t *grid_dims, uint8_t* I1_desc, uint8_t* I2_desc,
-                         int32_t* P, int32_t plane_radius, int32_t width ,int32_t height, bool* valids, bool right_image, float* D) {
+                         int32_t* P, int32_t plane_radius, int32_t width ,int32_t height, bool* valids, bool right_image, float* D, bool subsampling) {
  
   // get image width and height
   const int32_t disp_num    = grid_dims[0]-1;
   const int32_t window_size = 2;
   
   //TODO: Remove hard code and use param
-  bool subsampling = false;
   bool match_texture = true;
   int32_t grid_size = 20;
 
@@ -553,7 +552,7 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   // Launch the kernel
   findMatch_GPU<<<DimGrid, DimBlock>>>(d_u_vals, d_v_vals, size_total, d_planes_a, d_planes_b, d_planes_c,
                                         d_disparity_grid, d_grid_dims, d_I1, d_I2, d_P, plane_radius,
-                                        width, height, d_valids, right_image, d_D);
+                                        width, height, d_valids, right_image, d_D, false);
     
   // Sync after the kernel is launched
   cudaDeviceSynchronize();
@@ -571,26 +570,6 @@ void ElasGPU::computeDisparity(std::vector<support_pt> p_support, std::vector<tr
   delete pixs_u;
   delete pixs_v;
   delete valids;
-
-  /*
-  // Free big memory
-  cudaFree(d_u_vals);
-  cudaFree(d_v_vals);
-  cudaFree(d_planes_a);
-  cudaFree(d_planes_b);
-  cudaFree(d_planes_c);
-
-  // Free cuda memory
-  cudaFree(d_disparity_grid);
-  cudaFree(d_P);
-  cudaFree(d_D);
-  cudaFree(d_I1);
-  cudaFree(d_I2);
-  cudaFree(d_grid_dims);
-  cudaFree(d_u_vals);
-  cudaFree(d_v_vals);
-    */
-    //cudaDest();
 }
 
 // implements approximation to bilateral filtering

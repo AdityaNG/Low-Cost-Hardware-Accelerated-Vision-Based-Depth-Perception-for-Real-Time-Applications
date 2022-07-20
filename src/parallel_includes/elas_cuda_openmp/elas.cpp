@@ -16,64 +16,63 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 libelas; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110-1301, USA 
+Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
-#include <omp.h>
-#include <math.h>
-#include <algorithm>
-
 #include "elas.h"
-#include "matrix.h"
-#include "triangle.h"
+#include <algorithm>
+#include <math.h>
+#include <omp.h>
 #include "descriptor.h"
+#include "triangle.h"
+#include "matrix.h"
 
 using namespace std;
 
 bool subsampling = false;
 
 void Elas::process (uint8_t* I1_,uint8_t* I2_,float* D1,float* D2,const int32_t* dims){
-  
-  // get width, height and bytes per line
-  width  = dims[0];
-  height = dims[1];
-  bpl    = width + 15-(width-1)%16;
-  
-  // copy images to byte aligned memory
-  I1 = (uint8_t*)_mm_malloc(bpl*height*sizeof(uint8_t),16);
-  I2 = (uint8_t*)_mm_malloc(bpl*height*sizeof(uint8_t),16);
-  memset (I1,0,bpl*height*sizeof(uint8_t));
-  memset (I2,0,bpl*height*sizeof(uint8_t));
-  if (bpl==dims[2]) {
-    memcpy(I1,I1_,bpl*height*sizeof(uint8_t));
-    memcpy(I2,I2_,bpl*height*sizeof(uint8_t));
-  } else {
-    for (int32_t v=0; v<height; v++) {
-      memcpy(I1+v*bpl,I1_+v*dims[2],width*sizeof(uint8_t));
-      memcpy(I2+v*bpl,I2_+v*dims[2],width*sizeof(uint8_t));
-    }
-  }
 
-// allocate memory for disparity grid
+	// get width, height and bytes per line
+	width  = dims[0];
+	height = dims[1];
+	bpl    = width + 15-(width-1)%16;
+
+	// copy images to byte aligned memory
+	I1 = (uint8_t*)_mm_malloc(bpl*height*sizeof(uint8_t),16);
+	I2 = (uint8_t*)_mm_malloc(bpl*height*sizeof(uint8_t),16);
+	memset (I1,0,bpl*height*sizeof(uint8_t));
+	memset (I2,0,bpl*height*sizeof(uint8_t));
+	if (bpl==dims[2]) {
+		memcpy(I1,I1_,bpl*height*sizeof(uint8_t));
+		memcpy(I2,I2_,bpl*height*sizeof(uint8_t));
+	} else {
+		for (int32_t v=0; v<height; v++) {
+			memcpy(I1+v*bpl,I1_+v*dims[2],width*sizeof(uint8_t));
+			memcpy(I2+v*bpl,I2_+v*dims[2],width*sizeof(uint8_t));
+		}
+	}
+
+	// allocate memory for disparity grid
 	int32_t grid_width   = (int32_t)ceil((float)width/(float)param.grid_size);
 	int32_t grid_height  = (int32_t)ceil((float)height/(float)param.grid_size);
 	int32_t grid_dims[3] = {param.disp_max+2,grid_width,grid_height};
 	int32_t* disparity_grid_1 = (int32_t*)calloc((param.disp_max+2)*grid_height*grid_width,sizeof(int32_t));
 	int32_t* disparity_grid_2 = (int32_t*)calloc((param.disp_max+2)*grid_height*grid_width,sizeof(int32_t));
-  
-//Apply filter and comput. discriptors in descriptor.cpp
+
+//Apply filter and compute discriptors in descriptor.cpp
 #ifdef PROFILE
-  timer.start("Descriptor");  
+	timer.start("Descriptor");
 #endif
-  Descriptor desc1(I1,width,height,bpl,param.subsampling); //Image 1 desciptor
-  Descriptor desc2(I2,width,height,bpl,param.subsampling); //Image 2 desciptor
+	Descriptor desc1(I1,width,height,bpl,param.subsampling);
+	Descriptor desc2(I2,width,height,bpl,param.subsampling);
 
 #ifdef PROFILE
-  timer.start("Support Matches");
+	timer.start("Support Matches");
 #endif
 
-  vector<support_pt> p_support = computeSupportMatches(desc1.I_desc,desc2.I_desc);
-  
+	vector<support_pt> p_support = computeSupportMatches(desc1.I_desc,desc2.I_desc);
+
   // if not enough support points for triangulation
   if (p_support.size()<3) {
     cout << "ERROR: Need at least 3 support points!" << endl;
@@ -110,79 +109,80 @@ vector<triangle> tri_1, tri_2;
 	}
 
 #ifdef PROFILE
-  timer.start("Matching");
+	timer.start("Matching");
 #endif
 
 #pragma omp sections
 	{
 	#pragma omp section
-  computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
-  #pragma omp section
-  computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
-  }
+		computeDisparity(p_support,tri_1,disparity_grid_1,grid_dims,desc1.I_desc,desc2.I_desc,0,D1);
+	#pragma omp section
+		computeDisparity(p_support,tri_2,disparity_grid_2,grid_dims,desc1.I_desc,desc2.I_desc,1,D2);
+	}
 
 #ifdef PROFILE
-  timer.start("L/R Consistency Check");
+	timer.start("L/R Consistency Check");
 #endif
-  leftRightConsistencyCheck(D1,D2);
+	leftRightConsistencyCheck(D1,D2);
 
 #ifdef PROFILE
   timer.start("Remove Small Segments");
 #endif
   removeSmallSegments(D1);
   if (!param.postprocess_only_left)
-    removeSmallSegments(D2);
+      removeSmallSegments(D2);
 
 #ifdef PROFILE
   timer.start("Gap Interpolation");
 #endif
   gapInterpolation(D1);
   if (!param.postprocess_only_left)
-    gapInterpolation(D2);
+      gapInterpolation(D2);
 
   if (param.filter_adaptive_mean) {
 #ifdef PROFILE
-    timer.start("Adaptive Mean");
+      timer.start("Adaptive Mean");
 #endif
-    adaptiveMean(D1);
-    if (!param.postprocess_only_left)
-      adaptiveMean(D2);
+      adaptiveMean(D1);
+      if (!param.postprocess_only_left)
+          adaptiveMean(D2);
   }
 
   if (param.filter_median) {
 #ifdef PROFILE
-    timer.start("Median");
+      timer.start("Median");
 #endif
-    median(D1);
-    if (!param.postprocess_only_left)
-      median(D2);
+      median(D1);
+      if (!param.postprocess_only_left)
+          median(D2);
   }
 
 #ifdef PROFILE
-  timer.plot();
+	timer.plot();
+	printf("\n");
 #endif
 
-  // release memory
-  free(disparity_grid_1);
-  free(disparity_grid_2);
-  _mm_free(I1);
-  _mm_free(I2);
+	// release memory
+	free(disparity_grid_1);
+	free(disparity_grid_2);
+	_mm_free(I1);
+	_mm_free(I2);
 }
 
 /*
 * Outlier rejection
 */
 void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,int32_t D_can_height) {
-  
-  // for all valid support points do
-  #pragma omp parallel for
-  for (int32_t u_can=0; u_can<D_can_width; u_can++) {
-    for (int32_t v_can=0; v_can<D_can_height; v_can++) {
-      int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
-      //If the point has a calulated disparity
-      if (d_can>=0) {
-        // compute number of other points supporting the current point
-        int32_t support = 0;
+
+	// for all valid support points do
+	#pragma omp parallel for
+	for (int32_t u_can=0; u_can<D_can_width; u_can++) {
+		for (int32_t v_can=0; v_can<D_can_height; v_can++) {
+			int16_t d_can = *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width));
+			//If the point has a calulated disparity
+			if (d_can>=0) {
+				// compute number of other points supporting the current point
+				int32_t support = 0;
         //Checks a 5 pixel window for inconsistent disparities
         for (int32_t u_can_2=u_can-param.incon_window_size; u_can_2<=u_can+param.incon_window_size; u_can_2++) {
           for (int32_t v_can_2=v_can-param.incon_window_size; v_can_2<=v_can+param.incon_window_size; v_can_2++) {
@@ -324,7 +324,7 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
 
   // check if we are inside the image region
   if (u>=window_size+u_step && u<=width-window_size-1-u_step && v>=window_size+v_step && v<=height-window_size-1-v_step) {
-    
+
     // compute desc and start addresses
     int32_t  line_offset = 16*width*v;
     uint8_t *I1_line_addr,*I2_line_addr;
@@ -429,28 +429,28 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
 * Removes outlier and redundant support points
 */
 vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* I2_desc) {
-  
-  // be sure that at half resolution we only need data
-  // from every second line!
-  int32_t D_candidate_stepsize = param.candidate_stepsize; //Stride over candidates for discriptors
-  if (param.subsampling)
-    D_candidate_stepsize += D_candidate_stepsize%2;
 
-  // create matrix for saving disparity candidates
-  int32_t D_can_width  = 0;
-  int32_t D_can_height = 0;
-  for (int32_t u=0; u<width;  u+=D_candidate_stepsize) D_can_width++; //Determine number of candidates at the stepsize in the horizontal
-  for (int32_t v=0; v<height; v+=D_candidate_stepsize) D_can_height++; //Determine number of candidates at the stepsize in the vertical
-  int16_t* D_can = (int16_t*)calloc(D_can_width*D_can_height,sizeof(int16_t));
+	// be sure that at half resolution we only need data
+	// from every second line!
+	int32_t D_candidate_stepsize = param.candidate_stepsize; //Stride over candidates for discriptors
+	if (param.subsampling)
+		D_candidate_stepsize += D_candidate_stepsize%2;
 
-  // loop variables
-  int32_t u,v;
-  int16_t d,d2;
-  int32_t u_can, v_can;
+	// create matrix for saving disparity candidates
+	int32_t D_can_width  = 0;
+	int32_t D_can_height = 0;
+	for (int32_t u=0; u<width;  u+=D_candidate_stepsize) D_can_width++; //Determine number of candidates at the stepsize in the horizontal
+	for (int32_t v=0; v<height; v+=D_candidate_stepsize) D_can_height++; //Determine number of candidates at the stepsize in the vertical
+	int16_t* D_can = (int16_t*)calloc(D_can_width*D_can_height,sizeof(int16_t));
+
+	// loop variables
+	int32_t u,v;
+	int16_t d,d2;
+	int32_t u_can, v_can;
 	int32_t lr_threshold = param.lr_threshold;
 	vector<support_pt> p_support;
 	vector<support_pt> partial_p_support[2];
-  // for all point candidates in image 1 do
+	// for all point candidates in image 1 do
 	#pragma omp parallel default(none) num_threads(2) private(u_can, v_can, u, d, v, d2) shared(partial_p_support,lr_threshold, D_can, D_can_width, D_can_height, D_candidate_stepsize, I1_desc, I2_desc)
 	{
 		int tid = omp_get_thread_num();
@@ -459,36 +459,35 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 		v = v_can*D_candidate_stepsize;
 		for (u_can=1; u_can<D_can_width; u_can++) {
 			u = u_can*D_candidate_stepsize;
-      
-      // initialize disparity candidate to invalid
-      *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = -1; //Find the current candidate location
-      
-      // find forwards
-      d = computeMatchingDisparity(u,v,I1_desc,I2_desc,false); //Left image
-      //If we have found a disparity in the left, check from the right to left disparity
-      if (d>=0) {
-        
-        // find backwards
-        d2 = computeMatchingDisparity(u-d,v,I1_desc,I2_desc,true);
-        //Check our error between the 2 disparity and that its below 2 pixel difference
-        if (d2>=0 && abs(d-d2)<=lr_threshold)
-            //TODO: Use average of the two? Why only the left?
-          *(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = d; //Save disparity 
-      }
-    }
-  }
-  
-  // remove inconsistent support points
-  removeInconsistentSupportPoints(D_can,D_can_width,D_can_height);
-  
-  // remove support points on straight lines, since they are redundant
-  // this reduces the number of triangles a little bit and hence speeds up
-  // the triangulation process
-  removeRedundantSupportPoints(D_can,D_can_width,D_can_height,5,1,true);
-  removeRedundantSupportPoints(D_can,D_can_width,D_can_height,5,1,false);
-  
-  // move support points from image representation into a vector representation
-  #pragma omp parallel for
+
+			// initialize disparity candidate to invalid
+			*(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = -1; //Find the current candidate location
+
+			// find forwards
+			d = computeMatchingDisparity(u,v,I1_desc,I2_desc,false); //Left image
+			//If we have found a disparity in the left, check from the right to left disparity
+			if (d>=0) {
+
+			// find backwards
+			d2 = computeMatchingDisparity(u-d,v,I1_desc,I2_desc,true);
+			//Check our error between the 2 disparity and that its below 2 pixel difference
+			if (d2>=0 && abs(d-d2)<=lr_threshold) //TODO: Use average of the two? Why only the left?
+				*(D_can+getAddressOffsetImage(u_can,v_can,D_can_width)) = d; //Save disparity 
+			}
+		}
+	}
+
+	// remove inconsistent support points
+	removeInconsistentSupportPoints(D_can,D_can_width,D_can_height);
+
+	// remove support points on straight lines, since they are redundant
+	// this reduces the number of triangles a little bit and hence speeds up
+	// the triangulation process
+	removeRedundantSupportPoints(D_can,D_can_width,D_can_height,5,1,true);
+	removeRedundantSupportPoints(D_can,D_can_width,D_can_height,5,1,false);
+
+	// move support points from image representation into a vector representation
+	#pragma omp parallel for
 	for (int32_t v_can=1; v_can<D_can_height; v_can++)
 		for (int32_t u_can=1; u_can<D_can_width; u_can++)
 			if (*(D_can+getAddressOffsetImage(u_can,v_can,D_can_width))>=0)
@@ -499,16 +498,16 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 	p_support = partial_p_support[0];
 	p_support.insert(p_support.end(),partial_p_support[1].begin(),partial_p_support[1].end());
 
-  // if flag is set, add support points in image corners
-  // with the same disparity as the nearest neighbor support point
-  if (param.add_corners)
-    addCornerSupportPoints(p_support);
+	// if flag is set, add support points in image corners
+	// with the same disparity as the nearest neighbor support point
+	if (param.add_corners)
+		addCornerSupportPoints(p_support);
 
-  // free memory
-  free(D_can);
-  
-  // return support point vector
-  return p_support; 
+	// free memory
+	free(D_can);
+
+	// return support point vector
+	return p_support;
 }
 
 /*
@@ -516,68 +515,68 @@ vector<Elas::support_pt> Elas::computeSupportMatches (uint8_t* I1_desc,uint8_t* 
 */
 vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_support,int32_t right_image) {
 
-  // input/output structure for triangulation
-  struct triangulateio in, out;
-  int32_t k;
+	// input/output structure for triangulation
+	struct triangulateio in, out;
+	int32_t k;
 
-  // inputs
-  // Input number of points and point list
-  in.numberofpoints = p_support.size();
-  in.pointlist = (float*)malloc(in.numberofpoints*2*sizeof(float));
-  k=0;
-  if (!right_image) {
-    for (int32_t i=0; i<p_support.size(); i++) {
-      in.pointlist[k++] = p_support[i].u;
-      in.pointlist[k++] = p_support[i].v;
-    }
-  } else {
-      //If right image shift by the disparity (to the left)
-    for (int32_t i=0; i<p_support.size(); i++) {
-      in.pointlist[k++] = p_support[i].u-p_support[i].d;
-      in.pointlist[k++] = p_support[i].v;
-    }
-  }
-  in.numberofpointattributes = 0;
-  in.pointattributelist      = NULL;
-  in.pointmarkerlist         = NULL;
-  in.numberofsegments        = 0;
-  in.numberofholes           = 0;
-  in.numberofregions         = 0;
-  in.regionlist              = NULL;
-  
-  // outputs
-  out.pointlist              = NULL;
-  out.pointattributelist     = NULL;
-  out.pointmarkerlist        = NULL;
-  out.trianglelist           = NULL;
-  out.triangleattributelist  = NULL;
-  out.neighborlist           = NULL;
-  out.segmentlist            = NULL;
-  out.segmentmarkerlist      = NULL;
-  out.edgelist               = NULL;
-  out.edgemarkerlist         = NULL;
+	// inputs
+	// Input number of points and point list
+	in.numberofpoints = p_support.size();
+	in.pointlist = (float*)malloc(in.numberofpoints*2*sizeof(float));
+	k=0;
+	if (!right_image) {
+		for (int32_t i=0; i<p_support.size(); i++) {
+			in.pointlist[k++] = p_support[i].u;
+			in.pointlist[k++] = p_support[i].v;
+		}
+	} else {
+		//If right image shift by the disparity (to the left)
+		for (int32_t i=0; i<p_support.size(); i++) {
+			in.pointlist[k++] = p_support[i].u-p_support[i].d;
+			in.pointlist[k++] = p_support[i].v;
+		}
+	}
+	in.numberofpointattributes = 0;
+	in.pointattributelist      = NULL;
+	in.pointmarkerlist         = NULL;
+	in.numberofsegments        = 0;
+	in.numberofholes           = 0;
+	in.numberofregions         = 0;
+	in.regionlist              = NULL;
 
-  // do triangulation (z=zero-based, n=neighbors, Q=quiet, B=no boundary markers)
-  char parameters[] = "zQB";
-  triangulate(parameters, &in, &out, NULL);
-  
-  // put resulting triangles into vector tri
-  // triangle structure is an array that holds the triangles 3 corners
-  // Stores one point and the remainder in a counterclockwise order
-  vector<triangle> tri;
-  k=0;
-  for (int32_t i=0; i<out.numberoftriangles; i++) {
-    tri.push_back(triangle(out.trianglelist[k],out.trianglelist[k+1],out.trianglelist[k+2]));
-    k+=3;
-  }
-  
-  // free memory used for triangulation
-  free(in.pointlist);
-  free(out.pointlist);
-  free(out.trianglelist);
-  
-  // return triangles
-  return tri;
+	// outputs
+	out.pointlist              = NULL;
+	out.pointattributelist     = NULL;
+	out.pointmarkerlist        = NULL;
+	out.trianglelist           = NULL;
+	out.triangleattributelist  = NULL;
+	out.neighborlist           = NULL;
+	out.segmentlist            = NULL;
+	out.segmentmarkerlist      = NULL;
+	out.edgelist               = NULL;
+	out.edgemarkerlist         = NULL;
+
+	// do triangulation (z=zero-based, n=neighbors, Q=quiet, B=no boundary markers)
+	char parameters[] = "zQB";
+	triangulate(parameters, &in, &out, NULL);
+
+	// put resulting triangles into vector tri
+	// triangle structure is an array that holds the triangles 3 corners
+	// Stores one point and the remainder in a counterclockwise order
+	vector<triangle> tri;
+	k=0;
+	for (int32_t i=0; i<out.numberoftriangles; i++) {
+		tri.push_back(triangle(out.trianglelist[k],out.trianglelist[k+1],out.trianglelist[k+2]));
+		k+=3;
+	}
+
+	// free memory used for triangulation
+	free(in.pointlist);
+	free(out.pointlist);
+	free(out.trianglelist);
+
+	// return triangles
+	return tri;
 }
 
 /*
@@ -585,158 +584,158 @@ vector<Elas::triangle> Elas::computeDelaunayTriangulation (vector<support_pt> p_
 */
 void Elas::computeDisparityPlanes (vector<support_pt> p_support,vector<triangle> &tri,int32_t right_image) {
 
-  // init matrices
-  Matrix A(3,3);
-  Matrix b(3,1);
-  
-  // for all triangles do
-  for (int32_t i=0; i<tri.size(); i++) {
-    
-    // get triangle corner indices
-    // Since we fed in the support point to the triangle class sequentially
-    // The triangle indecties correspond directly to the support point indecies
-    int32_t c1 = tri[i].c1;
-    int32_t c2 = tri[i].c2;
-    int32_t c3 = tri[i].c3;
-    
-    // compute matrix A for linear system of left triangle
-    A.val[0][0] = p_support[c1].u;
-    A.val[1][0] = p_support[c2].u;
-    A.val[2][0] = p_support[c3].u;
-    A.val[0][1] = p_support[c1].v; A.val[0][2] = 1;
-    A.val[1][1] = p_support[c2].v; A.val[1][2] = 1;
-    A.val[2][1] = p_support[c3].v; A.val[2][2] = 1;
-    
-    // compute vector b for linear system (containing the disparities)
-    b.val[0][0] = p_support[c1].d;
-    b.val[1][0] = p_support[c2].d;
-    b.val[2][0] = p_support[c3].d;
-    
-    // on success of gauss jordan elimination
-    if (b.solve(A)) {
-      
-      // grab results from b
-      tri[i].t1a = b.val[0][0];
-      tri[i].t1b = b.val[1][0];
-      tri[i].t1c = b.val[2][0];
-      
-    // otherwise: invalid
-    } else {
-      tri[i].t1a = 0;
-      tri[i].t1b = 0;
-      tri[i].t1c = 0;
-    }
+	// init matrices
+	Matrix A(3,3);
+	Matrix b(3,1);
 
-    // compute matrix A for linear system of right triangle
-    A.val[0][0] = p_support[c1].u-p_support[c1].d;
-    A.val[1][0] = p_support[c2].u-p_support[c2].d;
-    A.val[2][0] = p_support[c3].u-p_support[c3].d;
-    A.val[0][1] = p_support[c1].v; A.val[0][2] = 1;
-    A.val[1][1] = p_support[c2].v; A.val[1][2] = 1;
-    A.val[2][1] = p_support[c3].v; A.val[2][2] = 1;
-    
-    // compute vector b for linear system (containing the disparities)
-    b.val[0][0] = p_support[c1].d;
-    b.val[1][0] = p_support[c2].d;
-    b.val[2][0] = p_support[c3].d;
-    
-    // on success of gauss jordan elimination
-    if (b.solve(A)) {
-      
-      // grab results from b
-      tri[i].t2a = b.val[0][0];
-      tri[i].t2b = b.val[1][0];
-      tri[i].t2c = b.val[2][0];
-      
-    // otherwise: invalid
-    } else {
-      tri[i].t2a = 0;
-      tri[i].t2b = 0;
-      tri[i].t2c = 0;
-    }
-  }  
+	// for all triangles do
+	for (int32_t i=0; i<tri.size(); i++) {
+
+		// get triangle corner indices
+		// Since we fed in the support point to the triangle class sequentially
+		// The triangle indecties correspond directly to the support point indecies
+		int32_t c1 = tri[i].c1;
+		int32_t c2 = tri[i].c2;
+		int32_t c3 = tri[i].c3;
+
+		// compute matrix A for linear system of left triangle
+		A.val[0][0] = p_support[c1].u;
+		A.val[1][0] = p_support[c2].u;
+		A.val[2][0] = p_support[c3].u;
+		A.val[0][1] = p_support[c1].v; A.val[0][2] = 1;
+		A.val[1][1] = p_support[c2].v; A.val[1][2] = 1;
+		A.val[2][1] = p_support[c3].v; A.val[2][2] = 1;
+
+		// compute vector b for linear system (containing the disparities)
+		b.val[0][0] = p_support[c1].d;
+		b.val[1][0] = p_support[c2].d;
+		b.val[2][0] = p_support[c3].d;
+
+		// on success of gauss jordan elimination
+		if (b.solve(A)) {
+
+			// grab results from b
+			tri[i].t1a = b.val[0][0];
+			tri[i].t1b = b.val[1][0];
+			tri[i].t1c = b.val[2][0];
+
+		// otherwise: invalid
+		} else {
+			tri[i].t1a = 0;
+			tri[i].t1b = 0;
+			tri[i].t1c = 0;
+		}
+
+		// compute matrix A for linear system of right triangle
+		A.val[0][0] = p_support[c1].u-p_support[c1].d;
+		A.val[1][0] = p_support[c2].u-p_support[c2].d;
+		A.val[2][0] = p_support[c3].u-p_support[c3].d;
+		A.val[0][1] = p_support[c1].v; A.val[0][2] = 1;
+		A.val[1][1] = p_support[c2].v; A.val[1][2] = 1;
+		A.val[2][1] = p_support[c3].v; A.val[2][2] = 1;
+
+		// compute vector b for linear system (containing the disparities)
+		b.val[0][0] = p_support[c1].d;
+		b.val[1][0] = p_support[c2].d;
+		b.val[2][0] = p_support[c3].d;
+
+		// on success of gauss jordan elimination
+		if (b.solve(A)) {
+
+			// grab results from b
+			tri[i].t2a = b.val[0][0];
+			tri[i].t2b = b.val[1][0];
+			tri[i].t2c = b.val[2][0];
+
+		// otherwise: invalid
+		} else {
+			tri[i].t2a = 0;
+			tri[i].t2b = 0;
+			tri[i].t2c = 0;
+		}
+	}
 }
 
 void Elas::createGrid(vector<support_pt> p_support,int32_t* disparity_grid,int32_t* grid_dims,bool right_image) {
-  
-  // get grid dimensions
-  int32_t grid_width  = grid_dims[1];
-  int32_t grid_height = grid_dims[2];
-  
-  // allocate temporary memory
-  int32_t* temp1 = (int32_t*)calloc((param.disp_max+1)*grid_height*grid_width,sizeof(int32_t));
-  int32_t* temp2 = (int32_t*)calloc((param.disp_max+1)*grid_height*grid_width,sizeof(int32_t));
-  
-  // for all support points do
-  for (int32_t i=0; i<p_support.size(); i++) {
-    
-    // compute disparity range to fill for this support point
-    int32_t x_curr = p_support[i].u;
-    int32_t y_curr = p_support[i].v;
-    int32_t d_curr = p_support[i].d;
-    int32_t d_min  = max(d_curr-1,0);
-    int32_t d_max  = min(d_curr+1,param.disp_max);
-    
-    // fill disparity grid helper
-    for (int32_t d=d_min; d<=d_max; d++) {
-      int32_t x;
-      if (!right_image)
-        x = floor((float)(x_curr/param.grid_size));
-      else
-        x = floor((float)(x_curr-d_curr)/(float)param.grid_size);
-      int32_t y = floor((float)y_curr/(float)param.grid_size);
-      
-      // point may potentially lay outside (corner points)
-      if (x>=0 && x<grid_width &&y>=0 && y<grid_height) {
-        int32_t addr = getAddressOffsetGrid(x,y,d,grid_width,param.disp_max+1);
-        *(temp1+addr) = 1;
-      }
-    }
-  }
-  
-  // diffusion pointers
-  const int32_t* tl = temp1 + (0*grid_width+0)*(param.disp_max+1);
-  const int32_t* tc = temp1 + (0*grid_width+1)*(param.disp_max+1);
-  const int32_t* tr = temp1 + (0*grid_width+2)*(param.disp_max+1);
-  const int32_t* cl = temp1 + (1*grid_width+0)*(param.disp_max+1);
-  const int32_t* cc = temp1 + (1*grid_width+1)*(param.disp_max+1);
-  const int32_t* cr = temp1 + (1*grid_width+2)*(param.disp_max+1);
-  const int32_t* bl = temp1 + (2*grid_width+0)*(param.disp_max+1);
-  const int32_t* bc = temp1 + (2*grid_width+1)*(param.disp_max+1);
-  const int32_t* br = temp1 + (2*grid_width+2)*(param.disp_max+1);
-  
-  int32_t* result    = temp2 + (1*grid_width+1)*(param.disp_max+1); 
-  int32_t* end_input = temp1 + grid_width*grid_height*(param.disp_max+1);
-  
-  // diffuse temporary grid
-  for( ; br != end_input; tl++, tc++, tr++, cl++, cc++, cr++, bl++, bc++, br++, result++ )
-    *result = *tl | *tc | *tr | *cl | *cc | *cr | *bl | *bc | *br;
-  
-  // for all grid positions create disparity grid
-  for (int32_t x=0; x<grid_width; x++) {
-    for (int32_t y=0; y<grid_height; y++) {
-        
-      // start with second value (first is reserved for count)
-      int32_t curr_ind = 1;
-      
-      // for all disparities do
-      for (int32_t d=0; d<=param.disp_max; d++) {
 
-        // if yes => add this disparity to current cell
-        if (*(temp2+getAddressOffsetGrid(x,y,d,grid_width,param.disp_max+1))>0) {
-          *(disparity_grid+getAddressOffsetGrid(x,y,curr_ind,grid_width,param.disp_max+2))=d;
-          curr_ind++;
-        }
-      }
-      
-      // finally set number of indices
-      *(disparity_grid+getAddressOffsetGrid(x,y,0,grid_width,param.disp_max+2))=curr_ind-1;
-    }
-  }
-  
-  // release temporary memory
-  free(temp1);
-  free(temp2);
+	// get grid dimensions
+	int32_t grid_width  = grid_dims[1];
+	int32_t grid_height = grid_dims[2];
+
+	// allocate temporary memory
+	int32_t* temp1 = (int32_t*)calloc((param.disp_max+1)*grid_height*grid_width,sizeof(int32_t));
+	int32_t* temp2 = (int32_t*)calloc((param.disp_max+1)*grid_height*grid_width,sizeof(int32_t));
+
+	// for all support points do
+	for (int32_t i=0; i<p_support.size(); i++) {
+
+		// compute disparity range to fill for this support point
+		int32_t x_curr = p_support[i].u;
+		int32_t y_curr = p_support[i].v;
+		int32_t d_curr = p_support[i].d;
+		int32_t d_min  = max(d_curr-1,0);
+		int32_t d_max  = min(d_curr+1,param.disp_max);
+
+		// fill disparity grid helper
+		for (int32_t d=d_min; d<=d_max; d++) {
+			int32_t x;
+			if (!right_image)
+				x = floor((float)(x_curr/param.grid_size));
+			else
+				x = floor((float)(x_curr-d_curr)/(float)param.grid_size);
+			int32_t y = floor((float)y_curr/(float)param.grid_size);
+
+			// point may potentially lay outside (corner points)
+			if (x>=0 && x<grid_width &&y>=0 && y<grid_height) {
+				int32_t addr = getAddressOffsetGrid(x,y,d,grid_width,param.disp_max+1);
+				*(temp1+addr) = 1;
+			}
+		}
+	}
+
+	// diffusion pointers
+	const int32_t* tl = temp1 + (0*grid_width+0)*(param.disp_max+1);
+	const int32_t* tc = temp1 + (0*grid_width+1)*(param.disp_max+1);
+	const int32_t* tr = temp1 + (0*grid_width+2)*(param.disp_max+1);
+	const int32_t* cl = temp1 + (1*grid_width+0)*(param.disp_max+1);
+	const int32_t* cc = temp1 + (1*grid_width+1)*(param.disp_max+1);
+	const int32_t* cr = temp1 + (1*grid_width+2)*(param.disp_max+1);
+	const int32_t* bl = temp1 + (2*grid_width+0)*(param.disp_max+1);
+	const int32_t* bc = temp1 + (2*grid_width+1)*(param.disp_max+1);
+	const int32_t* br = temp1 + (2*grid_width+2)*(param.disp_max+1);
+
+	int32_t* result    = temp2 + (1*grid_width+1)*(param.disp_max+1);
+	int32_t* end_input = temp1 + grid_width*grid_height*(param.disp_max+1);
+
+	// diffuse temporary grid
+	for( ; br != end_input; tl++, tc++, tr++, cl++, cc++, cr++, bl++, bc++, br++, result++ )
+		*result = *tl | *tc | *tr | *cl | *cc | *cr | *bl | *bc | *br;
+
+	// for all grid positions create disparity grid
+	for (int32_t x=0; x<grid_width; x++) {
+		for (int32_t y=0; y<grid_height; y++) {
+
+			// start with second value (first is reserved for count)
+			int32_t curr_ind = 1;
+
+			// for all disparities do
+			for (int32_t d=0; d<=param.disp_max; d++) {
+
+				// if yes => add this disparity to current cell
+				if (*(temp2+getAddressOffsetGrid(x,y,d,grid_width,param.disp_max+1))>0) {
+					*(disparity_grid+getAddressOffsetGrid(x,y,curr_ind,grid_width,param.disp_max+2))=d;
+					curr_ind++;
+				}
+			}
+
+			// finally set number of indices
+			*(disparity_grid+getAddressOffsetGrid(x,y,0,grid_width,param.disp_max+2))=curr_ind-1;
+		}
+	}
+
+	// release temporary memory
+	free(temp1);
+	free(temp2);
 }
 
 inline void Elas::updatePosteriorMinimum(__m128i* I2_block_addr,const int32_t &d,const int32_t &w,
@@ -1069,77 +1068,77 @@ void Elas::leftRightConsistencyCheck(float* D1,float* D2) {
 }
 
 void Elas::removeSmallSegments (float* D) {
-  
-  // get disparity image dimensions
-  int32_t D_width        = width;
-  int32_t D_height       = height;
-  int32_t D_speckle_size = param.speckle_size;
-  if (param.subsampling) {
-    D_width        = width/2;
-    D_height       = height/2;
-    D_speckle_size = sqrt((float)param.speckle_size)*2;
-  }
-  
-  // allocate memory on heap for dynamic programming arrays
-  int32_t *D_done     = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
-  int32_t *seg_list_u = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
-  int32_t *seg_list_v = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
-  int32_t seg_list_count;
-  int32_t seg_list_curr;
-  int32_t u_neighbor[4];
-  int32_t v_neighbor[4];
-  int32_t u_seg_curr;
-  int32_t v_seg_curr;
-  
-  // declare loop variables
-  int32_t addr_start, addr_curr, addr_neighbor;
-  
-  // for all pixels do
-  for (int32_t u=0; u<D_width; u++) {
-    for (int32_t v=0; v<D_height; v++) {
-      
-      // get address of first pixel in this segment
-      addr_start = getAddressOffsetImage(u,v,D_width);
-                  
-      // if this pixel has not already been processed
-      if (*(D_done+addr_start)==0) {
-                
-        // init segment list (add first element
-        // and set it to be the next element to check)
-        *(seg_list_u+0) = u;
-        *(seg_list_v+0) = v;
-        seg_list_count  = 1;
-        seg_list_curr   = 0;
-        
-        // add neighboring segments as long as there
-        // are none-processed pixels in the seg_list;
-        // none-processed means: seg_list_curr<seg_list_count
-        while (seg_list_curr<seg_list_count) {
-        
-          // get current position from seg_list
-          u_seg_curr = *(seg_list_u+seg_list_curr);
-          v_seg_curr = *(seg_list_v+seg_list_curr);
-          
-          // get address of current pixel in this segment
-          addr_curr = getAddressOffsetImage(u_seg_curr,v_seg_curr,D_width);
-          
-          // fill list with neighbor positions
-          u_neighbor[0] = u_seg_curr-1; v_neighbor[0] = v_seg_curr;
-          u_neighbor[1] = u_seg_curr+1; v_neighbor[1] = v_seg_curr;
-          u_neighbor[2] = u_seg_curr;   v_neighbor[2] = v_seg_curr-1;
-          u_neighbor[3] = u_seg_curr;   v_neighbor[3] = v_seg_curr+1;
-          
-          // for all neighbors do
-          for (int32_t i=0; i<4; i++) {
-            
-            // check if neighbor is inside image
-            if (u_neighbor[i]>=0 && v_neighbor[i]>=0 && u_neighbor[i]<D_width && v_neighbor[i]<D_height) {
-              
-              // get neighbor pixel address
-              addr_neighbor = getAddressOffsetImage(u_neighbor[i],v_neighbor[i],D_width);
-              
-              // check if neighbor has not been added yet and if it is valid
-              if (*(D_done+addr_neighbor)==0 && *(D+addr_neighbor)>=0) {
+
+	// get disparity image dimensions
+	int32_t D_width        = width;
+	int32_t D_height       = height;
+	int32_t D_speckle_size = param.speckle_size;
+	if (param.subsampling) {
+		D_width        = width/2;
+		D_height       = height/2;
+		D_speckle_size = sqrt((float)param.speckle_size)*2;
+	}
+
+	// allocate memory on heap for dynamic programming arrays
+	int32_t *D_done     = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
+	int32_t *seg_list_u = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
+	int32_t *seg_list_v = (int32_t*)calloc(D_width*D_height,sizeof(int32_t));
+	int32_t seg_list_count;
+	int32_t seg_list_curr;
+	int32_t u_neighbor[4];
+	int32_t v_neighbor[4];
+	int32_t u_seg_curr;
+	int32_t v_seg_curr;
+
+	// declare loop variables
+	int32_t addr_start, addr_curr, addr_neighbor;
+
+	// for all pixels do
+	for (int32_t u=0; u<D_width; u++) {
+		for (int32_t v=0; v<D_height; v++) {
+
+			// get address of first pixel in this segment
+			addr_start = getAddressOffsetImage(u,v,D_width);
+
+			// if this pixel has not already been processed
+			if (*(D_done+addr_start)==0) {
+
+				// init segment list (add first element
+				// and set it to be the next element to check)
+				*(seg_list_u+0) = u;
+				*(seg_list_v+0) = v;
+				seg_list_count  = 1;
+				seg_list_curr   = 0;
+
+				// add neighboring segments as long as there
+				// are none-processed pixels in the seg_list;
+				// none-processed means: seg_list_curr<seg_list_count
+				while (seg_list_curr<seg_list_count) {
+
+					// get current position from seg_list
+					u_seg_curr = *(seg_list_u+seg_list_curr);
+					v_seg_curr = *(seg_list_v+seg_list_curr);
+
+					// get address of current pixel in this segment
+					addr_curr = getAddressOffsetImage(u_seg_curr,v_seg_curr,D_width);
+
+					// fill list with neighbor positions
+					u_neighbor[0] = u_seg_curr-1; v_neighbor[0] = v_seg_curr;
+					u_neighbor[1] = u_seg_curr+1; v_neighbor[1] = v_seg_curr;
+					u_neighbor[2] = u_seg_curr;   v_neighbor[2] = v_seg_curr-1;
+					u_neighbor[3] = u_seg_curr;   v_neighbor[3] = v_seg_curr+1;
+
+					// for all neighbors do
+					for (int32_t i=0; i<4; i++) {
+
+						// check if neighbor is inside image
+						if (u_neighbor[i]>=0 && v_neighbor[i]>=0 && u_neighbor[i]<D_width && v_neighbor[i]<D_height) {
+
+							// get neighbor pixel address
+							addr_neighbor = getAddressOffsetImage(u_neighbor[i],v_neighbor[i],D_width);
+
+							// check if neighbor has not been added yet and if it is valid
+							if (*(D_done+addr_neighbor)==0 && *(D+addr_neighbor)>=0) {
 
                 // is the neighbor similar to the current pixel
                 // (=belonging to the current segment)
@@ -1600,14 +1599,14 @@ void Elas::adaptiveMean (float* D) {
 }
 
 void Elas::median (float* D) {
-  
-  // get disparity image dimensions
-  int32_t D_width          = width;
-  int32_t D_height         = height;
-  if (param.subsampling) {
-    D_width          = width/2;
-    D_height         = height/2;
-  }
+
+	// get disparity image dimensions
+	int32_t D_width          = width;
+	int32_t D_height         = height;
+	if (param.subsampling) {
+		D_width          = width/2;
+		D_height         = height/2;
+	}
 
   // temporary memory
   float *D_temp = (float*)calloc(D_width*D_height,sizeof(float));

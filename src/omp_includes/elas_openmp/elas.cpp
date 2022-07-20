@@ -148,6 +148,7 @@ vector<triangle> tri_1, tri_2;
 
 #ifdef PROFILE
 	timer.plot();
+	printf("\n");
 #endif
 
 	// release memory
@@ -186,7 +187,7 @@ void Elas::removeInconsistentSupportPoints (int16_t* D_can,int32_t D_can_width,i
 }
 
 void Elas::removeRedundantSupportPoints(int16_t* D_can,int32_t D_can_width,int32_t D_can_height,
-		int32_t redun_max_dist, int32_t redun_threshold, bool vertical) {
+										int32_t redun_max_dist, int32_t redun_threshold, bool vertical) {
 
 	// parameters
 	int32_t redun_dir_u[2] = {0,0};
@@ -348,7 +349,9 @@ inline int16_t Elas::computeMatchingDisparity (const int32_t &u,const int32_t &v
 			I2_block_addr = I2_line_addr+16*u_warp;
 
 			// compute match energy at this disparity
+      		// Sum all the intensity differences of all the surrounding canditates between the first I1 and second I2 inages 
 			xmm6 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_1));
+			//_mm_sad_epu8 sums the difference of the first 64 bytes and second 64 bytes (returns 2 values)
 			xmm6 = _mm_sad_epu8(xmm1,xmm6);
 			xmm5 = _mm_load_si128((__m128i*)(I2_block_addr+desc_offset_2));
 			xmm6 = _mm_add_epi16(_mm_sad_epu8(xmm2,xmm5),xmm6);
@@ -564,7 +567,7 @@ void Elas::computeDisparityPlanes (vector<support_pt> p_support,vector<triangle>
 			tri[i].t1b = b.val[1][0];
 			tri[i].t1c = b.val[2][0];
 
-			// otherwise: invalid
+		// otherwise: invalid
 		} else {
 			tri[i].t1a = 0;
 			tri[i].t1b = 0;

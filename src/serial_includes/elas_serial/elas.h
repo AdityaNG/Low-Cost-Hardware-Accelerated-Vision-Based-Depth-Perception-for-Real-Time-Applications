@@ -25,7 +25,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #define __ELAS_H__
 
 // Enable profiling
-//#define PROFILE
+// #define PROFILE
 
 #include <iostream>
 #include <stdio.h>
@@ -49,7 +49,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #endif
 
 #ifdef PROFILE
-#include "timer.h"
+#include "../../common_includes/timer/timer.h"
 #endif
 
 class Elas {

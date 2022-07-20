@@ -1,0 +1,2857 @@
+ K1 : [984.2439000000001, 0, 690;
+ 0, 980.8141000000001, 233.1966;
+ 0, 0, 1]
+ D1 : [-0.3728755, 0.2037299, 0.002219027, 0.001383707, -0.07233721999999999]
+ R1 : []
+ P1 : []
+ K2 : [989.5267, 0, 702;
+ 0, 987.8386, 245.559;
+ 0, 0, 1]
+ D2 : [-0.3644661, 0.1790019, 0.001148107, -0.0006298563, -0.05314062]
+ R2 : []
+ P2 : []
+Starting rectification
+Scaled K1: [984.2439000000001, 0, 690;
+ 0, 980.8141000000001, 233.1966;
+ 0, 0, 1]
+Scaled K2: [989.5267, 0, 702;
+ 0, 987.8386, 245.559;
+ 0, 0, 1]
+------------------
+Done rectification
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.6 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   42.3 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  115.6 ms
+         Remove Small Segments    5.9 ms
+             Gap Interpolation   12.9 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.6 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   42.3 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  115.6 ms
+         Remove Small Segments    5.9 ms
+             Gap Interpolation   12.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   49.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   37.4 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.3 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  116.6 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.8 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.6 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   42.3 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  115.6 ms
+         Remove Small Segments    5.9 ms
+             Gap Interpolation   12.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   49.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   37.4 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.3 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  116.6 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   49.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.1 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.2 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.8 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.6 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   42.3 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  115.6 ms
+         Remove Small Segments    5.9 ms
+             Gap Interpolation   12.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   49.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   37.4 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.3 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  116.6 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   49.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.1 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.2 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.8 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.4 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   36.7 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.1 ms
+                      Matching    4.8 ms
+         L/R Consistency Check  116.7 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+
+
+                    Descriptor   14.5 ms
+               Support Matches   50.4 ms
+        Delaunay Triangulation    3.8 ms
+              Disparity Planes    4.9 ms
+                          Grid    5.7 ms
+                      Matching  137.2 ms
+         L/R Consistency Check    7.6 ms
+         Remove Small Segments   17.4 ms
+             Gap Interpolation    2.2 ms
+                        Median   25.4 ms
+                    
+                    Descriptor   31.6 ms
+               Support Matches   13.4 ms
+        Delaunay Triangulation   41.2 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  133.4 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   55.3 ms
+               Support Matches   10.6 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.2 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.1 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.7 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.4 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  126.8 ms
+         Remove Small Segments    6.5 ms
+             Gap Interpolation   14.4 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   52.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    4.1 ms
+                          Grid    3.4 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  124.9 ms
+         Remove Small Segments    6.4 ms
+             Gap Interpolation   13.8 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   51.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.4 ms
+              Disparity Planes    3.3 ms
+                          Grid    3.2 ms
+                      Matching    4.9 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.5 ms
+                        Median    2.0 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.1 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.8 ms
+              Disparity Planes    3.5 ms
+                          Grid    3.3 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.8 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.0 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   43.7 ms
+              Disparity Planes    4.0 ms
+                          Grid    4.0 ms
+                      Matching    3.7 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.6 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   52.0 ms
+               Support Matches   10.1 ms
+        Delaunay Triangulation   44.1 ms
+              Disparity Planes    3.8 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.3 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.4 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   39.7 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    3.8 ms
+         L/R Consistency Check  120.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   40.4 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.6 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  118.5 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   44.3 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.3 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.9 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   50.2 ms
+               Support Matches   10.4 ms
+        Delaunay Triangulation   42.9 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.7 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  121.8 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.0 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.1 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   39.8 ms
+              Disparity Planes    4.2 ms
+                          Grid    3.7 ms
+                      Matching    3.5 ms
+         L/R Consistency Check  120.3 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.0 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   42.6 ms
+              Disparity Planes    3.7 ms
+                          Grid    3.3 ms
+                      Matching    3.6 ms
+         L/R Consistency Check  119.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.5 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   42.2 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.6 ms
+                      Matching    4.1 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   12.7 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.6 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   42.3 ms
+              Disparity Planes    4.0 ms
+                          Grid    3.5 ms
+                      Matching    3.9 ms
+         L/R Consistency Check  115.6 ms
+         Remove Small Segments    5.9 ms
+             Gap Interpolation   12.9 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   49.3 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   37.4 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.3 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  116.6 ms
+         Remove Small Segments    6.0 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.8 ms
+                    
+                    Descriptor   49.5 ms
+               Support Matches   10.3 ms
+        Delaunay Triangulation   41.1 ms
+              Disparity Planes    3.6 ms
+                          Grid    3.2 ms
+                      Matching    4.2 ms
+         L/R Consistency Check  118.6 ms
+         Remove Small Segments    6.1 ms
+             Gap Interpolation   13.8 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   51.4 ms
+               Support Matches   10.2 ms
+        Delaunay Triangulation   36.7 ms
+              Disparity Planes    3.4 ms
+                          Grid    3.1 ms
+                      Matching    4.8 ms
+         L/R Consistency Check  116.7 ms
+         Remove Small Segments    6.3 ms
+             Gap Interpolation   13.4 ms
+                        Median    1.9 ms
+                    
+                    Descriptor   50.5 ms
+               Support Matches   10.5 ms
+        Delaunay Triangulation   40.0 ms
+              Disparity Planes    4.5 ms
+                          Grid    3.4 ms
+                      Matching    4.5 ms
+         L/R Consistency Check  117.6 ms
+         Remove Small Segments    6.2 ms
+             Gap Interpolation   13.1 ms
+                        Median    1.9 ms
+
+
+** Object tracking disabled
+KITTI Path: /home/dhruval/Kitti_Small 
+Init done
+Max files = 22
+Post Process only left = 1, Subsampling = 0
+(FPS=3.289120) (375, 1242) (t_t=0.304033, dmap_t=0.273327, pc_t=0.000726)
+(FPS=3.584756) (375, 1242) (t_t=0.278959, dmap_t=0.252099, pc_t=0.000222)
+(FPS=3.913701) (375, 1242) (t_t=0.255513, dmap_t=0.228602, pc_t=0.000227)
+(FPS=3.753921) (375, 1242) (t_t=0.266388, dmap_t=0.239896, pc_t=0.000223)
+(FPS=3.803730) (375, 1242) (t_t=0.262900, dmap_t=0.237172, pc_t=0.000217)
+(FPS=3.914527) (375, 1242) (t_t=0.255459, dmap_t=0.229891, pc_t=0.000228)
+(FPS=3.942270) (375, 1242) (t_t=0.253661, dmap_t=0.227810, pc_t=0.000226)
+(FPS=3.878195) (375, 1242) (t_t=0.257852, dmap_t=0.232138, pc_t=0.000222)
+(FPS=3.844906) (375, 1242) (t_t=0.260084, dmap_t=0.234477, pc_t=0.000232)
+(FPS=3.874582) (375, 1242) (t_t=0.258092, dmap_t=0.232554, pc_t=0.000230)
+(FPS=3.941821) (375, 1242) (t_t=0.253690, dmap_t=0.228049, pc_t=0.000232)
+(FPS=3.962934) (375, 1242) (t_t=0.252338, dmap_t=0.227003, pc_t=0.000226)
+(FPS=3.887843) (375, 1242) (t_t=0.257212, dmap_t=0.231869, pc_t=0.000230)
+(FPS=3.883246) (375, 1242) (t_t=0.257517, dmap_t=0.231903, pc_t=0.000221)
+(FPS=3.945634) (375, 1242) (t_t=0.253445, dmap_t=0.228023, pc_t=0.000217)
+(FPS=3.905136) (375, 1242) (t_t=0.256073, dmap_t=0.230423, pc_t=0.000225)
+(FPS=3.949986) (375, 1242) (t_t=0.253165, dmap_t=0.227329, pc_t=0.000213)
+(FPS=3.984815) (375, 1242) (t_t=0.250953, dmap_t=0.224413, pc_t=0.000222)
+(FPS=4.074317) (375, 1242) (t_t=0.245440, dmap_t=0.220082, pc_t=0.000218)
+(FPS=3.943801) (375, 1242) (t_t=0.253562, dmap_t=0.228123, pc_t=0.000231)
+(FPS=4.054449) (375, 1242) (t_t=0.246643, dmap_t=0.220589, pc_t=0.000232)
+(FPS=3.978156) (375, 1242) (t_t=0.251373, dmap_t=0.224928, pc_t=0.000222)
+
+
+Program exitted successfully!
+
