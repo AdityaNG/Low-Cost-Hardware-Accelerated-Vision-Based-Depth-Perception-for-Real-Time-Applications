@@ -72,6 +72,17 @@ The extrinsic parameters of the stereo pair is calculated during runtime.
 The rotation and translation matrices for the point cloud transformation should be named as `XR` and `XT` in the calibration file. `XR` should be a **3 x 3** 
 matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration file in the `calibration/` folder.
 
+# Throughput Testing
+
+```bash
+./test.sh                       # will run tests and save to results.csv
+python3 plot.py < results.csv   # Plot the results
+```
+
+<p align="center">
+    <img src="imgs/result_20_jul_2022.png">
+</p>
+
 # TODO 
 
 Things that we are currently working on
