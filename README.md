@@ -79,6 +79,10 @@ matrix and `XT` should be a **3 x 1** matrix. Please see a sample calibration fi
 python3 plot.py < results.csv   # Plot the results
 ```
 
+<p align="center">
+    <img src="imgs/result_20_jul_2022.png">
+</p>
+
 # TODO 
 
 Things that we are currently working on
