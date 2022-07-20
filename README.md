@@ -19,7 +19,7 @@ Depth estimation and 3D object detection are important for autonomous systems to
 
 Install with pip
 ```bash
-python3 -m pip install git+https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
+python3 -m pip install git+https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications
 ```
 
 Run the demo
@@ -51,7 +51,7 @@ $ python3 -m pip install -r requirements.txt
 Clone the repository:
 
 ```bash
-$ git clone https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices.git
+$ git clone https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications
 ```
 
 Compile using the make utility:

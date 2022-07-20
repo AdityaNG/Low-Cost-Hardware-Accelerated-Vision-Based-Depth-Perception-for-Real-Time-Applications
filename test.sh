@@ -31,5 +31,3 @@ done
 
 python3 test.py
 python3 test.py > results.csv
-
-rm tmp.txt
