@@ -69,7 +69,9 @@ double pc_t = 0, dmap_t = 0, t_t = 1; // For calculating timings
 pthread_t graphicsThread;        // This is the openGL thread that plots the points in 3D)
 bool graphicsBeingUsed = true;   // To know if graphics is used or not
 bool objectTracking = false;     // To know if object tracking is being done
-      
+
+extern int BAYESIAN_DISTANCE_THRESH;
+
 int debug = 0;                   // Applies different roation and translation to the points
 int frame_skip = 1;              // Skip by frame_skip frames
 int video_mode = 0;              // Loop among all the images in the given directory
@@ -549,7 +551,7 @@ extern "C"{ // This function is exposed in the shared library along with the mai
     	imgCallback_video();
     	color = (uchar4*)left_img_OLD.ptr<unsigned char>(0);	
     	obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-    	pred_list = get_predicted_boxes(); // Bayesian
+    	pred_list = get_predicted_boxes(BAYESIAN_DISTANCE_THRESH); // Bayesian
     	obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
     }
     else{
@@ -614,7 +616,7 @@ void imageLoop(){
 			cvtColor(left_img, rgba, cv::COLOR_BGR2BGRA);
 			color = (uchar4*)rgba.ptr<unsigned char>(0);
 			obj_list = f.get(); // Getting obj_list from the future object which the async call returned to f
-			pred_list = get_predicted_boxes(); // Bayesian
+			pred_list = get_predicted_boxes(BAYESIAN_DISTANCE_THRESH); // Bayesian
 			append_old_objs(obj_list);
 			obj_list.insert( obj_list.end(), pred_list.begin(), pred_list.end() );
 		}	
@@ -728,6 +730,7 @@ int main(int argc, const char** argv) {
 	  { "scale_factor", 'f', POPT_ARG_FLOAT, &scale_factor, 0, "All operations will be applied after shrinking the image by this factor", "NUM" },
 	  { "extrapolate_point_cloud", 'e', POPT_ARG_INT, &point_cloud_extrapolation, 0, "Extrapolate the point cloud by this factor", "NUM" },
 	  { "profile", 'P', POPT_ARG_INT, &profile, 0, "Profile", "NUM" },
+	  { "BAYESIAN_DISTANCE_THRESH", 'B', POPT_ARG_INT, &BAYESIAN_DISTANCE_THRESH, 100, "Profile", "NUM" },
       POPT_AUTOHELP
 	  { NULL, 0, 0, NULL, 0, NULL, NULL }
 	};	

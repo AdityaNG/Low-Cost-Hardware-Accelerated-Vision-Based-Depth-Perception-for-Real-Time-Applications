@@ -61,6 +61,11 @@ $ make stereo_vision -j$(($(nproc) * 2)) -s        # binary
 $ make shared_library -j$(($(nproc) * 2)) -s       # shared object file
 ```
 
+Run the quick demo:
+```bash
+$ ./build/bin/stereo_vision_serial -k $(pwd)/kitti_mini/ -v=1
+```
+
 # Stereo Calibration
 
 A calibrated pair of cameras is required for stereo rectification and calibration files should be stored in a `.yml` file. 

@@ -1,0 +1,342 @@
+ K1 : [984.2439000000001, 0, 690;
+ 0, 980.8141000000001, 233.1966;
+ 0, 0, 1]
+ D1 : [-0.3728755, 0.2037299, 0.002219027, 0.001383707, -0.07233721999999999]
+ R1 : []
+ P1 : []
+ K2 : [989.5267, 0, 702;
+ 0, 987.8386, 245.559;
+ 0, 0, 1]
+ D2 : [-0.3644661, 0.1790019, 0.001148107, -0.0006298563, -0.05314062]
+ R2 : []
+ P2 : []
+Starting rectification
+Scaled K1: [984.2439000000001, 0, 690;
+ 0, 980.8141000000001, 233.1966;
+ 0, 0, 1]
+Scaled K2: [989.5267, 0, 702;
+ 0, 987.8386, 245.559;
+ 0, 0, 1]
+------------------
+Done rectification
+** Object tracking disabled
+KITTI Path: /home/aditya/VSProjects/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices/kitti_mini/ 
+Init done
+Max files = 21
+Post Process only left = 1, Subsampling = 0
+
+                    Descriptor 10.06 ms
+               Support Matches 25.85 ms
+        Delaunay Triangulation 2.34 ms
+              Disparity Planes 2.09 ms
+                          Grid 3.23 ms
+                      Matching 94.20 ms
+         L/R Consistency Check 6.28 ms
+         Remove Small Segments 12.71 ms
+             Gap Interpolation 1.58 ms
+                        Median 18.17 ms
+========================================
+                    Total time 176.51 ms
+
+(FPS=5.498540) (375, 1242) (t_t=0.181866, dmap_t=0.179294, pc_t=0.000585)
+
+                    Descriptor 9.26 ms
+               Support Matches 26.10 ms
+        Delaunay Triangulation 2.35 ms
+              Disparity Planes 2.01 ms
+                          Grid 2.40 ms
+                      Matching 91.60 ms
+         L/R Consistency Check 6.07 ms
+         Remove Small Segments 11.56 ms
+             Gap Interpolation 1.44 ms
+                        Median 17.58 ms
+========================================
+                    Total time 170.35 ms
+
+(FPS=5.745684) (375, 1242) (t_t=0.174044, dmap_t=0.172645, pc_t=0.000161)
+
+                    Descriptor 7.66 ms
+               Support Matches 26.51 ms
+        Delaunay Triangulation 2.47 ms
+              Disparity Planes 2.14 ms
+                          Grid 2.31 ms
+                      Matching 92.56 ms
+         L/R Consistency Check 5.07 ms
+         Remove Small Segments 11.83 ms
+             Gap Interpolation 1.43 ms
+                        Median 17.00 ms
+========================================
+                    Total time 168.97 ms
+
+(FPS=5.846368) (375, 1242) (t_t=0.171046, dmap_t=0.170080, pc_t=0.000159)
+
+                    Descriptor 7.53 ms
+               Support Matches 25.48 ms
+        Delaunay Triangulation 2.38 ms
+              Disparity Planes 2.15 ms
+                          Grid 2.22 ms
+                      Matching 91.33 ms
+         L/R Consistency Check 5.26 ms
+         Remove Small Segments 10.49 ms
+             Gap Interpolation 1.33 ms
+                        Median 17.35 ms
+========================================
+                    Total time 165.52 ms
+
+(FPS=5.970152) (375, 1242) (t_t=0.167500, dmap_t=0.166650, pc_t=0.000152)
+
+                    Descriptor 7.50 ms
+               Support Matches 25.00 ms
+        Delaunay Triangulation 2.33 ms
+              Disparity Planes 2.08 ms
+                          Grid 2.22 ms
+                      Matching 91.29 ms
+         L/R Consistency Check 5.38 ms
+         Remove Small Segments 11.09 ms
+             Gap Interpolation 1.45 ms
+                        Median 17.40 ms
+========================================
+                    Total time 165.75 ms
+
+(FPS=5.925023) (375, 1242) (t_t=0.168776, dmap_t=0.167246, pc_t=0.000485)
+
+                    Descriptor 7.51 ms
+               Support Matches 26.22 ms
+        Delaunay Triangulation 2.49 ms
+              Disparity Planes 2.16 ms
+                          Grid 2.57 ms
+                      Matching 92.34 ms
+         L/R Consistency Check 5.16 ms
+         Remove Small Segments 11.14 ms
+             Gap Interpolation 1.43 ms
+                        Median 17.56 ms
+========================================
+                    Total time 168.60 ms
+
+(FPS=5.859687) (375, 1242) (t_t=0.170658, dmap_t=0.169765, pc_t=0.000140)
+
+                    Descriptor 7.64 ms
+               Support Matches 25.04 ms
+        Delaunay Triangulation 2.32 ms
+              Disparity Planes 2.09 ms
+                          Grid 2.21 ms
+                      Matching 92.60 ms
+         L/R Consistency Check 5.18 ms
+         Remove Small Segments 10.59 ms
+             Gap Interpolation 1.54 ms
+                        Median 17.86 ms
+========================================
+                    Total time 167.07 ms
+
+(FPS=5.910910) (375, 1242) (t_t=0.169179, dmap_t=0.168167, pc_t=0.000171)
+
+                    Descriptor 7.72 ms
+               Support Matches 25.50 ms
+        Delaunay Triangulation 2.37 ms
+              Disparity Planes 2.11 ms
+                          Grid 2.21 ms
+                      Matching 91.91 ms
+         L/R Consistency Check 5.11 ms
+         Remove Small Segments 10.33 ms
+             Gap Interpolation 1.36 ms
+                        Median 16.70 ms
+========================================
+                    Total time 165.33 ms
+
+(FPS=5.965750) (375, 1242) (t_t=0.167624, dmap_t=0.166591, pc_t=0.000155)
+
+                    Descriptor 7.38 ms
+               Support Matches 25.50 ms
+        Delaunay Triangulation 2.35 ms
+              Disparity Planes 2.06 ms
+                          Grid 2.26 ms
+                      Matching 90.82 ms
+         L/R Consistency Check 5.04 ms
+         Remove Small Segments 10.29 ms
+             Gap Interpolation 1.35 ms
+                        Median 16.28 ms
+========================================
+                    Total time 163.32 ms
+
+(FPS=6.052006) (375, 1242) (t_t=0.165234, dmap_t=0.164356, pc_t=0.000148)
+
+                    Descriptor 7.27 ms
+               Support Matches 24.71 ms
+        Delaunay Triangulation 2.34 ms
+              Disparity Planes 2.09 ms
+                          Grid 2.33 ms
+                      Matching 94.59 ms
+         L/R Consistency Check 5.57 ms
+         Remove Small Segments 12.09 ms
+             Gap Interpolation 1.41 ms
+                        Median 17.43 ms
+========================================
+                    Total time 169.83 ms
+
+(FPS=5.819481) (375, 1242) (t_t=0.171837, dmap_t=0.170987, pc_t=0.000156)
+
+                    Descriptor 7.78 ms
+               Support Matches 26.60 ms
+        Delaunay Triangulation 2.47 ms
+              Disparity Planes 2.09 ms
+                          Grid 2.32 ms
+                      Matching 98.61 ms
+         L/R Consistency Check 5.72 ms
+         Remove Small Segments 10.89 ms
+             Gap Interpolation 1.37 ms
+                        Median 17.31 ms
+========================================
+                    Total time 175.14 ms
+
+(FPS=5.639753) (375, 1242) (t_t=0.177313, dmap_t=0.176288, pc_t=0.000163)
+
+                    Descriptor 7.59 ms
+               Support Matches 24.69 ms
+        Delaunay Triangulation 2.38 ms
+              Disparity Planes 2.13 ms
+                          Grid 2.27 ms
+                      Matching 93.33 ms
+         L/R Consistency Check 5.00 ms
+         Remove Small Segments 10.52 ms
+             Gap Interpolation 1.34 ms
+                        Median 16.55 ms
+========================================
+                    Total time 165.82 ms
+
+(FPS=5.960282) (375, 1242) (t_t=0.167777, dmap_t=0.166884, pc_t=0.000152)
+
+                    Descriptor 7.37 ms
+               Support Matches 25.01 ms
+        Delaunay Triangulation 2.41 ms
+              Disparity Planes 3.05 ms
+                          Grid 2.74 ms
+                      Matching 93.09 ms
+         L/R Consistency Check 5.07 ms
+         Remove Small Segments 11.12 ms
+             Gap Interpolation 1.38 ms
+                        Median 16.67 ms
+========================================
+                    Total time 167.91 ms
+
+(FPS=5.886863) (375, 1242) (t_t=0.169870, dmap_t=0.169015, pc_t=0.000156)
+
+                    Descriptor 7.28 ms
+               Support Matches 25.12 ms
+        Delaunay Triangulation 2.61 ms
+              Disparity Planes 2.27 ms
+                          Grid 2.46 ms
+                      Matching 95.92 ms
+         L/R Consistency Check 5.06 ms
+         Remove Small Segments 10.37 ms
+             Gap Interpolation 1.31 ms
+                        Median 16.98 ms
+========================================
+                    Total time 169.38 ms
+
+(FPS=5.835927) (375, 1242) (t_t=0.171352, dmap_t=0.170487, pc_t=0.000159)
+
+                    Descriptor 7.48 ms
+               Support Matches 25.20 ms
+        Delaunay Triangulation 2.56 ms
+              Disparity Planes 2.22 ms
+                          Grid 2.41 ms
+                      Matching 94.14 ms
+         L/R Consistency Check 5.10 ms
+         Remove Small Segments 10.56 ms
+             Gap Interpolation 1.33 ms
+                        Median 16.64 ms
+========================================
+                    Total time 167.65 ms
+
+(FPS=5.892442) (375, 1242) (t_t=0.169709, dmap_t=0.168840, pc_t=0.000167)
+
+                    Descriptor 7.41 ms
+               Support Matches 25.90 ms
+        Delaunay Triangulation 2.63 ms
+              Disparity Planes 2.34 ms
+                          Grid 2.33 ms
+                      Matching 104.07 ms
+         L/R Consistency Check 5.43 ms
+         Remove Small Segments 10.84 ms
+             Gap Interpolation 1.50 ms
+                        Median 17.16 ms
+========================================
+                    Total time 179.60 ms
+
+(FPS=5.506930) (375, 1242) (t_t=0.181589, dmap_t=0.180722, pc_t=0.000152)
+
+                    Descriptor 7.46 ms
+               Support Matches 27.91 ms
+        Delaunay Triangulation 2.77 ms
+              Disparity Planes 2.42 ms
+                          Grid 2.37 ms
+                      Matching 99.14 ms
+         L/R Consistency Check 5.10 ms
+         Remove Small Segments 10.79 ms
+             Gap Interpolation 1.35 ms
+                        Median 16.40 ms
+========================================
+                    Total time 175.72 ms
+
+(FPS=5.624653) (375, 1242) (t_t=0.177789, dmap_t=0.176890, pc_t=0.000154)
+
+                    Descriptor 7.28 ms
+               Support Matches 26.52 ms
+        Delaunay Triangulation 2.93 ms
+              Disparity Planes 2.53 ms
+                          Grid 2.50 ms
+                      Matching 102.68 ms
+         L/R Consistency Check 5.12 ms
+         Remove Small Segments 11.19 ms
+             Gap Interpolation 1.42 ms
+                        Median 16.77 ms
+========================================
+                    Total time 178.92 ms
+
+(FPS=5.523951) (375, 1242) (t_t=0.181030, dmap_t=0.180034, pc_t=0.000139)
+
+                    Descriptor 7.44 ms
+               Support Matches 25.94 ms
+        Delaunay Triangulation 2.80 ms
+              Disparity Planes 2.43 ms
+                          Grid 2.36 ms
+                      Matching 98.23 ms
+         L/R Consistency Check 5.06 ms
+         Remove Small Segments 11.18 ms
+             Gap Interpolation 1.46 ms
+                        Median 16.47 ms
+========================================
+                    Total time 173.37 ms
+
+(FPS=5.703377) (375, 1242) (t_t=0.175335, dmap_t=0.174484, pc_t=0.000156)
+
+                    Descriptor 7.38 ms
+               Support Matches 26.44 ms
+        Delaunay Triangulation 2.87 ms
+              Disparity Planes 2.42 ms
+                          Grid 2.37 ms
+                      Matching 100.38 ms
+         L/R Consistency Check 5.11 ms
+         Remove Small Segments 11.11 ms
+             Gap Interpolation 1.40 ms
+                        Median 16.28 ms
+========================================
+                    Total time 175.75 ms
+
+(FPS=5.624953) (375, 1242) (t_t=0.177779, dmap_t=0.176840, pc_t=0.000155)
+
+                    Descriptor 7.40 ms
+               Support Matches 26.43 ms
+        Delaunay Triangulation 2.96 ms
+              Disparity Planes 2.57 ms
+                          Grid 2.35 ms
+                      Matching 101.87 ms
+         L/R Consistency Check 5.13 ms
+         Remove Small Segments 11.29 ms
+             Gap Interpolation 1.48 ms
+                        Median 16.59 ms
+========================================
+                    Total time 178.08 ms
+
+(FPS=5.553946) (375, 1242) (t_t=0.180052, dmap_t=0.179215, pc_t=0.000154)
+AVG_FPS=5.778414

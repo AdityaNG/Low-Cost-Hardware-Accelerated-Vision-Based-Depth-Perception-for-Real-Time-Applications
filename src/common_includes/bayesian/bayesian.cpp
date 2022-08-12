@@ -8,6 +8,8 @@
 
 using namespace std;
 
+int BAYESIAN_DISTANCE_THRESH = 100;
+
 int OLD_OBJS_TOP = 0;
 bayesian_t OLD_BAYES_OBJS[MAX_BAYESIAN_OBJECTS];
 int QUEUE_IS_EMPTY = 1, QUEUE_IS_FULL = 0;
@@ -134,7 +136,8 @@ void predict(int id, int* x, int* y) {
     OLD_BAYES_OBJS[id].predY = *y;
 }
 
-std::vector<OBJ> get_predicted_boxes() {
+std::vector<OBJ> get_predicted_boxes(int new_BAYESIAN_DISTANCE_THRESH) {
+	BAYESIAN_DISTANCE_THRESH = new_BAYESIAN_DISTANCE_THRESH;
     error_list.clear();
     int recent = (OLD_OBJS_TOP-1) % BAYESIAN_HISTORY;
     std::vector<OBJ> plist;

@@ -8,7 +8,7 @@
 
 #define MAX_BAYESIAN_OBJECTS 10
 #define BAYESIAN_HISTORY 5
-#define BAYESIAN_DISTANCE_THRESH 100
+// #define BAYESIAN_DISTANCE_THRESH 100
 
 typedef struct bayesian{
     int predX = 0, predY = 0;
@@ -21,5 +21,5 @@ typedef struct bayesian{
 void append_old_objs(std::vector<OBJ> obj_list);
 void display_history();
 void predict(int id, int* x, int* y);
-std::vector<OBJ> get_predicted_boxes();
+std::vector<OBJ> get_predicted_boxes(int);
 #endif
