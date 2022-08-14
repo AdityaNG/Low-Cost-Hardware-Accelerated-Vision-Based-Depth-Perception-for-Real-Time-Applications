@@ -18,6 +18,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements_tests.txt
+    - name: Install build-essential
+      run: sudo apt-get install -y build-essential
     - name: Install stereo_vision
       run: |
         pip install .
