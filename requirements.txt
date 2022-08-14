@@ -4,3 +4,5 @@ tqdm==4.62.3
 pylint==2.14.3
 pytest==4.6.9
 pytest-cov==3.0.0
+opencv-python
+opencv-contrib-python
