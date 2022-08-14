@@ -10,8 +10,10 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 UNAME = subprocess.run(['uname', '-m'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '')
 
-OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
-OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
+# OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
+# OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
+OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv4'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
+OPENCV_LINKER_ARGS = subprocess.run(['pkg-config', '--libs', 'opencv4'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()
 
 if 'armv7l' in UNAME: # Raspberry Pi
     OPENCV_INCLUDE_PATH = list(map(lambda i: i.replace('-I', '') ,subprocess.run(['pkg-config', '--cflags', 'opencv4'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace('\n', '').split()))
