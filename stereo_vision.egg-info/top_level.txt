@@ -1,2 +1,0 @@
-stereo_vision
-stereo_vision_serial
