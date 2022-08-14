@@ -1,4 +1,4 @@
-# Depth Perception from Stereoscopic Vision on Edge Devices
+# Low Cost Hardware Accelerated Vision Based Depth Perception for Real Time Applications
 
 ![pylint workflow](https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications/actions/workflows/pylint.yml/badge.svg)
 ![pypi workflow](https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications/actions/workflows/pypi.yml/badge.svg)
@@ -16,7 +16,7 @@ A library to simplify disparity calculation and 3D depth map generation from a s
 Depth estimation and 3D object detection are important for autonomous systems to be able to estimate their own state and gain greater context of their external environment. The project is an implementation of the software side of a perception stack.
 
 <p align="center">
-    <img src="outputs/single_loop.gif">
+    <img src="outputs/PointCloud.gif">
 </p>
 
 # Quick Start
@@ -83,7 +83,7 @@ Things that we are currently working on
  - Calibration functionality
  - Add CONTRIBUTING.md
  - Add "Good Starter" Issues
- - Understand and change LICENSE
+ - Understand and change LICENSE if necessary
 
 ## License
 
