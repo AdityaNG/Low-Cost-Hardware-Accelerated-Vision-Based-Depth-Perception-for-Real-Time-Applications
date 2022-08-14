@@ -119,8 +119,14 @@ void Elas::process(uint8_t *I1_, uint8_t *I2_, float *D1, float *D2, const int32
 #ifdef PROFILE
     timer.start("Matching");
 #endif
-    computeDisparity(p_support, tri_1, disparity_grid_1, grid_dims, desc1->I_desc, desc2->I_desc, 0, D1);
-    computeDisparity(p_support, tri_2, disparity_grid_2, grid_dims, desc1->I_desc, desc2->I_desc, 1, D2);
+
+#pragma omp sections
+    {
+#pragma omp section
+        computeDisparity(p_support, tri_1, disparity_grid_1, grid_dims, desc1->I_desc, desc2->I_desc, 0, D1);
+#pragma omp section
+        computeDisparity(p_support, tri_2, disparity_grid_2, grid_dims, desc1->I_desc, desc2->I_desc, 1, D2);
+    }
 
 #ifdef PROFILE
     timer.start("L/R Consistency Check");

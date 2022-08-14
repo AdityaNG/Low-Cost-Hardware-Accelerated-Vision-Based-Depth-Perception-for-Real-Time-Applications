@@ -704,64 +704,64 @@ void ElasGPU::adaptiveMean(float *D) {
         // Copy the final disparity values back over
         cudaMemcpy(D, d_D, width * height * sizeof(float), cudaMemcpyDeviceToHost);
 
-        // horizontal filter
-        for (int32_t v = 3; v < D_height - 3; v++) {
-            // Preload first 7 pixels in row
-            for (int32_t u = 0; u < 7; u++)
-                val[u] = *(D_copy + v * D_width + u);
-            // Loop through remaining rows
-            for (int32_t u = 7; u < D_width; u++) {
-                // Current pixel being filtered is middle of our set (4 back, in orginal its 3 for some reason)
-                // Note this isn't truely the center since we have 8 for the vestor registers
-                float val_curr = *(D_copy + v * D_width + (u - 3));
-                // Update the most outdated (farthest away) pixel of our 8
-                val[u % 8] = *(D_copy + v * D_width + u);
+        // // horizontal filter
+        // for (int32_t v = 3; v < D_height - 3; v++) {
+        //     // Preload first 7 pixels in row
+        //     for (int32_t u = 0; u < 7; u++)
+        //         val[u] = *(D_copy + v * D_width + u);
+        //     // Loop through remaining rows
+        //     for (int32_t u = 7; u < D_width; u++) {
+        //         // Current pixel being filtered is middle of our set (4 back, in orginal its 3 for some reason)
+        //         // Note this isn't truely the center since we have 8 for the vestor registers
+        //         float val_curr = *(D_copy + v * D_width + (u - 3));
+        //         // Update the most outdated (farthest away) pixel of our 8
+        //         val[u % 8] = *(D_copy + v * D_width + u);
 
-                float weight_sum0 = 0;
-                float weight_sum2 = 0;
-                float factor_sum2 = 0;
+        //         float weight_sum0 = 0;
+        //         float weight_sum2 = 0;
+        //         float factor_sum2 = 0;
 
-                for (int32_t i = 0; i < 8; i++) {
-                    weight_sum0 = 4.0f - std::fabs(val[i] - val_curr);
-                    weight_sum0 = std::fmax(0.0f, weight_sum0);
-                    weight_sum2 += weight_sum0;
-                    factor_sum2 += val[i] * weight_sum0;
-                }
+        //         for (int32_t i = 0; i < 8; i++) {
+        //             weight_sum0 = 4.0f - std::fabs(val[i] - val_curr);
+        //             weight_sum0 = std::fmax(0.0f, weight_sum0);
+        //             weight_sum2 += weight_sum0;
+        //             factor_sum2 += val[i] * weight_sum0;
+        //         }
 
-                if (weight_sum2 > 0) {
-                    float d = factor_sum2 / weight_sum2;
-                    if (d >= 0)
-                        *(D_tmp + v * D_width + (u - 3)) = d;
-                }
-            }
-        }
+        //         if (weight_sum2 > 0) {
+        //             float d = factor_sum2 / weight_sum2;
+        //             if (d >= 0)
+        //                 *(D_tmp + v * D_width + (u - 3)) = d;
+        //         }
+        //     }
+        // }
 
-        // vertical filter
-        for (int32_t u = 3; u < D_width - 3; u++) {
-            for (int32_t v = 0; v < 7; v++)
-                val[v] = *(D_tmp + v * D_width + u);
-            for (int32_t v = 7; v < D_height; v++) {
-                float val_curr = *(D_tmp + (v - 3) * D_width + u);
-                val[v % 8] = *(D_tmp + v * D_width + u);
+        // // vertical filter
+        // for (int32_t u = 3; u < D_width - 3; u++) {
+        //     for (int32_t v = 0; v < 7; v++)
+        //         val[v] = *(D_tmp + v * D_width + u);
+        //     for (int32_t v = 7; v < D_height; v++) {
+        //         float val_curr = *(D_tmp + (v - 3) * D_width + u);
+        //         val[v % 8] = *(D_tmp + v * D_width + u);
 
-                float weight_sum0 = 0.0f;
-                float weight_sum2 = 0.0f;
-                float factor_sum2 = 0.0f;
+        //         float weight_sum0 = 0.0f;
+        //         float weight_sum2 = 0.0f;
+        //         float factor_sum2 = 0.0f;
 
-                for (int32_t i = 0; i < 8; i++) {
-                    weight_sum0 = 4.0f - std::fabs(val[i] - val_curr);
-                    weight_sum0 = std::fmax(0.0f, weight_sum0);
-                    weight_sum2 += weight_sum0;
-                    factor_sum2 += val[i] * weight_sum0;
-                }
+        //         for (int32_t i = 0; i < 8; i++) {
+        //             weight_sum0 = 4.0f - std::fabs(val[i] - val_curr);
+        //             weight_sum0 = std::fmax(0.0f, weight_sum0);
+        //             weight_sum2 += weight_sum0;
+        //             factor_sum2 += val[i] * weight_sum0;
+        //         }
 
-                if (weight_sum2 > 0) {
-                    float d = factor_sum2 / weight_sum2;
-                    if (d >= 0)
-                        *(D + (v - 3) * D_width + u) = d;
-                }
-            }
-        }
+        //         if (weight_sum2 > 0) {
+        //             float d = factor_sum2 / weight_sum2;
+        //             if (d >= 0)
+        //                 *(D + (v - 3) * D_width + u) = d;
+        //         }
+        //     }
+        // }
     }
 
     // free memory

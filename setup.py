@@ -34,7 +34,6 @@ setup(
     package_dir={'stereo_vision': 'stereo_vision'},
     include_package_data=True,
     package_data={'stereo_vision': glob.glob("bin/*") + glob.glob("data/*")},
-    #scripts=['bin/vivp'],
     license='LICENSE.txt',
     url='https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices',
     description="A library to simplify disparity calculation and 3D depth map generation from a stereo pair",

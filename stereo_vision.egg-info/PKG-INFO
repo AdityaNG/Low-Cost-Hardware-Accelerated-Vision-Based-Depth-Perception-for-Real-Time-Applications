@@ -1,8 +1,17 @@
-# Depth Perception from Stereoscopic Vision on Edge Devices
+Metadata-Version: 2.1
+Name: stereo-vision
+Version: 0.0.1
+Summary: A library to simplify disparity calculation and 3D depth map generation from a stereo pair
+Home-page: https://github.com/AdityaNG/Depth-Perception-from-Stereoscopic-Vision-on-Edge-Devices
+Author: Aditya NG, Dhruval PB
+Author-email: adityang5@gmail.com, dhruvalpb@gmail.com
+License: LICENSE.txt
+Platform: UNKNOWN
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
 
-![pylint workflow](https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications/actions/workflows/pylint.yml/badge.svg)
-![pypi workflow](https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications/actions/workflows/pypi.yml/badge.svg)
-![pytest workflow](https://github.com/AdityaNG/Low-Cost-Hardware-Accelerated-Vision-Based-Depth-Perception-for-Real-Time-Applications/actions/workflows/pytest.yml/badge.svg)
+# Depth Perception from Stereoscopic Vision on Edge Devices
 
 <p align="center">
     <img src="outputs/fsds.gif">
@@ -88,3 +97,5 @@ Things that we are currently working on
 ## License
 
 This software is released under the [GNU GPL v3 license](LICENSE).
+
+

@@ -8,6 +8,8 @@ import requests
 import tqdm
 import zipfile
 import errno
+import site
+
 
 def ensure_directory_exists(path: str):
     try:
@@ -131,10 +133,19 @@ def points_2_top_view(points, x_range, y_range, z_range, scale):
     
     return img
 
-site_packages_dir = "/".join(__file__.split("/")[:-2])
-search_q = os.path.join(site_packages_dir,'stereo_vision*.so')
-so_files = glob.glob(search_q)
-
+# site_packages_dir = "/".join(__file__.split("/")[:-2])
+# search_q = os.path.join(site_packages_dir,'stereo_vision*.so')
+# so_files = glob.glob(search_q)
+so_files = []
+for site_packages_dir in [site.getusersitepackages()] + site.getsitepackages():
+	# site_packages_dir = "/".join(__file__.split("/")[:-2])
+	search_q = os.path.join(site_packages_dir,'stereo_vision*.so')
+	so_files += list(glob.glob(search_q))
+# if len(so_files==0):
+# 	site_packages_dir = os.path.join("/".join(__file__.split("/")[:-2]), 'build','bin')
+# 	search_q = os.path.join(site_packages_dir,'stereo_vision*.so')
+# 	so_files = glob.glob(search_q)
+print('so_files', so_files)
 DEFAULT_STEREO_VISION_SO_PATH = so_files[0]
 
 KITTI_ZIP_PATH = os.path.join("/".join(__file__.split("/")[:-1]), 'data', 'kitti2015.zip')
