@@ -15,7 +15,7 @@ jobs:
         python-version: 3.9
     - uses: Dovyski/setup-opencv-action@v1
       with:
-        opencv-version: '4.0.0'
+        opencv-version: '4.4.0'
 
   
     - name: Install dependencies
