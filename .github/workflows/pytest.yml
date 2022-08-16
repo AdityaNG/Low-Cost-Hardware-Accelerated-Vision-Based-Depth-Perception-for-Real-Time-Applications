@@ -28,7 +28,7 @@ jobs:
       with:  
         dir: ./opencv-install
         cached: ${{ steps.opencv-cache.outputs.cache-hit }}
-        opencv-version: '4.0.0'
+        opencv-version: '4.4.0'
 
 
   
