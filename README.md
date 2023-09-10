@@ -9,7 +9,9 @@
 </p>
 
 A library to simplify disparity calculation and 3D depth map generation from a stereo pair
-- Authors: [Dhruval PB](http://github.com/Dhruval360), [Aditya NG](http://github.com/AdityaNG)
+- Authors: [Aditya NG](http://github.com/AdityaNG), [Dhruval PB](http://github.com/Dhruval360)
+- Project Page: [Hardware Accelerated Stereo Vision](https://adityang.github.io/AdityaNG/HardwareAcceleratedStereoVision/)
+- LinkedIn Post: [Hardware Accelerated Stereo Vision](https://www.linkedin.com/posts/adityang_low-cost-hardware-accelerated-vision-based-activity-7067379026075537408-XbFj/?utm_source=share&utm_medium=member_desktop)
 
 ## About the Project
 
@@ -18,6 +20,30 @@ Depth estimation and 3D object detection are important for autonomous systems to
 <p align="center">
     <img src="outputs/PointCloud.gif">
 </p>
+
+# Cite Our Work
+
+Please cite our paper if you find this repo helpful
+
+```bib
+@InProceedings{10.1007/978-981-19-7867-8_22,
+  author="Aditya, N. G.
+  and Dhruval, P. B.
+  and Shylaja, S. S.
+  and Katharguppe, Srinivas",
+  editor="Tistarelli, Massimo
+  and Dubey, Shiv Ram
+  and Singh, Satish Kumar
+  and Jiang, Xiaoyi",
+  title="Low-Cost Hardware-Accelerated Vision-Based Depth Perception for Real-Time Applications",
+  booktitle="Computer Vision and Machine Intelligence",
+  year="2023",
+  publisher="Springer Nature Singapore",
+  address="Singapore",
+  pages="271--282",
+  isbn="978-981-19-7867-8"
+}
+```
 
 # Quick Start
 
